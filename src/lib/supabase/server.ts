@@ -11,8 +11,8 @@ export function createClient({
   isAdmin?: boolean;
 }) {
   return createServerClient(
-    `https://${env.NEXT_PUBLIC_SUPABASE_PROJECT_REF}.supabase.co`,
-    isAdmin ? env.DATABASE_SERVICE_ROLE : env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    env.NEXT_PUBLIC_SUPABASE_URL,
+    isAdmin ? env.DATABASE_SERVICE_ROLE : env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
     {
       cookies: {
         get(name: string) {

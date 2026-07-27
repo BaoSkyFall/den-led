@@ -4,8 +4,8 @@ import { createBrowserClient } from "@supabase/ssr";
 
 export function createClient() {
   return createBrowserClient(
-    `https://${env.NEXT_PUBLIC_SUPABASE_PROJECT_REF}.supabase.co`,
-    env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    env.NEXT_PUBLIC_SUPABASE_URL,
+    env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
   );
 }
 

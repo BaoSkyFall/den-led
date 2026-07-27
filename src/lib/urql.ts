@@ -9,11 +9,11 @@ import { registerUrql } from "@urql/next/rsc";
 
 export const makeClient = (access_token?: string) => {
   return createClient({
-    url: `https://${env.NEXT_PUBLIC_SUPABASE_PROJECT_REF}.supabase.co/graphql/v1`,
+    url: `${env.NEXT_PUBLIC_SUPABASE_URL}/graphql/v1`,
     exchanges: [cacheExchange, fetchExchange],
     fetchOptions: () => {
       const headers = {
-        apiKey: env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+        apikey: env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
       };
 
       if (access_token) {

@@ -1,7 +1,7 @@
 "use client";
 import { useMemo } from "react";
 import { useAuth } from "@/providers/AuthProvider";
-import { User } from "@supabase/auth-helpers-nextjs";
+import { User } from "@supabase/supabase-js";
 import { useQuery } from "@urql/next";
 import CartLink from "./CartLink";
 import { FetchCartQuery } from "./UserCartSection";

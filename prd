@@ -1,0 +1,79 @@
+Recreate the website "United Motors Group - Luxury Lifestyle" with high visual fidelity as a Tailwind CSS and Lucide Icons site.
+
+The result must match the supplied reference website, not a cleaned-up reinterpretation.
+
+Preserve source quirks:
+- Grayscale filter application (20%) on hero car image but 100% grayscale on the collage image.
+- Mixing of tracking values: some elements use tracking-tighter while others use extreme letter spacing (0.2em).
+- Lack of explicit form validation logic in the footer.
+
+CRITICAL FIDELITY CONSTRAINTS
+- Strict background color palette: Main background #111111, Secondary #0a0a0a, Footer #050505.
+- Branding Color: Exactly #f59e0b (Tailwind amber-500).
+- Selection State: Background must be amber-500 with black text.
+- Font Stack: Helvetica Neue, Helvetica, Arial, sans-serif with -webkit-font-smoothing: antialiased.
+
+TECH STACK / DEPENDENCIES
+- CSS Framework: Tailwind CSS (CDN version)
+- Icon Library: Lucide Icons (unpkg.com/lucide@latest)
+- Behavior: HTML scroll-smooth on the root element.
+
+GLOBAL STYLE
+- Body: bg-[#111111], text-gray-300, antialiased selection:bg-amber-500 selection:text-black.
+- Custom CSS for no-scrollbar: `::-webkit-scrollbar { display: none; }` and `-ms-overflow-style: none; scrollbar-width: none;`.
+
+ASSET MAP
+- Hero Car: public/assets/den-led/SH/SH 2026/DSC01116.jpg
+- SH 2026: public/assets/den-led/SH/SH 2026/DSC08596.jpg
+- AB 2026: public/assets/den-led/AB/AB2026/DSC07552.jpg
+- Vario 2026: public/assets/den-led/Vario/Vario 2026/DSC06430.jpg
+- Interior Collage (Main): public/assets/den-led/Winner/DSC07725.jpg
+- Interior Faded Background: public/assets/den-led/Winner/DSC07732.jpg
+
+VECTOR / ICON SHAPES
+- All icons use `data-lucide` references with `strokeWidth: 1.5`.
+- Custom Logo: Rectangular block (w-14 h-14 or w-20 h-20) with background amber-500 or white/5, containing stacked spans for "UNITED" (text-[10px] tracking-widest) and "MOTORS" (text-lg/xl tracking-tighter).
+
+LAYER STACK / POSITIONING MAP
+- Social Sidebar: fixed, left-8, top-1/2, -translate-y-1/2, z-40.
+- Header: fixed, top-0, w-full, z-50, backdrop-blur-md, bg-[#111111]/90.
+- Hero Text: relative, z-10, lg:col-span-5.
+- Hero Background: absolute, top-0, right-0, w-2/3, h-full, gradient (from-[#1a1a1a] to-transparent), opacity-50.
+- Floating Orange Box: absolute, top-1/2, -right-12, -translate-y-1/2, z-20, bg-amber-500.
+
+SECTION 1 - NAVIGATION
+- Height: h-24. Max-width: 1400px.
+- Left: Brand logo + menu button (hidden on mobile).
+- Center: Nav links (Home, Garage, About Us, Contact) in uppercase, text-xs, font-bold, tracking-[0.2em].
+- Right: Phone CTA (bg-amber-500, black text) + Mobile menu trigger.
+
+SECTION 2 - HERO
+- Height: lg:h-screen (min 800px).
+- Copy: "Premium Collection", "Luxury Lifestyle Rentals" (text-8xl, leading-[0.9]).
+- Specific Pricing Box: border-l-2 border-amber-500, pl-6. "The AMG GLE Coupé 2024" / "SAR 2,600 / Per Day".
+- Asset: Hero car image with grayscale-[20%] and contrast-125.
+- Page Indicator: Absolute top-40, left-10. "01" with a horizontal w-12 bar.
+
+SECTION 3 - SPECIALS GRID
+- Header: "Todays Specials" with filter buttons (SUV, Luxury, Sportcar) separated by a 1px vertical bar.
+- Cards: aspect-[16/9] images. Hover state: scale-105 transition (700ms).
+- Overlay: absolute gradient inset from transparent to #111111/80 at the bottom.
+- Pagination: Centered flexbox with "1", "4", and a w-12 horizontal separator line.
+
+SECTION 4 - FEATURE COLLAGE
+- Grid: 2 columns.
+- Left: Image block with the floating orange "UNITED MOTORS GROUP" box.
+- Right: Content block with background image opacity-10 and `mask-image-gradient`.
+- Icons: Mileage (gauge), Pick Up (map-pin), Delivery (truck) with text-[10px] tracking-widest.
+
+SECTION 5 - FOOTER & CONTACT
+- Grid: 2 columns.
+- Form: Dark inputs (bg-[#111]) with border-white/10 and amber-500 focus states.
+- Copyright: border-t border-white/5, flex-row justify-between.
+
+IMPLEMENTATION REQUIREMENTS
+- Use exact original URLs from the ASSET MAP.
+- Preserve the precise grid spans (lg:grid-cols-12 for hero, lg:grid-cols-2 for features).
+- Do not substitute Lucide icons with FontAwesome or others.
+- Maintain the specific padding values (px-6, pt-32, py-24).
+- Ensure the mobile menu trigger is visible and the sidebar is hidden on small screens.

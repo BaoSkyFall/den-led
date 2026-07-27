@@ -6,7 +6,8 @@ import { SelectProducts, orders } from "@/lib/supabase/schema";
 import { getURL } from "@/lib/utils";
 import { orderLines } from "./../../../lib/supabase/schema";
 
-import { User, createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { User } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase/server";
 
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
@@ -32,7 +33,7 @@ export async function POST(request: Request) {
   let user: User | undefined;
 
   const validation = orderProductsSchema.safeParse(data);
-  const supabase = createRouteHandlerClient({ cookies });
+  const supabase = createClient({ cookieStore: cookies() });
 
   if (!validation)
     return new NextResponse(JSON.stringify("Invalid data format."), {
