@@ -9,7 +9,11 @@ import {
 // Lazy — only instantiated when S3 vars are present to avoid build-time crash
 let _s3Client: S3Client | null = null;
 function getS3Client(): S3Client {
-  if (!env.NEXT_PUBLIC_S3_REGION || !env.S3_ACCESS_KEY_ID || !env.S3_SECRET_ACCESS_KEY) {
+  if (
+    !env.NEXT_PUBLIC_S3_REGION ||
+    !env.S3_ACCESS_KEY_ID ||
+    !env.S3_SECRET_ACCESS_KEY
+  ) {
     throw new Error("S3 environment variables are not configured.");
   }
   if (!_s3Client) {

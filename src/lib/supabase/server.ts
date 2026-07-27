@@ -12,7 +12,9 @@ export function createClient({
 }) {
   return createServerClient(
     env.NEXT_PUBLIC_SUPABASE_URL,
-    isAdmin ? env.DATABASE_SERVICE_ROLE : env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    isAdmin
+      ? env.DATABASE_SERVICE_ROLE
+      : env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
     {
       cookies: {
         get(name: string) {

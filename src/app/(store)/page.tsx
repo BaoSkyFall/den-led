@@ -208,7 +208,9 @@ function HeroSection() {
             </p>
             <h1
               className="text-6xl lg:text-8xl font-black uppercase leading-[0.9] tracking-tighter text-white mb-8"
-              style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}
+              style={{
+                fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+              }}
             >
               Luxury
               <br />
@@ -259,7 +261,10 @@ function HeroSection() {
             {/* Floating amber box */}
             <div className="absolute top-1/2 -left-6 -translate-y-1/2 z-20 bg-amber-500 p-4 hidden lg:flex flex-col items-center gap-1">
               {["DEN", "LED", "MOTORS"].map((word) => (
-                <span key={word} className="text-[9px] font-black tracking-[0.2em] uppercase text-black leading-tight">
+                <span
+                  key={word}
+                  className="text-[9px] font-black tracking-[0.2em] uppercase text-black leading-tight"
+                >
                   {word}
                 </span>
               ))}
@@ -286,7 +291,9 @@ function SpecialsSection() {
             </p>
             <h2
               className="text-4xl lg:text-5xl font-black uppercase tracking-tighter text-white"
-              style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}
+              style={{
+                fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+              }}
             >
               Todays Specials
             </h2>
@@ -351,7 +358,9 @@ function SpecialsSection() {
                   <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-white/40 mb-1">
                     Giá
                   </p>
-                  <p className="text-amber-500 font-bold text-sm">{product.price}</p>
+                  <p className="text-amber-500 font-bold text-sm">
+                    {product.price}
+                  </p>
                 </div>
               </div>
             </Link>
@@ -363,9 +372,13 @@ function SpecialsSection() {
           <button className="text-white/30 hover:text-white transition-colors">
             <ChevronLeft size={16} strokeWidth={1.5} />
           </button>
-          <span className="text-xs font-bold tracking-[0.2em] text-amber-500">1</span>
+          <span className="text-xs font-bold tracking-[0.2em] text-amber-500">
+            1
+          </span>
           <div className="w-12 h-px bg-white/20" />
-          <span className="text-xs font-bold tracking-[0.2em] text-white/30">4</span>
+          <span className="text-xs font-bold tracking-[0.2em] text-white/30">
+            4
+          </span>
           <button className="text-white/30 hover:text-white transition-colors">
             <ChevronRight size={16} strokeWidth={1.5} />
           </button>
@@ -420,8 +433,10 @@ function FeatureCollage() {
             <div
               className="absolute inset-0"
               style={{
-                maskImage: "linear-gradient(to right, transparent, #0a0a0a 60%)",
-                WebkitMaskImage: "linear-gradient(to right, transparent, #0a0a0a 60%)",
+                maskImage:
+                  "linear-gradient(to right, transparent, #0a0a0a 60%)",
+                WebkitMaskImage:
+                  "linear-gradient(to right, transparent, #0a0a0a 60%)",
               }}
             />
 
@@ -431,7 +446,9 @@ function FeatureCollage() {
               </p>
               <h2
                 className="text-4xl lg:text-5xl font-black uppercase tracking-tighter text-white mb-6"
-                style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}
+                style={{
+                  fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+                }}
               >
                 Premium
                 <br />
@@ -439,8 +456,8 @@ function FeatureCollage() {
               </h2>
               <p className="text-sm text-white/50 leading-relaxed mb-12 max-w-sm">
                 Chúng tôi cung cấp những chiếc xe máy cao cấp nhất với dịch vụ
-                chuyên nghiệp và đáng tin cậy. Mỗi xe đều được kiểm tra kỹ
-                lưỡng trước khi đến tay khách hàng.
+                chuyên nghiệp và đáng tin cậy. Mỗi xe đều được kiểm tra kỹ lưỡng
+                trước khi đến tay khách hàng.
               </p>
 
               {/* Feature icons */}
@@ -448,7 +465,11 @@ function FeatureCollage() {
                 {FEATURES.map(({ Icon, label, description }) => (
                   <div key={label} className="flex items-start gap-5">
                     <div className="flex-shrink-0 w-10 h-10 border border-white/10 flex items-center justify-center">
-                      <Icon size={16} strokeWidth={1.5} className="text-amber-500" />
+                      <Icon
+                        size={16}
+                        strokeWidth={1.5}
+                        className="text-amber-500"
+                      />
                     </div>
                     <div>
                       <p className="text-[10px] font-bold tracking-widest uppercase text-white mb-1">
@@ -508,8 +529,8 @@ function Footer() {
             </div>
 
             <p className="text-sm text-white/40 leading-relaxed mb-8 max-w-sm">
-              Chuyên cung cấp xe máy Honda cao cấp, chính hãng. Dịch vụ
-              chuyên nghiệp, uy tín và đáng tin cậy.
+              Chuyên cung cấp xe máy Honda cao cấp, chính hãng. Dịch vụ chuyên
+              nghiệp, uy tín và đáng tin cậy.
             </p>
 
             <div className="flex gap-5">
@@ -533,12 +554,17 @@ function Footer() {
             </p>
             <h3
               className="text-3xl font-black uppercase tracking-tighter text-white mb-8"
-              style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}
+              style={{
+                fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+              }}
             >
               Liên Hệ Tư Vấn
             </h3>
 
-            <form className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
+            <form
+              className="flex flex-col gap-4"
+              onSubmit={(e) => e.preventDefault()}
+            >
               <div className="grid grid-cols-2 gap-4">
                 <input
                   type="text"
