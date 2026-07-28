@@ -124,7 +124,9 @@ export default function MultiImageDialog({
                       !isExcluded &&
                         isSelected &&
                         "border-amber-500 ring-2 ring-amber-500/40",
-                      !isExcluded && !isSelected && "border-slate-200 hover:border-slate-400",
+                      !isExcluded &&
+                        !isSelected &&
+                        "border-slate-200 hover:border-slate-400",
                     )}
                   >
                     <Image
@@ -137,7 +139,11 @@ export default function MultiImageDialog({
                     {isSelected && (
                       <div className="absolute inset-0 bg-amber-500/20 flex items-center justify-center">
                         <div className="w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center">
-                          <Check size={16} strokeWidth={3} className="text-black" />
+                          <Check
+                            size={16}
+                            strokeWidth={3}
+                            className="text-black"
+                          />
                         </div>
                       </div>
                     )}
@@ -157,7 +163,9 @@ export default function MultiImageDialog({
               <button
                 type="button"
                 onClick={() =>
-                  setCursor(data.mediasCollection.pageInfo.endCursor ?? undefined)
+                  setCursor(
+                    data.mediasCollection.pageInfo.endCursor ?? undefined,
+                  )
                 }
                 className="text-xs font-medium text-slate-600 hover:text-slate-900 border border-slate-300 hover:border-slate-500 px-4 py-2 rounded transition-colors"
               >
