@@ -561,7 +561,7 @@ export default function ProductDetailPage({ params }: Props) {
           )}
 
           {/* Name */}
-          <h1 className="text-4xl xl:text-5xl font-black uppercase tracking-tighter text-white mb-3 leading-[0.95]">
+          <h1 className="text-4xl xl:text-5xl font-black uppercase tracking-tighter text-white mb-3">
             {product.name}
           </h1>
 

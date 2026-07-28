@@ -79,7 +79,7 @@ function HeroSection() {
             <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-amber-500 mb-6">
               Bi Cầu & Đèn LED Xe Máy
             </p>
-            <h1 className="text-6xl lg:text-8xl font-black uppercase leading-[1.5] tracking-tighter text-white mb-8">
+            <h1 className="text-6xl lg:text-8xl font-black uppercase tracking-tighter text-white mb-8">
               Nâng
               <br />
               Cấp

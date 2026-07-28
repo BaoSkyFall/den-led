@@ -188,7 +188,7 @@ export default function ShopPage() {
           <p className="text-[10px] font-bold tracking-[0.3em] uppercase text-amber-500 mb-4">
             Danh Sách Sản Phẩm
           </p>
-          <h1 className="text-5xl lg:text-7xl font-black uppercase leading-[0.9] tracking-tighter text-white mb-4">
+          <h1 className="text-5xl lg:text-7xl font-black uppercase tracking-tighter text-white mb-4">
             Garage
           </h1>
           <p className="text-sm text-white/50 max-w-lg leading-relaxed">
