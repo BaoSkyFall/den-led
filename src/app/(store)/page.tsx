@@ -79,7 +79,7 @@ function HeroSection() {
             <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-amber-500 mb-6">
               Bi Cầu & Đèn LED Xe Máy
             </p>
-            <h1 className="text-6xl lg:text-8xl font-black uppercase leading-[0.9] tracking-tighter text-white mb-8">
+            <h1 className="text-6xl lg:text-8xl font-black uppercase leading-[1.5] tracking-tighter text-white mb-8">
               Nâng
               <br />
               Cấp
@@ -121,15 +121,14 @@ function HeroSection() {
               priority
               className="object-cover object-center grayscale-[20%] contrast-125"
             />
-            <div className="absolute top-1/2 -left-6 -translate-y-1/2 z-20 bg-amber-500 p-4 hidden lg:flex flex-col items-center gap-1">
-              {["SÂN", "CHƠI", "ĐÈN LED"].map((word) => (
-                <span
-                  key={word}
-                  className="text-[8px] font-black tracking-[0.15em] uppercase text-black leading-tight"
-                >
-                  {word}
-                </span>
-              ))}
+            <div className="absolute top-1/2 -left-6 -translate-y-1/2 z-20 hidden lg:block">
+              <Image
+                src="/logo.png"
+                alt="Sân Chơi Đèn Led"
+                width={112}
+                height={99}
+                className="h-24 w-auto object-contain drop-shadow-2xl"
+              />
             </div>
           </div>
         </div>
@@ -313,13 +312,14 @@ function FeatureCollage() {
               />
               <div className="absolute " />
             </div>
-            <div className="absolute top-1/2 -right-6 lg:-right-12 -translate-y-1/2 z-20 bg-amber-500 px-4 py-8 hidden lg:flex flex-col items-center gap-1">
-              <span className="text-[8px] font-black tracking-[0.15em] uppercase text-black">
-                SÂN CHƠI
-              </span>
-              <span className="text-[8px] font-black tracking-[0.15em] uppercase text-black">
-                ĐÈN LED
-              </span>
+            <div className="absolute top-1/2 -right-6 lg:-right-12 -translate-y-1/2 z-20 hidden lg:block">
+              <Image
+                src="/logo.png"
+                alt="Sân Chơi Đèn Led"
+                width={112}
+                height={99}
+                className="h-24 w-auto object-contain drop-shadow-2xl"
+              />
             </div>
           </div>
 

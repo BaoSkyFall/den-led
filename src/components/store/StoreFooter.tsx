@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Facebook } from "lucide-react";
 
 type IconProps = { size?: number; strokeWidth?: number; className?: string };
@@ -44,20 +45,19 @@ export default function StoreFooter() {
           {/* Left: brand */}
           <div>
             <div className="flex items-center gap-4 mb-10">
-              <div className="w-14 h-14 bg-amber-500 flex flex-col items-center justify-center px-1">
-                <span className="text-[8px] tracking-widest font-bold text-black leading-none text-center">
-                  SÂN CHƠI
-                </span>
-                <span className="text-[11px] tracking-tight font-black text-black leading-none text-center">
-                  ĐÈN LED
-                </span>
-              </div>
+              <Image
+                src="/logo.png"
+                alt="Sân Chơi Đèn Led"
+                width={72}
+                height={64}
+                className="h-16 w-auto object-contain"
+              />
               <div>
                 <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/40">
                   Sân Chơi Đèn Led
                 </p>
                 <p className="text-sm font-bold uppercase text-white tracking-wide">
-                  Độ Đèn Xe Máy
+                  Chuyên Độ Đèn Xe Máy
                 </p>
               </div>
             </div>

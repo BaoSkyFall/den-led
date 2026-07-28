@@ -34,10 +34,7 @@ export default function AdminMobileNav({ items }: Props) {
               )}
             >
               <Icon
-                className={cn(
-                  "h-5 w-5 shrink-0",
-                  isActive && "text-amber-600",
-                )}
+                className={cn("h-5 w-5 shrink-0", isActive && "text-amber-600")}
               />
               <span
                 className={cn(

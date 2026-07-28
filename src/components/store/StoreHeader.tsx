@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { ChevronDown, Menu, Phone, X } from "lucide-react";
@@ -15,14 +16,14 @@ export default function StoreHeader() {
       <header className="fixed top-0 w-full z-50 h-24 backdrop-blur-md bg-[#111111]/90 border-b border-white/5">
         <div className="max-w-[1400px] mx-auto px-6 h-full flex items-center justify-between">
           <Link href="/" className="flex items-center gap-4 shrink-0">
-            <div className="w-14 h-14 bg-amber-500 flex flex-col items-center justify-center px-1">
-              <span className="text-[8px] tracking-widest font-bold text-black leading-none text-center">
-                SÂN CHƠI
-              </span>
-              <span className="text-[11px] tracking-tight font-black text-black leading-none text-center">
-                ĐÈN LED
-              </span>
-            </div>
+            <Image
+              src="/logo.png"
+              alt="Sân Chơi Đèn Led"
+              width={64}
+              height={56}
+              priority
+              className="h-14 w-auto object-contain"
+            />
           </Link>
 
           <nav className="hidden lg:flex items-center gap-1">
@@ -112,14 +113,13 @@ export default function StoreHeader() {
       {mobileOpen && (
         <div className="fixed inset-0 z-[100] bg-[#0a0a0a] flex flex-col overflow-y-auto">
           <div className="flex items-center justify-between p-8 border-b border-white/5">
-            <div className="w-10 h-10 bg-amber-500 flex flex-col items-center justify-center px-1">
-              <span className="text-[7px] tracking-widest font-bold text-black leading-none text-center">
-                SÂN CHƠI
-              </span>
-              <span className="text-[9px] tracking-tight font-black text-black leading-none text-center">
-                ĐÈN LED
-              </span>
-            </div>
+            <Image
+              src="/logo.png"
+              alt="Sân Chơi Đèn Led"
+              width={56}
+              height={48}
+              className="h-12 w-auto object-contain"
+            />
             <button className="text-white" onClick={() => setMobileOpen(false)}>
               <X size={24} strokeWidth={1.5} />
             </button>

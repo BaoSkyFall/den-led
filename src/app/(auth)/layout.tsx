@@ -23,14 +23,14 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
         {/* Brand overlay */}
         <div className="absolute left-8 top-8 z-20">
           <Link href="/" className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-amber-500 flex flex-col items-center justify-center px-1">
-              <span className="text-[7px] tracking-widest font-bold text-black leading-none text-center">
-                SÂN CHƠI
-              </span>
-              <span className="text-[10px] tracking-tight font-black text-black leading-none text-center">
-                ĐÈN LED
-              </span>
-            </div>
+            <Image
+              src="/logo.png"
+              alt="Sân Chơi Đèn Led"
+              width={64}
+              height={56}
+              priority
+              className="h-14 w-auto object-contain drop-shadow-lg"
+            />
           </Link>
         </div>
 
