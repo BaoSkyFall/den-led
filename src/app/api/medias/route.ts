@@ -68,10 +68,7 @@ export async function POST(request: NextRequest) {
   );
 
   if (uploaded.length === 0 && errors.length > 0) {
-    return NextResponse.json(
-      { message: errors.join("; ") },
-      { status: 400 },
-    );
+    return NextResponse.json({ message: errors.join("; ") }, { status: 400 });
   }
 
   return NextResponse.json(uploaded, { status: 201 });
