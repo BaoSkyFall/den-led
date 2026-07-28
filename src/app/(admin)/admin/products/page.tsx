@@ -34,10 +34,7 @@ async function ProductsPage({ searchParams }: AdminProjectsPageProps) {
   if (!data) return notFound();
 
   return (
-    <AdminShell
-      heading="Sản Phẩm"
-      description="Quản lý danh sách sản phẩm."
-    >
+    <AdminShell heading="Sản Phẩm" description="Quản lý danh sách sản phẩm.">
       <section className="flex justify-end items-center pb-5 w-full">
         <Link href="/admin/products/new" className={cn(buttonVariants())}>
           Thêm Sản Phẩm

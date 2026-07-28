@@ -48,7 +48,10 @@ type ProductDetail = {
 
 // ─── Static product data map (extends DB data with local images) ───────────────
 
-const PRODUCT_IMAGES: Record<string, { hero: string; gallery: string[]; catalog: string }> = {
+const PRODUCT_IMAGES: Record<
+  string,
+  { hero: string; gallery: string[]; catalog: string }
+> = {
   "sh-2026": {
     hero: "/assets/den-led/SH/SH 2026/DSC08596.jpg",
     gallery: [
@@ -67,9 +70,7 @@ const PRODUCT_IMAGES: Record<string, { hero: string; gallery: string[]; catalog:
   },
   "vario-2026": {
     hero: "/assets/den-led/Vario/Vario 2026/DSC06430.jpg",
-    gallery: [
-      "/assets/den-led/Vario/Vario 2026/DSC06430.jpg",
-    ],
+    gallery: ["/assets/den-led/Vario/Vario 2026/DSC06430.jpg"],
     catalog: "/catalog.pdf/7.jpg",
   },
 };
@@ -131,13 +132,14 @@ function BiCauLoader() {
       `}</style>
 
       <div className="relative flex items-center justify-center">
-
         {/* ── Ambient background glow ── */}
         <div
           className="absolute rounded-full pointer-events-none"
           style={{
-            width: 220, height: 220,
-            background: "radial-gradient(circle, rgba(251,191,36,0.12) 0%, transparent 70%)",
+            width: 220,
+            height: 220,
+            background:
+              "radial-gradient(circle, rgba(251,191,36,0.12) 0%, transparent 70%)",
             animation: "bcAmbient 2s ease-in-out infinite",
           }}
         />
@@ -146,8 +148,10 @@ function BiCauLoader() {
         <div
           className="absolute pointer-events-none"
           style={{
-            top: "50%", left: "50%",
-            width: 0, height: 0,
+            top: "50%",
+            left: "50%",
+            width: 0,
+            height: 0,
             borderLeft: "60px solid transparent",
             borderRight: "60px solid transparent",
             borderTop: "130px solid rgba(251,191,36,0.07)",
@@ -159,7 +163,6 @@ function BiCauLoader() {
 
         {/* ── Bi cầu assembly (110 × 110) ── */}
         <div className="relative" style={{ width: 110, height: 110 }}>
-
           {/* Outer dashed housing — slow CW */}
           <div
             className="absolute inset-0 rounded-full"
@@ -174,13 +177,23 @@ function BiCauLoader() {
             className="absolute inset-1 rounded-full"
             style={{ animation: "bcOuterSpin 5s linear infinite" }}
           >
-            <svg viewBox="0 0 100 100" className="w-full h-full" style={{ transform: "rotate(-90deg)" }}>
-              {[0,1,2,3,4,5,6,7].map((i) => (
+            <svg
+              viewBox="0 0 100 100"
+              className="w-full h-full"
+              style={{ transform: "rotate(-90deg)" }}
+            >
+              {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
                 <circle
                   key={i}
-                  cx="50" cy="50" r="46"
+                  cx="50"
+                  cy="50"
+                  r="46"
                   fill="none"
-                  stroke={i % 2 === 0 ? "rgba(251,191,36,0.55)" : "rgba(255,255,255,0.06)"}
+                  stroke={
+                    i % 2 === 0
+                      ? "rgba(251,191,36,0.55)"
+                      : "rgba(255,255,255,0.06)"
+                  }
                   strokeWidth="3"
                   strokeDasharray="24 12"
                   strokeDashoffset={-(i * 18)}
@@ -194,9 +207,15 @@ function BiCauLoader() {
             className="absolute inset-5 rounded-full"
             style={{ animation: "bcInnerSpin 4s linear infinite" }}
           >
-            <svg viewBox="0 0 100 100" className="w-full h-full" style={{ transform: "rotate(-90deg)" }}>
+            <svg
+              viewBox="0 0 100 100"
+              className="w-full h-full"
+              style={{ transform: "rotate(-90deg)" }}
+            >
               <circle
-                cx="50" cy="50" r="44"
+                cx="50"
+                cy="50"
+                r="44"
                 fill="none"
                 stroke="rgba(255,255,255,0.1)"
                 strokeWidth="2"
@@ -210,7 +229,8 @@ function BiCauLoader() {
             className="absolute rounded-full"
             style={{
               inset: 8,
-              background: "radial-gradient(circle at 38% 32%, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.7) 100%)",
+              background:
+                "radial-gradient(circle at 38% 32%, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.7) 100%)",
               border: "1px solid rgba(255,255,255,0.05)",
             }}
           />
@@ -230,7 +250,8 @@ function BiCauLoader() {
             className="absolute rounded-full"
             style={{
               inset: 27,
-              background: "radial-gradient(circle at 40% 35%, rgba(255,255,255,0.07) 0%, rgba(10,10,10,0.9) 100%)",
+              background:
+                "radial-gradient(circle at 40% 35%, rgba(255,255,255,0.07) 0%, rgba(10,10,10,0.9) 100%)",
               border: "1px solid rgba(255,255,255,0.04)",
             }}
           />
@@ -245,8 +266,10 @@ function BiCauLoader() {
               key={i}
               className="absolute rounded-full bg-white"
               style={{
-                width: 3, height: 3,
-                top, left,
+                width: 3,
+                height: 3,
+                top,
+                left,
                 transform: "translate(-50%,-50%)",
                 animation: `bcChip 1.6s ease-in-out infinite ${i * 0.18}s`,
               }}
@@ -257,8 +280,10 @@ function BiCauLoader() {
           <div
             className="absolute bg-white rounded-full"
             style={{
-              width: 12, height: 12,
-              top: "50%", left: "50%",
+              width: 12,
+              height: 12,
+              top: "50%",
+              left: "50%",
               animation: "bcCorePulse 2s ease-in-out infinite",
             }}
           />
@@ -278,7 +303,9 @@ function BiCauLoader() {
             <div
               key={delay}
               className="w-1 h-1 rounded-full bg-white/30"
-              style={{ animation: `bcChip 1.2s ease-in-out infinite ${delay}s` }}
+              style={{
+                animation: `bcChip 1.2s ease-in-out infinite ${delay}s`,
+              }}
             />
           ))}
         </div>
@@ -303,9 +330,16 @@ function Header() {
       <header className="fixed top-0 w-full z-50 h-20 backdrop-blur-md bg-[#111111]/90 border-b border-white/5">
         <div className="max-w-[1400px] mx-auto px-6 h-full flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/" className="w-12 h-12 bg-amber-500 flex flex-col items-center justify-center px-1">
-              <span className="text-[7px] tracking-widest font-bold text-black leading-none text-center">SÂN CHƠI</span>
-              <span className="text-[10px] tracking-tight font-black text-black leading-none text-center">ĐÈN LED</span>
+            <Link
+              href="/"
+              className="w-12 h-12 bg-amber-500 flex flex-col items-center justify-center px-1"
+            >
+              <span className="text-[7px] tracking-widest font-bold text-black leading-none text-center">
+                SÂN CHƠI
+              </span>
+              <span className="text-[10px] tracking-tight font-black text-black leading-none text-center">
+                ĐÈN LED
+              </span>
             </Link>
           </div>
           <nav className="hidden lg:flex items-center gap-10">
@@ -327,7 +361,10 @@ function Header() {
               <Phone size={12} strokeWidth={2} />
               <span>0949955644</span>
             </a>
-            <button className="lg:hidden text-white" onClick={() => setOpen(true)}>
+            <button
+              className="lg:hidden text-white"
+              onClick={() => setOpen(true)}
+            >
               <Menu size={22} strokeWidth={1.5} />
             </button>
           </div>
@@ -336,7 +373,10 @@ function Header() {
 
       {open && (
         <div className="fixed inset-0 z-[100] bg-[#0a0a0a] flex flex-col p-8">
-          <button className="self-end text-white mb-12" onClick={() => setOpen(false)}>
+          <button
+            className="self-end text-white mb-12"
+            onClick={() => setOpen(false)}
+          >
             <X size={24} strokeWidth={1.5} />
           </button>
           <nav className="flex flex-col gap-8">
@@ -366,7 +406,13 @@ function Header() {
 
 // ─── Image Gallery ────────────────────────────────────────────────────────────
 
-function ImageGallery({ images, catalog }: { images: string[]; catalog: string }) {
+function ImageGallery({
+  images,
+  catalog,
+}: {
+  images: string[];
+  catalog: string;
+}) {
   const [active, setActive] = useState(0);
   const allImages = [...images, catalog];
 
@@ -386,7 +432,9 @@ function ImageGallery({ images, catalog }: { images: string[]; catalog: string }
         {allImages.length > 1 && (
           <>
             <button
-              onClick={() => setActive((p) => (p - 1 + allImages.length) % allImages.length)}
+              onClick={() =>
+                setActive((p) => (p - 1 + allImages.length) % allImages.length)
+              }
               className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/60 text-white p-2 hover:bg-amber-500 hover:text-black transition-colors"
             >
               <ChevronLeft size={16} />
@@ -409,7 +457,9 @@ function ImageGallery({ images, catalog }: { images: string[]; catalog: string }
               key={i}
               onClick={() => setActive(i)}
               className={`relative w-20 h-16 shrink-0 overflow-hidden border-2 transition-colors ${
-                active === i ? "border-amber-500" : "border-white/10 hover:border-white/40"
+                active === i
+                  ? "border-amber-500"
+                  : "border-white/10 hover:border-white/40"
               }`}
             >
               <Image src={img} alt="" fill className="object-cover" />
@@ -425,16 +475,24 @@ function ImageGallery({ images, catalog }: { images: string[]; catalog: string }
 
 function VariantSelector({ groups }: { groups: VariantGroup[] }) {
   // Nothing pre-selected — customer chọn 1 hoặc nhiều tùy ý
-  const [selections, setSelections] = useState<Record<string, VariantOption | null>>(
-    Object.fromEntries(groups.map((g) => [g.id, null])),
-  );
+  const [selections, setSelections] = useState<
+    Record<string, VariantOption | null>
+  >(Object.fromEntries(groups.map((g) => [g.id, null])));
 
-  const selectedOptions = Object.values(selections).filter(Boolean) as VariantOption[];
-  const totalPrice = selectedOptions.reduce((sum, opt) => sum + Number(opt.price), 0);
+  const selectedOptions = Object.values(selections).filter(
+    Boolean,
+  ) as VariantOption[];
+  const totalPrice = selectedOptions.reduce(
+    (sum, opt) => sum + Number(opt.price),
+    0,
+  );
   const hasSelection = selectedOptions.length > 0;
 
   const formatVND = (n: number) =>
-    new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n);
+    new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(n);
 
   function toggleOption(groupId: string, opt: VariantOption) {
     setSelections((prev) => ({
@@ -476,10 +534,18 @@ function VariantSelector({ groups }: { groups: VariantGroup[] }) {
                     <div className="flex items-start gap-3">
                       <div
                         className={`mt-0.5 w-4 h-4 shrink-0 border flex items-center justify-center ${
-                          isSelected ? "border-amber-500 bg-amber-500" : "border-white/30"
+                          isSelected
+                            ? "border-amber-500 bg-amber-500"
+                            : "border-white/30"
                         }`}
                       >
-                        {isSelected && <Check size={10} strokeWidth={3} className="text-black" />}
+                        {isSelected && (
+                          <Check
+                            size={10}
+                            strokeWidth={3}
+                            className="text-black"
+                          />
+                        )}
                       </div>
                       <div>
                         <p className="text-sm font-bold uppercase tracking-wide text-white">
@@ -507,8 +573,12 @@ function VariantSelector({ groups }: { groups: VariantGroup[] }) {
       <div className="border-t border-white/10 pt-6">
         {hasSelection ? (
           <div className="flex items-baseline justify-between mb-1">
-            <span className="text-[10px] uppercase tracking-[0.2em] text-white/40">Tổng cộng</span>
-            <span className="text-2xl font-black text-white">{formatVND(totalPrice)}</span>
+            <span className="text-[10px] uppercase tracking-[0.2em] text-white/40">
+              Tổng cộng
+            </span>
+            <span className="text-2xl font-black text-white">
+              {formatVND(totalPrice)}
+            </span>
           </div>
         ) : (
           <p className="text-xs text-white/30 mb-4">
@@ -543,7 +613,9 @@ function VariantSelector({ groups }: { groups: VariantGroup[] }) {
 type Props = { params: { slug: string } };
 
 export default function ProductDetailPage({ params }: Props) {
-  const [product, setProduct] = useState<ProductDetail | null | undefined>(undefined);
+  const [product, setProduct] = useState<ProductDetail | null | undefined>(
+    undefined,
+  );
 
   useEffect(() => {
     async function fetchProduct() {
@@ -559,9 +631,7 @@ export default function ProductDetailPage({ params }: Props) {
   }, [params.slug]);
 
   if (product === undefined) {
-    return (
-      <BiCauLoader />
-    );
+    return <BiCauLoader />;
   }
 
   if (product === null) {
@@ -581,14 +651,22 @@ export default function ProductDetailPage({ params }: Props) {
   }, 0);
 
   const formatVND = (n: number) =>
-    new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n);
+    new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(n);
 
   return (
     <div className="min-h-screen bg-[#111111] text-white">
       {/* Social sidebar */}
       <aside className="hidden lg:flex fixed left-8 top-1/2 -translate-y-1/2 z-40 flex-col gap-5">
         {[Instagram, Facebook, Twitter].map((Icon, i) => (
-          <a key={i} href="#" aria-label="social" className="text-gray-500 hover:text-amber-500 transition-colors">
+          <a
+            key={i}
+            href="#"
+            aria-label="social"
+            className="text-gray-500 hover:text-amber-500 transition-colors"
+          >
             <Icon size={16} strokeWidth={1.5} />
           </a>
         ))}
@@ -600,11 +678,17 @@ export default function ProductDetailPage({ params }: Props) {
       <main className="max-w-[1400px] mx-auto px-4 sm:px-6 pt-24 lg:pt-32 pb-16 lg:pb-24">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 mb-10">
-          <Link href="/" className="text-[10px] uppercase tracking-[0.2em] text-white/30 hover:text-white transition-colors">
+          <Link
+            href="/"
+            className="text-[10px] uppercase tracking-[0.2em] text-white/30 hover:text-white transition-colors"
+          >
             Home
           </Link>
           <ChevronRight size={10} className="text-white/20" />
-          <Link href="/shop" className="text-[10px] uppercase tracking-[0.2em] text-white/30 hover:text-white transition-colors">
+          <Link
+            href="/shop"
+            className="text-[10px] uppercase tracking-[0.2em] text-white/30 hover:text-white transition-colors"
+          >
             Garage
           </Link>
           <ChevronRight size={10} className="text-white/20" />

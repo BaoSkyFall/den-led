@@ -53,10 +53,10 @@ export function SignInForm() {
       console.log("data", data);
 
       if (error) {
-        toast({ title: "Error", description: error.message });
+        toast({ title: "Lỗi đăng nhập", description: error.message });
       } else {
-        toast({ title: "Login Sucess" });
-        router.push(searchParams?.get("from") || "/");
+        toast({ title: "Đăng nhập thành công" });
+        router.push(searchParams?.get("from") || "/admin");
       }
     });
   }

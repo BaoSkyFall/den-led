@@ -21,7 +21,10 @@ async function UsersPage({ searchParams }: AdminUsersPageProps) {
   const users = await listUsers({});
 
   return (
-    <AdminShell heading="Người Dùng" description="Quản lý tài khoản người dùng.">
+    <AdminShell
+      heading="Người Dùng"
+      description="Quản lý tài khoản người dùng."
+    >
       <AdminUserNav />
       <ProductsDataTable columns={UsersColumns} data={users || []} />
       <ErrorToaster />

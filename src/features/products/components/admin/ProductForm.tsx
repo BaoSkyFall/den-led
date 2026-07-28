@@ -291,11 +291,17 @@ function ProductFrom({ product }: ProductsFormProps) {
       {/* Variant management — only available for existing products */}
       {product?.id && (
         <div className="max-w-[500px] px-3 border-t pt-6 mt-2">
-          <h3 className="text-base font-semibold mb-1">Gói Dịch Vụ (Variants)</h3>
+          <h3 className="text-base font-semibold mb-1">
+            Gói Dịch Vụ (Variants)
+          </h3>
           <p className="text-xs text-muted-foreground mb-4">
             Quản lý gói dịch vụ và các mức giá cho sản phẩm này.
           </p>
-          <Suspense fallback={<p className="text-xs text-muted-foreground">Đang tải...</p>}>
+          <Suspense
+            fallback={
+              <p className="text-xs text-muted-foreground">Đang tải...</p>
+            }
+          >
             <VariantManager productId={product.id} />
           </Suspense>
         </div>

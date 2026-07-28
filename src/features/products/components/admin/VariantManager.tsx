@@ -12,7 +12,13 @@ import {
   updateVariantOption,
 } from "@/_actions/variants";
 import { SelectVariantGroup, SelectVariantOption } from "@/lib/supabase/schema";
-import { ChevronDown, ChevronUp, Plus, Trash2, GripVertical } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Plus,
+  Trash2,
+  GripVertical,
+} from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 
 type GroupWithOptions = SelectVariantGroup & { options: SelectVariantOption[] };
@@ -164,7 +170,10 @@ export default function VariantManager({ productId }: Props) {
         <div key={group.id} className="border rounded-lg overflow-hidden">
           {/* Group header */}
           <div className="flex items-center gap-2 p-3 bg-muted/40">
-            <GripVertical size={14} className="text-muted-foreground shrink-0" />
+            <GripVertical
+              size={14}
+              className="text-muted-foreground shrink-0"
+            />
             <Input
               className="h-7 text-sm font-medium flex-1"
               defaultValue={group.name}

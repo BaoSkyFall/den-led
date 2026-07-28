@@ -42,7 +42,7 @@ const ProductsColumns: ColumnDef<{
 }>[] = [
   {
     accessorKey: "name",
-    header: () => <div className="text-left capitalize">Product Name</div>,
+    header: () => <div className="text-left">Tên Sản Phẩm</div>,
     cell: ({ row }) => {
       const product = row.original.node;
 
@@ -58,7 +58,7 @@ const ProductsColumns: ColumnDef<{
   },
   {
     accessorKey: "slug",
-    header: () => <div className="">Slug</div>,
+    header: () => <div className="">Slug (Đường dẫn)</div>,
     cell: ({ row }) => {
       const product = row.original.node;
 
@@ -67,7 +67,7 @@ const ProductsColumns: ColumnDef<{
   },
   {
     accessorKey: "Collection",
-    header: () => <div className="">Collection</div>,
+    header: () => <div className="">Bộ Sưu Tập</div>,
     cell: ({ row }) => {
       const product = row.original.node;
 
@@ -80,7 +80,7 @@ const ProductsColumns: ColumnDef<{
   },
   {
     accessorKey: "featured",
-    header: () => <div className="">Featured</div>,
+    header: () => <div className="">Nổi Bật</div>,
     cell: ({ row }) => {
       const product = row.original.node;
 
@@ -89,16 +89,19 @@ const ProductsColumns: ColumnDef<{
   },
   {
     accessorKey: "price",
-    header: () => <div className="">Price</div>,
+    header: () => <div className="">Giá (Cơ Bản)</div>,
     cell: ({ row }) => {
       const product = row.original.node;
-
-      return <div className="font-medium">{`$ ${product.price}`}</div>;
+      const formatted = new Intl.NumberFormat("vi-VN", {
+        style: "currency",
+        currency: "VND",
+      }).format(Number(product.price));
+      return <div className="font-medium">{formatted}</div>;
     },
   },
   {
     id: "actions",
-    header: () => <div className="text-center capitalize">Actions</div>,
+    header: () => <div className="text-center">Thao Tác</div>,
     cell: ({ row }) => {
       const product = row.original.node;
 
@@ -106,7 +109,7 @@ const ProductsColumns: ColumnDef<{
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
+              <span className="sr-only">Mở menu</span>
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -114,13 +117,13 @@ const ProductsColumns: ColumnDef<{
             align="start"
             className="flex flex-col items-start"
           >
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuLabel>Thao Tác</DropdownMenuLabel>
 
             <Link
               href={`/admin/products/${product.id}`}
               className={buttonVariants({ variant: "ghost" })}
             >
-              Edit Product
+              Chỉnh Sửa
             </Link>
             {/* <DeleteCategoryDialog categoryId={category.id} /> */}
           </DropdownMenuContent>

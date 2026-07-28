@@ -1,5 +1,10 @@
 import db from "@/lib/supabase/db";
-import { medias, products, variantGroups, variantOptions } from "@/lib/supabase/schema";
+import {
+  medias,
+  products,
+  variantGroups,
+  variantOptions,
+} from "@/lib/supabase/schema";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 

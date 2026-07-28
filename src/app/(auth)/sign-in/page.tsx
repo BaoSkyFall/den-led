@@ -1,5 +1,11 @@
 import { type Metadata } from "next";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { SigninForm } from "@/features/auth";
 import { Suspense } from "react";
 

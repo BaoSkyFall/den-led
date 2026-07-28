@@ -18,15 +18,15 @@ function AdminShell({
   children,
 }: AdminShellProps) {
   return (
-    <section>
+    <section className="w-full min-w-0">
       <div className="flex gap-x-3 mb-5 pb-3 border-b">
         {showBackButton && <BackButton />}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-semibold w-[480px] mb-2 leading-tight">
+        <div className="flex justify-between items-center w-full min-w-0">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-xl sm:text-2xl font-semibold mb-2 leading-tight truncate">
               {heading}
             </h1>
-            <p className="max-w-xl text-zinc-500 text-md w-[580px] leading-tight">
+            <p className="text-zinc-500 text-sm leading-tight line-clamp-2">
               {description}
             </p>
           </div>

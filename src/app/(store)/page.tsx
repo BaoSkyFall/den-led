@@ -94,17 +94,20 @@ const FEATURES = [
   {
     Icon: Zap,
     label: "BI CẦU CAO CẤP",
-    description: "Sử dụng bi cầu Kenzo, HD chính hãng — ánh sáng rõ nét, hiệu ứng đẹp mắt",
+    description:
+      "Sử dụng bi cầu Kenzo, HD chính hãng — ánh sáng rõ nét, hiệu ứng đẹp mắt",
   },
   {
     Icon: Award,
     label: "LINH KIỆN CHÍNH HÃNG",
-    description: "LED Audi A11PRO, A7, A8X — nhập khẩu, chống nước, tuổi thọ cao",
+    description:
+      "LED Audi A11PRO, A7, A8X — nhập khẩu, chống nước, tuổi thọ cao",
   },
   {
     Icon: Shield,
     label: "BẢO HÀNH 12 THÁNG",
-    description: "Cam kết bảo hành toàn bộ linh kiện và công lắp đặt sau thi công",
+    description:
+      "Cam kết bảo hành toàn bộ linh kiện và công lắp đặt sau thi công",
   },
 ];
 
@@ -221,8 +224,12 @@ function Header() {
         <div className="fixed inset-0 z-[100] bg-[#0a0a0a] flex flex-col overflow-y-auto">
           <div className="flex items-center justify-between p-8 border-b border-white/5">
             <div className="w-10 h-10 bg-amber-500 flex flex-col items-center justify-center px-1">
-              <span className="text-[7px] tracking-widest font-bold text-black leading-none text-center">SÂN CHƠI</span>
-              <span className="text-[9px] tracking-tight font-black text-black leading-none text-center">ĐÈN LED</span>
+              <span className="text-[7px] tracking-widest font-bold text-black leading-none text-center">
+                SÂN CHƠI
+              </span>
+              <span className="text-[9px] tracking-tight font-black text-black leading-none text-center">
+                ĐÈN LED
+              </span>
             </div>
             <button className="text-white" onClick={() => setMobileOpen(false)}>
               <X size={24} strokeWidth={1.5} />
@@ -252,7 +259,9 @@ function Header() {
                     <button
                       className="p-4 text-white/40"
                       onClick={() =>
-                        setMobileExpanded(mobileExpanded === v.label ? null : v.label)
+                        setMobileExpanded(
+                          mobileExpanded === v.label ? null : v.label,
+                        )
                       }
                     >
                       <ChevronDown
@@ -331,7 +340,9 @@ function HeroSection() {
   return (
     <section className="relative min-h-[800px] lg:h-screen bg-[#111111] overflow-hidden">
       <div className="absolute top-40 left-10 z-20 hidden lg:flex items-center gap-4">
-        <span className="text-xs font-bold tracking-[0.2em] text-white/30 uppercase">01</span>
+        <span className="text-xs font-bold tracking-[0.2em] text-white/30 uppercase">
+          01
+        </span>
         <div className="w-12 h-px bg-white/20" />
       </div>
 
@@ -355,7 +366,7 @@ function HeroSection() {
                 Bi Cầu Kenzo S700PRO V2
               </p>
               <p className="text-white font-bold text-sm tracking-wide">
-                Chỉ Từ 3.750.000đ / Chiếc
+                Chỉ Từ 999.000đ / Chiếc
               </p>
             </div>
 
@@ -387,7 +398,10 @@ function HeroSection() {
             />
             <div className="absolute top-1/2 -left-6 -translate-y-1/2 z-20 bg-amber-500 p-4 hidden lg:flex flex-col items-center gap-1">
               {["SÂN", "CHƠI", "ĐÈN LED"].map((word) => (
-                <span key={word} className="text-[8px] font-black tracking-[0.15em] uppercase text-black leading-tight">
+                <span
+                  key={word}
+                  className="text-[8px] font-black tracking-[0.15em] uppercase text-black leading-tight"
+                >
                   {word}
                 </span>
               ))}
@@ -432,7 +446,9 @@ function SpecialsSection() {
                 <button
                   onClick={() => setActiveFilter(f)}
                   className={`text-[10px] font-bold tracking-[0.2em] uppercase transition-colors duration-300 ${
-                    activeFilter === f ? "text-amber-500" : "text-white/40 hover:text-white"
+                    activeFilter === f
+                      ? "text-amber-500"
+                      : "text-white/40 hover:text-white"
                   }`}
                 >
                   {f}
@@ -474,7 +490,9 @@ function SpecialsSection() {
                   <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-white/40 mb-1">
                     Giá Từ
                   </p>
-                  <p className="text-amber-500 font-bold text-sm">{product.price}</p>
+                  <p className="text-amber-500 font-bold text-sm">
+                    {product.price}
+                  </p>
                 </div>
               </div>
             </Link>
@@ -485,9 +503,13 @@ function SpecialsSection() {
           <button className="text-white/30 hover:text-white transition-colors">
             <ChevronLeft size={16} strokeWidth={1.5} />
           </button>
-          <span className="text-xs font-bold tracking-[0.2em] text-amber-500">1</span>
+          <span className="text-xs font-bold tracking-[0.2em] text-amber-500">
+            1
+          </span>
           <div className="w-12 h-px bg-white/20" />
-          <span className="text-xs font-bold tracking-[0.2em] text-white/30">4</span>
+          <span className="text-xs font-bold tracking-[0.2em] text-white/30">
+            4
+          </span>
           <button className="text-white/30 hover:text-white transition-colors">
             <ChevronRight size={16} strokeWidth={1.5} />
           </button>
@@ -515,20 +537,31 @@ function FeatureCollage() {
               <div className="absolute inset-0 bg-[#111111]/30" />
             </div>
             <div className="absolute top-1/2 -right-6 lg:-right-12 -translate-y-1/2 z-20 bg-amber-500 px-4 py-8 hidden lg:flex flex-col items-center gap-1">
-              <span className="text-[8px] font-black tracking-[0.15em] uppercase text-black">SÂN CHƠI</span>
-              <span className="text-[8px] font-black tracking-[0.15em] uppercase text-black">ĐÈN LED</span>
+              <span className="text-[8px] font-black tracking-[0.15em] uppercase text-black">
+                SÂN CHƠI
+              </span>
+              <span className="text-[8px] font-black tracking-[0.15em] uppercase text-black">
+                ĐÈN LED
+              </span>
             </div>
           </div>
 
           <div className="relative flex flex-col justify-center px-8 lg:px-16 py-16 lg:py-0 overflow-hidden">
             <div className="absolute inset-0 opacity-10">
-              <Image src="/assets/den-led/Winner/DSC07732.jpg" alt="" fill className="object-cover object-center" />
+              <Image
+                src="/assets/den-led/Winner/DSC07732.jpg"
+                alt=""
+                fill
+                className="object-cover object-center"
+              />
             </div>
             <div
               className="absolute inset-0"
               style={{
-                maskImage: "linear-gradient(to right, transparent, #0a0a0a 60%)",
-                WebkitMaskImage: "linear-gradient(to right, transparent, #0a0a0a 60%)",
+                maskImage:
+                  "linear-gradient(to right, transparent, #0a0a0a 60%)",
+                WebkitMaskImage:
+                  "linear-gradient(to right, transparent, #0a0a0a 60%)",
               }}
             />
 
@@ -543,19 +576,27 @@ function FeatureCollage() {
               </h2>
               <p className="text-sm text-white/50 leading-relaxed mb-12 max-w-sm">
                 Chuyên độ bi cầu, đèn LED cho xe máy — từ bi cầu Kenzo, HD đến
-                đèn Audi DRL. Thi công chuẩn kỹ thuật, thẩm mỹ cao, bảo hành
-                rõ ràng.
+                đèn Audi DRL. Thi công chuẩn kỹ thuật, thẩm mỹ cao, bảo hành rõ
+                ràng.
               </p>
 
               <div className="flex flex-col gap-8">
                 {FEATURES.map(({ Icon, label, description }) => (
                   <div key={label} className="flex items-start gap-5">
                     <div className="flex-shrink-0 w-10 h-10 border border-white/10 flex items-center justify-center">
-                      <Icon size={16} strokeWidth={1.5} className="text-amber-500" />
+                      <Icon
+                        size={16}
+                        strokeWidth={1.5}
+                        className="text-amber-500"
+                      />
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold tracking-widest uppercase text-white mb-1">{label}</p>
-                      <p className="text-xs text-white/40 leading-relaxed">{description}</p>
+                      <p className="text-[10px] font-bold tracking-widest uppercase text-white mb-1">
+                        {label}
+                      </p>
+                      <p className="text-xs text-white/40 leading-relaxed">
+                        {description}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -566,7 +607,11 @@ function FeatureCollage() {
                 className="inline-flex items-center gap-3 mt-12 text-xs font-bold tracking-[0.2em] uppercase text-white hover:text-amber-500 transition-colors group"
               >
                 <span>Liên Hệ Tư Vấn</span>
-                <ChevronRight size={14} strokeWidth={1.5} className="transition-transform group-hover:translate-x-1" />
+                <ChevronRight
+                  size={14}
+                  strokeWidth={1.5}
+                  className="transition-transform group-hover:translate-x-1"
+                />
               </a>
             </div>
           </div>
@@ -587,8 +632,12 @@ function Footer() {
           <div>
             <div className="flex items-center gap-4 mb-10">
               <div className="w-14 h-14 bg-amber-500 flex flex-col items-center justify-center px-1">
-                <span className="text-[8px] tracking-widest font-bold text-black leading-none text-center">SÂN CHƠI</span>
-                <span className="text-[11px] tracking-tight font-black text-black leading-none text-center">ĐÈN LED</span>
+                <span className="text-[8px] tracking-widest font-bold text-black leading-none text-center">
+                  SÂN CHƠI
+                </span>
+                <span className="text-[11px] tracking-tight font-black text-black leading-none text-center">
+                  ĐÈN LED
+                </span>
               </div>
               <div>
                 <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/40">
@@ -602,8 +651,8 @@ function Footer() {
 
             <p className="text-sm text-white/40 leading-relaxed mb-8 max-w-sm">
               Chuyên độ bi cầu, đèn LED cho xe máy Honda: SH, Air Blade, Vario,
-              Lead, Winner, Vision, Future. Linh kiện chính hãng, thi công
-              chuẩn kỹ thuật, bảo hành 12 tháng.
+              Lead, Winner, Vision, Future. Linh kiện chính hãng, thi công chuẩn
+              kỹ thuật, bảo hành 12 tháng.
             </p>
 
             <div className="flex gap-5">
@@ -629,7 +678,10 @@ function Footer() {
               Tư Vấn Miễn Phí
             </h3>
 
-            <form className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
+            <form
+              className="flex flex-col gap-4"
+              onSubmit={(e) => e.preventDefault()}
+            >
               <div className="grid grid-cols-2 gap-4">
                 <input
                   type="text"

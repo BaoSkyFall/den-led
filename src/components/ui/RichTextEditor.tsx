@@ -57,7 +57,11 @@ function ToolbarButton({
   );
 }
 
-export default function RichTextEditor({ value, onChange, placeholder }: Props) {
+export default function RichTextEditor({
+  value,
+  onChange,
+  placeholder,
+}: Props) {
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -133,14 +137,18 @@ export default function RichTextEditor({ value, onChange, placeholder }: Props) 
         <ToolbarButton
           title="Tiêu đề H2"
           active={editor.isActive("heading", { level: 2 })}
-          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+          onClick={() =>
+            editor.chain().focus().toggleHeading({ level: 2 }).run()
+          }
         >
           <Heading2 size={14} />
         </ToolbarButton>
         <ToolbarButton
           title="Tiêu đề H3"
           active={editor.isActive("heading", { level: 3 })}
-          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+          onClick={() =>
+            editor.chain().focus().toggleHeading({ level: 3 }).run()
+          }
         >
           <Heading3 size={14} />
         </ToolbarButton>
