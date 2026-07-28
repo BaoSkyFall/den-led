@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -25,7 +25,6 @@ import { PasswordInput } from "./PasswordInput";
 type FormData = z.infer<typeof authSchema>;
 
 export function SignInForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const supabase = createClient();
@@ -46,18 +45,23 @@ export function SignInForm() {
 
   function onSubmit({ email, password }: FormData) {
     startTransition(async () => {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-      console.log("data", data);
 
       if (error) {
         toast({ title: "Lỗi đăng nhập", description: error.message });
-      } else {
-        toast({ title: "Đăng nhập thành công" });
-        router.push(searchParams?.get("from") || "/admin");
+        return;
       }
+
+      toast({ title: "Đăng nhập thành công" });
+
+      // Hard navigation ensures the server-side layout picks up the fresh
+      // auth cookie set by @supabase/ssr — router.push can race the cookie
+      // write and cause the admin layout to redirect back to /sign-in.
+      const target = searchParams?.get("from") || "/admin";
+      window.location.href = target;
     });
   }
 

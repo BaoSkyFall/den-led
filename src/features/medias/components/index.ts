@@ -1,4 +1,5 @@
 export { default as ImageDialog } from "./ImageDialog";
+export { default as MultiImageDialog } from "./MultiImageDialog";
 export { default as ImageGrid } from "./ImageGrid";
 export { default as MediasPageContent } from "./MediasPageContent";
 export { default as UploadMediaContainer } from "./UploadMediaContainer";

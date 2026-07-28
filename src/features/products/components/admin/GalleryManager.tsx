@@ -1,7 +1,7 @@
 "use client";
 
 import { useToast } from "@/components/ui/use-toast";
-import { ImageDialog } from "@/features/medias";
+import { MultiImageDialog } from "@/features/medias";
 import { keytoUrl } from "@/lib/utils";
 import { ArrowLeft, ArrowRight, Plus, Trash2 } from "lucide-react";
 import Image from "next/image";
@@ -47,32 +47,45 @@ export default function GalleryManager({ productId }: Props) {
     });
   }
 
-  function addMedia(mediaId: string) {
-    if (items.some((i) => i.mediaId === mediaId)) {
-      toast({ title: "Ảnh đã có trong gallery" });
+  async function addMultiple(mediaIds: string[]) {
+    const newIds = mediaIds.filter(
+      (id) => !items.some((it) => it.mediaId === id),
+    );
+    if (newIds.length === 0) {
+      toast({ title: "Tất cả ảnh đã có sẵn trong gallery" });
       return;
     }
-    // Fetch media details to render immediately
-    fetch(`/api/medias/${mediaId}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((media) => {
-        if (!media) {
-          toast({ title: "Không tìm thấy ảnh" });
-          return;
-        }
-        const next: GalleryItem[] = [
-          ...items,
-          {
-            id: `tmp-${mediaId}`,
-            mediaId,
-            key: media.key,
-            alt: media.alt ?? "",
-            priority: items.length,
-          },
-        ];
-        persist(next);
-        toast({ title: "Đã thêm ảnh vào gallery" });
+
+    // Fetch media details in parallel to render immediately
+    try {
+      const responses = await Promise.all(
+        newIds.map((id) =>
+          fetch(`/api/medias/${id}`).then((r) => (r.ok ? r.json() : null)),
+        ),
+      );
+      const fetched = responses.filter(Boolean) as Array<{
+        id: string;
+        key: string;
+        alt: string;
+      }>;
+
+      const next: GalleryItem[] = [
+        ...items,
+        ...fetched.map((media, i) => ({
+          id: `tmp-${media.id}`,
+          mediaId: media.id,
+          key: media.key,
+          alt: media.alt ?? "",
+          priority: items.length + i,
+        })),
+      ];
+      persist(next);
+      toast({
+        title: `Đã thêm ${fetched.length} ảnh vào gallery`,
       });
+    } catch {
+      toast({ title: "Lỗi", description: "Không tải được thông tin ảnh." });
+    }
   }
 
   function removeAt(index: number) {
@@ -89,6 +102,8 @@ export default function GalleryManager({ productId }: Props) {
     persist(next);
   }
 
+  const excludeIds = items.map((i) => i.mediaId);
+
   if (loading) {
     return (
       <p className="text-xs text-muted-foreground py-2">Đang tải gallery...</p>
@@ -97,7 +112,7 @@ export default function GalleryManager({ productId }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <div>
           <p className="text-sm font-semibold">
             {items.length} ảnh trong gallery
@@ -106,13 +121,13 @@ export default function GalleryManager({ productId }: Props) {
             Kéo mũi tên để đổi thứ tự. Ảnh đầu tiên hiển thị lớn nhất.
           </p>
         </div>
-        <ImageDialog
-          onChange={addMedia}
-          value={undefined}
+        <MultiImageDialog
+          onConfirm={addMultiple}
+          excludeIds={excludeIds}
           renderTrigger={
             <button
               type="button"
-              className="inline-flex items-center gap-1 border border-slate-300 hover:border-amber-500 hover:bg-amber-50 text-slate-700 text-xs font-medium px-3 py-1.5 rounded-md transition-colors"
+              className="inline-flex items-center gap-1 border border-slate-300 hover:border-amber-500 hover:bg-amber-50 text-slate-700 text-xs font-medium px-3 py-1.5 rounded-md transition-colors whitespace-nowrap"
             >
               <Plus size={14} />
               Thêm Ảnh
@@ -126,16 +141,16 @@ export default function GalleryManager({ productId }: Props) {
           <p className="text-sm text-muted-foreground mb-3">
             Chưa có ảnh nào trong gallery.
           </p>
-          <ImageDialog
-            onChange={addMedia}
-            value={undefined}
+          <MultiImageDialog
+            onConfirm={addMultiple}
+            excludeIds={excludeIds}
             renderTrigger={
               <button
                 type="button"
                 className="inline-flex items-center gap-1 border border-slate-300 hover:border-amber-500 hover:bg-amber-50 text-slate-700 text-sm font-medium px-4 py-2 rounded-md transition-colors"
               >
                 <Plus size={14} />
-                Thêm ảnh đầu tiên
+                Chọn ảnh từ thư viện
               </button>
             }
           />
@@ -160,7 +175,6 @@ export default function GalleryManager({ productId }: Props) {
                 </span>
               </div>
 
-              {/* Hover actions */}
               <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1 p-2">
                 <button
                   type="button"
