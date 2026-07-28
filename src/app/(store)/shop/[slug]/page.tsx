@@ -249,7 +249,13 @@ function BiCauLoader() {
 function ImageGallery({ images }: { images: string[] }) {
   const [active, setActive] = useState(0);
 
-  if (images.length === 0) return null;
+  if (images.length === 0) {
+    return (
+      <div className="aspect-[4/3] border border-dashed border-white/10 flex items-center justify-center text-xs text-white/30 uppercase tracking-widest">
+        Chưa có ảnh sản phẩm
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -261,9 +267,9 @@ function ImageGallery({ images }: { images: string[] }) {
           fill
           className="object-cover object-center"
           priority
+          sizes="(max-width: 1024px) 100vw, 50vw"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#111111]/30 to-transparent" />
-        {/* Nav arrows */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#111111]/30 to-transparent pointer-events-none" />
         {images.length > 1 && (
           <>
             <button
@@ -271,33 +277,45 @@ function ImageGallery({ images }: { images: string[] }) {
                 setActive((p) => (p - 1 + images.length) % images.length)
               }
               className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/60 text-white p-2 hover:bg-amber-500 hover:text-black transition-colors"
+              aria-label="Ảnh trước"
             >
               <ChevronLeft size={16} />
             </button>
             <button
               onClick={() => setActive((p) => (p + 1) % images.length)}
               className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/60 text-white p-2 hover:bg-amber-500 hover:text-black transition-colors"
+              aria-label="Ảnh tiếp"
             >
               <ChevronRight size={16} />
             </button>
+            <span className="absolute bottom-3 right-3 bg-black/60 text-white text-[10px] font-bold tracking-widest px-2 py-1">
+              {active + 1} / {images.length}
+            </span>
           </>
         )}
       </div>
 
-      {/* Thumbnails */}
+      {/* Thumbnail grid — 4-up like admin gallery */}
       {images.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto">
+        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
           {images.map((img, i) => (
             <button
               key={i}
               onClick={() => setActive(i)}
-              className={`relative w-20 h-16 shrink-0 overflow-hidden border-2 transition-colors ${
+              className={`relative aspect-square overflow-hidden border-2 transition-colors ${
                 active === i
                   ? "border-amber-500"
                   : "border-white/10 hover:border-white/40"
               }`}
+              aria-label={`Ảnh ${i + 1}`}
             >
-              <Image src={img} alt="" fill className="object-cover" />
+              <Image
+                src={img}
+                alt=""
+                fill
+                className="object-cover"
+                sizes="120px"
+              />
             </button>
           ))}
         </div>
