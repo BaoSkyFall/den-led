@@ -76,19 +76,49 @@ export async function GET(
         })),
     }));
 
-    // Gallery images sorted by priority
-    const { data: galleryRows } = await supabase
+    // Gallery images sorted by priority — two queries to avoid PostgREST FK
+    // embedding issues (mediaId/productId are mixed-case and the join table
+    // has duplicate FK definitions, which makes the embed ambiguous).
+    const { data: galleryRows, error: galleryErr } = await supabase
       .from("product_medias")
-      .select("mediaId, priority, medias:mediaId(id, key, alt)")
+      .select('"mediaId", priority')
       .eq("productId", (product as any).id)
       .order("priority", { ascending: true });
 
-    const gallery = (galleryRows ?? []).map((row: any) => ({
-      mediaId: row.mediaId,
-      key: row.medias?.key ?? "",
-      alt: row.medias?.alt ?? "",
-      priority: row.priority,
-    }));
+    if (galleryErr) {
+      console.error("[/api/products/[slug]] Gallery error:", galleryErr);
+    }
+
+    const mediaIds = (galleryRows ?? []).map((r: any) => r.mediaId);
+    let mediaMap = new Map<string, { key: string; alt: string }>();
+
+    if (mediaIds.length > 0) {
+      const { data: mediaRows, error: mediaErr } = await supabase
+        .from("medias")
+        .select("id, key, alt")
+        .in("id", mediaIds);
+
+      if (mediaErr) {
+        console.error("[/api/products/[slug]] Medias error:", mediaErr);
+      }
+
+      mediaMap = new Map(
+        (mediaRows ?? []).map((m: any) => [
+          m.id,
+          { key: m.key ?? "", alt: m.alt ?? "" },
+        ]),
+      );
+    }
+
+    const gallery = (galleryRows ?? []).map((row: any) => {
+      const media = mediaMap.get(row.mediaId);
+      return {
+        mediaId: row.mediaId,
+        key: media?.key ?? "",
+        alt: media?.alt ?? "",
+        priority: row.priority,
+      };
+    });
 
     const p = product as any;
     return NextResponse.json({
