@@ -52,10 +52,11 @@ export async function GET(
 
     const { data: options } = await supabase
       .from("variant_options")
-      .select(
-        "id, group_id, name, price, images, features, display_order",
+      .select("id, group_id, name, price, images, features, display_order")
+      .in(
+        "group_id",
+        (groups ?? []).map((g: any) => g.id),
       )
-      .in("group_id", (groups ?? []).map((g: any) => g.id))
       .order("display_order", { ascending: true });
 
     const groupsWithOptions = (groups ?? []).map((g: any) => ({

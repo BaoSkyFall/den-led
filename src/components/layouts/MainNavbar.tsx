@@ -15,16 +15,24 @@ interface MainNavbarProps {
 
 async function MainNavbar({ adminLayout = false }: MainNavbarProps) {
   return (
-    <nav className="bg-background/95 fixed z-50 w-full">
+    <nav
+      className={cn(
+        "fixed top-0 left-0 right-0 z-50 h-16 border-b",
+        adminLayout
+          ? "bg-white border-slate-200"
+          : "bg-background/95 border-transparent",
+      )}
+    >
       <div
         className={cn(
-          adminLayout ? "mx-auto px-[3rem] max-w-[2500px] py-3" : "container",
+          "h-full",
+          adminLayout ? "mx-auto px-4 md:px-8 max-w-[2500px]" : "container",
         )}
       >
-        <div className="hidden md:flex gap-x-8 justify-between items-center">
+        <div className="hidden md:flex h-full gap-x-8 justify-between items-center">
           {/* Menu & branding */}
           <div className="flex gap-x-3 items-center">
-            <SideMenu />
+            {!adminLayout && <SideMenu />}
             <Branding />
           </div>
 
@@ -42,9 +50,11 @@ async function MainNavbar({ adminLayout = false }: MainNavbarProps) {
               <UserNav />
             </Suspense>
 
-            <Link href={"/wish-list"}>
-              <Icons.heart className="w-4 h-4" aria-label="wishlist" />
-            </Link>
+            {!adminLayout && (
+              <Link href={"/wish-list"}>
+                <Icons.heart className="w-4 h-4" aria-label="wishlist" />
+              </Link>
+            )}
 
             <Suspense fallback={<CartLink productCount={0} />}>
               {!adminLayout && <CartNav />}
