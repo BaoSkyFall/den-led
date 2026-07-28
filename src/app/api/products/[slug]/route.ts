@@ -1,11 +1,15 @@
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 import db from "@/lib/supabase/db";
 import {
   medias,
+  productMedias,
   products,
   variantGroups,
   variantOptions,
 } from "@/lib/supabase/schema";
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -48,5 +52,22 @@ export async function GET(
     }),
   );
 
-  return NextResponse.json({ ...product, variantGroups: groupsWithOptions });
+  // Fetch gallery images sorted by priority
+  const gallery = await db
+    .select({
+      mediaId: medias.id,
+      key: medias.key,
+      alt: medias.alt,
+      priority: productMedias.priority,
+    })
+    .from(productMedias)
+    .innerJoin(medias, eq(productMedias.mediaId, medias.id))
+    .where(eq(productMedias.productId, product.id))
+    .orderBy(asc(productMedias.priority));
+
+  return NextResponse.json({
+    ...product,
+    variantGroups: groupsWithOptions,
+    gallery,
+  });
 }

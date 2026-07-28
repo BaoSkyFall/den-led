@@ -35,7 +35,7 @@ async function EditCollectionPage({
 
   return (
     <AdminShell
-      heading="Chỉnh Sửa Bộ Sưu Tập"
+      heading="Chỉnh Sửa Danh Mục"
       description="Cập nhật thông tin bộ sưu tập rồi nhấn Update để lưu thay đổi."
     >
       <div className="">

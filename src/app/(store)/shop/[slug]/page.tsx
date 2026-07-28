@@ -25,6 +25,13 @@ type VariantGroup = {
   options: VariantOption[];
 };
 
+type GalleryItem = {
+  mediaId: string;
+  key: string;
+  alt: string;
+  priority: number | null;
+};
+
 type ProductDetail = {
   id: string;
   name: string;
@@ -34,6 +41,7 @@ type ProductDetail = {
   price: string;
   imageKey: string | null;
   variantGroups: VariantGroup[];
+  gallery: GalleryItem[];
 };
 
 // ─── Static product data map (extends DB data with local images) ───────────────
@@ -544,9 +552,13 @@ export default function ProductDetailPage({ params }: Props) {
     return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/products/${k}`;
   };
 
-  const images = PRODUCT_IMAGES[params.slug];
-  const gallery = images?.gallery ?? [resolveKey(product.imageKey)];
-  const catalog = images?.catalog ?? "/catalog.pdf/1.jpg";
+  const seededImages = PRODUCT_IMAGES[params.slug];
+  // Priority: DB gallery > seeded static > featured image
+  const gallery: string[] =
+    product.gallery && product.gallery.length > 0
+      ? product.gallery.map((g) => resolveKey(g.key))
+      : (seededImages?.gallery ?? [resolveKey(product.imageKey)]);
+  const catalog = seededImages?.catalog ?? "/catalog.pdf/1.jpg";
 
   const minTotal = product.variantGroups.reduce((sum, g) => {
     const cheapest = g.options.reduce(

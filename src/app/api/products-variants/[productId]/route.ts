@@ -1,3 +1,6 @@
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 import db from "@/lib/supabase/db";
 import { variantGroups, variantOptions } from "@/lib/supabase/schema";
 import { eq } from "drizzle-orm";

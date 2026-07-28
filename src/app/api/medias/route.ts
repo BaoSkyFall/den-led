@@ -1,3 +1,6 @@
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 import { env } from "@/env.mjs";
 import db from "@/lib/supabase/db";
 import { getPublicUrl } from "@/lib/storage";

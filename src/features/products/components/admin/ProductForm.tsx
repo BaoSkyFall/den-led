@@ -37,6 +37,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Suspense, useTransition } from "react";
 import VariantManager from "./VariantManager";
+import GalleryManager from "./GalleryManager";
 import { useForm } from "react-hook-form";
 import { gql } from "urql";
 import { Save, X } from "lucide-react";
@@ -192,7 +193,7 @@ function ProductForm({ product }: ProductsFormProps) {
                 name={"collectionId"}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Bộ Sưu Tập</FormLabel>
+                    <FormLabel>Danh Mục</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value || undefined}
@@ -277,8 +278,11 @@ function ProductForm({ product }: ProductsFormProps) {
           </div>
         </Section>
 
-        {/* Media */}
-        <Section title="Hình Ảnh" description="Ảnh đại diện hiển thị trên card">
+        {/* Featured image */}
+        <Section
+          title="Ảnh Đại Diện"
+          description="Ảnh chính hiển thị trên card và làm ảnh mặc định"
+        >
           <FormField
             control={form.control}
             name="featuredImageId"
@@ -300,6 +304,22 @@ function ProductForm({ product }: ProductsFormProps) {
             )}
           />
         </Section>
+
+        {/* Gallery — only for existing products */}
+        {product?.id && (
+          <Section
+            title="Gallery Ảnh Sản Phẩm"
+            description="Nhiều ảnh hiển thị trong trang chi tiết. Ảnh đầu tiên là ảnh lớn nhất."
+          >
+            <Suspense
+              fallback={
+                <p className="text-xs text-muted-foreground">Đang tải...</p>
+              }
+            >
+              <GalleryManager productId={product.id} />
+            </Suspense>
+          </Section>
+        )}
 
         {/* Variants — only for existing products */}
         {product?.id && (

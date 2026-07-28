@@ -67,7 +67,7 @@ const ProductsColumns: ColumnDef<{
   },
   {
     accessorKey: "Collection",
-    header: () => <div className="">Bộ Sưu Tập</div>,
+    header: () => <div className="">Danh Mục</div>,
     cell: ({ row }) => {
       const product = row.original.node;
 

@@ -6,7 +6,7 @@ type Props = {};
 async function NewProjectPage({}: Props) {
   return (
     <AdminShell
-      heading="Thêm Bộ Sưu Tập"
+      heading="Thêm Danh Mục"
       description="Điền thông tin bên dưới rồi nhấn Thêm để tạo bộ sưu tập mới."
     >
       <CollectionForm />

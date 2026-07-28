@@ -19,6 +19,7 @@ type Props = {
   multiple?: boolean;
   modalOpen?: boolean;
   value?: string;
+  renderTrigger?: React.ReactNode;
 };
 
 function ImageDialog({
@@ -26,13 +27,9 @@ function ImageDialog({
   onChange,
   value,
   defaultValue,
+  renderTrigger,
 }: Props) {
   const [dialogOpen, setDialogOpen] = React.useState(modalOpen);
-  // const { control, setError, getValues, setValue } = useFormContext()
-  // const { fields, remove, append, update, move, swap } = useFieldArray({
-  //   control,
-  //   name: "",
-  // })
   const onClickHandler = (mediaId: string) => {
     onChange(mediaId);
     setDialogOpen(false);
@@ -41,18 +38,25 @@ function ImageDialog({
   return (
     <div>
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogTrigger>
-          <div>
-            {value ? (
-              <ImagePreviewCard
-                key={value}
-                onClick={() => {}}
-                mediaId={value}
-              />
-            ) : (
-              "Select / Add Image"
-            )}
-          </div>
+        <DialogTrigger asChild>
+          {renderTrigger ?? (
+            <div>
+              {value ? (
+                <ImagePreviewCard
+                  key={value}
+                  onClick={() => {}}
+                  mediaId={value}
+                />
+              ) : (
+                <button
+                  type="button"
+                  className="text-sm text-slate-600 border border-dashed border-slate-300 px-4 py-3 hover:border-amber-500 hover:text-slate-900 transition-colors"
+                >
+                  Chọn / Thêm ảnh
+                </button>
+              )}
+            </div>
+          )}
         </DialogTrigger>
 
         <DialogContent className="max-w-[1080px] min-h-full md:min-h-[480px]">

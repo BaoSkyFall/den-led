@@ -34,10 +34,10 @@ async function collectionsPage({ searchParams }: AdminCollectionsPageProps) {
   if (!data) return notFound();
 
   return (
-    <AdminShell heading="Bộ Sưu Tập" description="Quản lý bộ sưu tập sản phẩm.">
+    <AdminShell heading="Danh Mục" description="Quản lý bộ sưu tập sản phẩm.">
       <section className="flex justify-end items-center pb-5 w-full">
         <Link href="/admin/collections/new" className={cn(buttonVariants())}>
-          Thêm Bộ Sưu Tập
+          Thêm Danh Mục
         </Link>
       </section>
 
