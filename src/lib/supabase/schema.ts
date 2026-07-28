@@ -538,3 +538,57 @@ export type InsertMedia = InferInsertModel<typeof medias>;
 //     }
 //   }
 // )
+
+// ─── Variant Groups & Options ──────────────────────────────────────────────────
+// Simple 2-level model: Group (service package) → Options (tiers with price)
+// Customer picks 1 option per group; total price = sum of selections.
+
+export const variantGroups = pgTable("variant_groups", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  productId: text("product_id")
+    .notNull()
+    .references(() => products.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  description: text("description"),
+  displayOrder: integer("display_order").default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+});
+
+export type SelectVariantGroup = InferSelectModel<typeof variantGroups>;
+export type InsertVariantGroup = InferInsertModel<typeof variantGroups>;
+
+export const variantOptions = pgTable("variant_options", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  groupId: uuid("group_id")
+    .notNull()
+    .references(() => variantGroups.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  price: decimal("price", { precision: 12, scale: 0 }).notNull(),
+  images: text("images").array().default([]),
+  features: text("features").array().default([]),
+  displayOrder: integer("display_order").default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+});
+
+export type SelectVariantOption = InferSelectModel<typeof variantOptions>;
+export type InsertVariantOption = InferInsertModel<typeof variantOptions>;
+
+export const variantGroupsRelations = relations(
+  variantGroups,
+  ({ one, many }) => ({
+    product: one(products, {
+      fields: [variantGroups.productId],
+      references: [products.id],
+    }),
+    options: many(variantOptions),
+  }),
+);
+
+export const variantOptionsRelations = relations(variantOptions, ({ one }) => ({
+  group: one(variantGroups, {
+    fields: [variantOptions.groupId],
+    references: [variantGroups.id],
+  }),
+}));

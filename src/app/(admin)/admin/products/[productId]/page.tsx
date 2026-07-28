@@ -22,8 +22,8 @@ async function EditProjectPage({
 
   return (
     <AdminShell
-      heading="Add Project"
-      description="Input the field below, after that press Add Project button to save the project."
+      heading="Chỉnh Sửa Sản Phẩm"
+      description="Cập nhật thông tin sản phẩm rồi nhấn Update để lưu thay đổi."
     >
       <Suspense>
         <ProductForm product={product} />

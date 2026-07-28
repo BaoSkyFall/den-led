@@ -35,12 +35,12 @@ async function collectionsPage({ searchParams }: AdminCollectionsPageProps) {
 
   return (
     <AdminShell
-      heading="Collections"
-      description={"Edit collections from the dashboard. "}
+      heading="Bộ Sưu Tập"
+      description="Quản lý bộ sưu tập sản phẩm."
     >
       <section className="flex justify-end items-center pb-5 w-full">
         <Link href="/admin/collections/new" className={cn(buttonVariants())}>
-          New Collection
+          Thêm Bộ Sưu Tập
         </Link>
       </section>
 

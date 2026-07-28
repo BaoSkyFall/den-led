@@ -35,12 +35,12 @@ async function OrdersPage({ searchParams }: AdminOrdersPageProps) {
 
   return (
     <AdminShell
-      heading="Orders"
-      description={"Edit orders from the dashboard. "}
+      heading="Đơn Hàng"
+      description="Quản lý đơn hàng của khách."
     >
       <section className="flex justify-end items-center pb-5 w-full">
         <Link href="/admin/collections/new" className={cn(buttonVariants())}>
-          New Order
+          Tạo Đơn Hàng
         </Link>
       </section>
 

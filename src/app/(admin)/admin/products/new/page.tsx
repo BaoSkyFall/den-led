@@ -10,8 +10,8 @@ async function NewProjectPage() {
 
   return (
     <AdminShell
-      heading="Add Project"
-      description="Input the field below, after that press Add Project button to save the project."
+      heading="Thêm Sản Phẩm"
+      description="Điền thông tin bên dưới rồi nhấn Thêm để lưu sản phẩm."
     >
       <Suspense>
         <ProductForm />

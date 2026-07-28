@@ -35,8 +35,8 @@ async function EditCollectionPage({
 
   return (
     <AdminShell
-      heading="Add Collection"
-      description="Input the field below, after that press add Collections."
+      heading="Chỉnh Sửa Bộ Sưu Tập"
+      description="Cập nhật thông tin bộ sưu tập rồi nhấn Update để lưu thay đổi."
     >
       <div className="">
         <CollectionForm collection={data.collectionsCollection.edges[0].node} />

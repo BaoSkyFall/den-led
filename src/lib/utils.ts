@@ -21,10 +21,9 @@ export const getURL = () => {
 };
 
 export const keytoUrl = (key?: string) => {
-  if (!key)
-    return "https://hiyori-backpack.s3.us-west-2.amazonaws.com/public/bathroom-planning.jpg";
-  if (!env.NEXT_PUBLIC_S3_BUCKET || !env.NEXT_PUBLIC_S3_REGION) return key;
-  return `https://${env.NEXT_PUBLIC_S3_BUCKET}.s3.${env.NEXT_PUBLIC_S3_REGION}.amazonaws.com/${key}`;
+  if (!key) return "";
+  if (key.startsWith("http") || key.startsWith("/")) return key;
+  return `${env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/products/${key}`;
 };
 
 export function formatPrice(price: number | string) {

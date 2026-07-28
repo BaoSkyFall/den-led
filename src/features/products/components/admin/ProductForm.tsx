@@ -32,9 +32,11 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@urql/next";
 import { createInsertSchema } from "drizzle-zod";
+import RichTextEditor from "@/components/ui/RichTextEditor";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Suspense, useTransition } from "react";
+import VariantManager from "./VariantManager";
 import { useForm } from "react-hook-form";
 import { gql } from "urql";
 
@@ -106,11 +108,11 @@ function ProductFrom({ product }: ProductsFormProps) {
       >
         <div className="flex flex-col gap-y-5 max-w-[500px]">
           <FormItem>
-            <FormLabel className="text-sm">Name*</FormLabel>
+            <FormLabel className="text-sm">Tên Sản Phẩm*</FormLabel>
             <FormControl>
               <Input
                 aria-invalid={!!form.formState.errors.name}
-                placeholder="Type Product Name."
+                placeholder="Nhập tên sản phẩm."
                 {...register("name")}
               />
             </FormControl>
@@ -118,30 +120,38 @@ function ProductFrom({ product }: ProductsFormProps) {
           </FormItem>
 
           <FormItem>
-            <FormLabel className="text-sm">Slug*</FormLabel>
+            <FormLabel className="text-sm">Slug (đường dẫn)*</FormLabel>
             <FormControl>
               <Input
                 defaultValue={product?.slug}
                 aria-invalid={!!form.formState.errors.slug}
-                placeholder="Type Product slug."
+                placeholder="vd: sh-2026"
                 {...register("slug")}
               />
             </FormControl>
             <FormMessage />
           </FormItem>
 
-          <FormItem>
-            <FormLabel className="text-sm">Description*</FormLabel>
-            <FormControl>
-              <Input
-                defaultValue={product?.description || ""}
-                aria-invalid={!!form.formState.errors.description}
-                placeholder="Type a short description for the product.."
-                {...register("description")}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm">Mô Tả Sản Phẩm</FormLabel>
+                <FormControl>
+                  <RichTextEditor
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                    placeholder="Nhập mô tả sản phẩm (hỗ trợ định dạng)..."
+                  />
+                </FormControl>
+                <FormDescription>
+                  Hỗ trợ in đậm, nghiêng, tiêu đề, danh sách, và link.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           {/* <FormField
             control={form.control}
@@ -170,14 +180,14 @@ function ProductFrom({ product }: ProductsFormProps) {
                 name={"collectionId"}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{"Collections"}</FormLabel>
+                    <FormLabel>Bộ Sưu Tập</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value || undefined}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a collection" />
+                          <SelectValue placeholder="Chọn bộ sưu tập" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -194,7 +204,7 @@ function ProductFrom({ product }: ProductsFormProps) {
                       </SelectContent>
                     </Select>
                     <FormDescription>
-                      {"Select a Collection for the products."}
+                      Chọn bộ sưu tập cho sản phẩm này.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -206,12 +216,12 @@ function ProductFrom({ product }: ProductsFormProps) {
           <BadgeSelectField name="badge" label={""} />
 
           <FormItem>
-            <FormLabel className="text-sm">Rating*</FormLabel>
+            <FormLabel className="text-sm">Đánh Giá (0–5)*</FormLabel>
             <FormControl>
               <Input
                 defaultValue={product?.rating}
                 aria-invalid={!!form.formState.errors.rating}
-                placeholder="Rating (0-5)."
+                placeholder="vd: 4.5"
                 {...register("rating")}
               />
             </FormControl>
@@ -227,12 +237,12 @@ function ProductFrom({ product }: ProductsFormProps) {
           </FormItem>
 
           <FormItem>
-            <FormLabel className="text-sm">Price*</FormLabel>
+            <FormLabel className="text-sm">Giá Cơ Bản (fallback)</FormLabel>
             <FormControl>
               <Input
                 defaultValue={product?.price}
                 aria-invalid={!!form.formState.errors.price}
-                placeholder="Price"
+                placeholder="vd: 0 (dùng variant để đặt giá)"
                 {...register("price")}
               />
             </FormControl>
@@ -244,7 +254,7 @@ function ProductFrom({ product }: ProductsFormProps) {
             name="featuredImageId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Featured Image*</FormLabel>
+                <FormLabel>Ảnh Đại Diện*</FormLabel>
                 <Suspense>
                   <ImageDialog
                     defaultValue={product?.featuredImageId}
@@ -254,8 +264,7 @@ function ProductFrom({ product }: ProductsFormProps) {
                 </Suspense>
 
                 <FormDescription>
-                  Drag n Drop the image to above section or click the button to
-                  select from Image gallery.
+                  Kéo thả hoặc chọn ảnh từ thư viện hình ảnh.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -265,7 +274,7 @@ function ProductFrom({ product }: ProductsFormProps) {
 
         <div className="py-8 flex gap-x-5 items-center">
           <Button disabled={isPending} variant={"outline"} form="project-form">
-            {product ? "Update" : "Create"}
+            {product ? "Cập Nhật" : "Tạo Mới"}
             {isPending && (
               <Spinner
                 className="mr-2 h-4 w-4 animate-spin"
@@ -274,10 +283,23 @@ function ProductFrom({ product }: ProductsFormProps) {
             )}
           </Button>
           <Link href="/admin/products" className={buttonVariants()}>
-            Cancel
+            Huỷ
           </Link>
         </div>
       </form>
+
+      {/* Variant management — only available for existing products */}
+      {product?.id && (
+        <div className="max-w-[500px] px-3 border-t pt-6 mt-2">
+          <h3 className="text-base font-semibold mb-1">Gói Dịch Vụ (Variants)</h3>
+          <p className="text-xs text-muted-foreground mb-4">
+            Quản lý gói dịch vụ và các mức giá cho sản phẩm này.
+          </p>
+          <Suspense fallback={<p className="text-xs text-muted-foreground">Đang tải...</p>}>
+            <VariantManager productId={product.id} />
+          </Suspense>
+        </div>
+      )}
     </Form>
   );
 }

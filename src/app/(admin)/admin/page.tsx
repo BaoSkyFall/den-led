@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
-async function AdminDashboard() {
-  redirect("/admin/dashboard");
+async function AdminPage() {
+  redirect("/admin/products");
 }
 
-export default AdminDashboard;
+export default AdminPage;

@@ -7,37 +7,31 @@ export type DashboardConfig = {
 export const dashboardConfig: DashboardConfig = {
   sidebarNav: [
     {
-      title: "Dashboard",
-      href: "/admin/dashboard",
-      icon: "layoutDashboard",
-      items: [],
-    },
-    {
-      title: "Products",
+      title: "Sản Phẩm",
       href: "/admin/products",
       icon: "cart",
       items: [],
     },
     {
-      title: "Collections",
+      title: "Bộ Sưu Tập",
       href: "/admin/collections",
       icon: "folder",
       items: [],
     },
     {
-      title: "Medias",
+      title: "Hình Ảnh",
       href: "/admin/medias",
       icon: "image",
       items: [],
     },
     {
-      title: "Users",
+      title: "Người Dùng",
       href: "/admin/users",
       icon: "user",
       items: [],
     },
     {
-      title: "Orders",
+      title: "Đơn Hàng",
       href: "/admin/orders",
       icon: "receipt",
       items: [],

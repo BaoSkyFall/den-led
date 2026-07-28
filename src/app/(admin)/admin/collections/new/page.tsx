@@ -6,8 +6,8 @@ type Props = {};
 async function NewProjectPage({}: Props) {
   return (
     <AdminShell
-      heading="Add Collection"
-      description="Input the field below, after that press Add Collection button to save the project."
+      heading="Thêm Bộ Sưu Tập"
+      description="Điền thông tin bên dưới rồi nhấn Thêm để tạo bộ sưu tập mới."
     >
       <CollectionForm />
     </AdminShell>
