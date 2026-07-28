@@ -57,14 +57,9 @@ function UploadMediaContainer({
         body: formData,
       });
 
-      const data = (await response.json()) as string[];
-
-      if (data) {
+      if (response.ok) {
         refetch({ requestPolicy: "network-only" });
-
-        setUploadingImages(
-          uploadingImages.filter((item) => data.includes(item.path)),
-        );
+        setUploadingImages([]);
       }
     } catch (error) {
       // console.error("Error uploading files:", error)

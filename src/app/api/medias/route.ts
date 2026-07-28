@@ -1,9 +1,7 @@
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-import { env } from "@/env.mjs";
 import db from "@/lib/supabase/db";
-import { getPublicUrl } from "@/lib/storage";
 import { medias } from "@/lib/supabase/schema";
 import { createClient } from "@/lib/supabase/server";
 import { mediaSchema } from "@/validations/medias";
@@ -17,7 +15,6 @@ const BUCKET = "products";
 export async function POST(request: NextRequest) {
   const cookieStore = cookies();
 
-  // Auth check: only admin users can upload
   const authClient = createClient({ cookieStore });
   const {
     data: { user },
@@ -37,13 +34,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(validation.error.format(), { status: 400 });
   }
 
-  // Use service role client to bypass RLS for storage upload
   const supabase = createClient({ cookieStore, isAdmin: true });
 
-  let statusCode = 201;
-  let errorMessage = "Unexpected Error";
+  const uploaded: Array<{ id: string; key: string; alt: string }> = [];
+  const errors: string[] = [];
 
-  const uploadResponse = await Promise.all(
+  await Promise.all(
     Object.entries(data).map(async ([, file]) => {
       const ext = file.type.split("/")[1] ?? "jpg";
       const storagePath = `public/${nanoid()}.${ext}`;
@@ -55,20 +51,28 @@ export async function POST(request: NextRequest) {
 
         if (uploadError) throw new Error(uploadError.message);
 
-        const url = getPublicUrl(storagePath);
+        const [row] = await db
+          .insert(medias)
+          .values({ alt: file.name, key: storagePath })
+          .returning({
+            id: medias.id,
+            key: medias.key,
+            alt: medias.alt,
+          });
 
-        await db.insert(medias).values({ alt: file.name, key: storagePath });
-
-        return url;
+        uploaded.push(row);
       } catch (err) {
-        statusCode = 400;
-        errorMessage = (err as Error).message;
-        return { message: (err as Error).message };
+        errors.push((err as Error).message);
       }
     }),
   );
 
-  return statusCode >= 300
-    ? NextResponse.json({ message: errorMessage }, { status: statusCode })
-    : NextResponse.json(uploadResponse, { status: statusCode });
+  if (uploaded.length === 0 && errors.length > 0) {
+    return NextResponse.json(
+      { message: errors.join("; ") },
+      { status: 400 },
+    );
+  }
+
+  return NextResponse.json(uploaded, { status: 201 });
 }

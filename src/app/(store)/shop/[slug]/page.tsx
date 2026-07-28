@@ -309,14 +309,12 @@ function ImageGallery({ images }: { images: string[] }) {
 // ─── Variant Selector ─────────────────────────────────────────────────────────
 
 function VariantSelector({ groups }: { groups: VariantGroup[] }) {
-  // Nothing pre-selected — customer chọn 1 hoặc nhiều tùy ý
-  const [selections, setSelections] = useState<
-    Record<string, VariantOption | null>
-  >(Object.fromEntries(groups.map((g) => [g.id, null])));
+  // Multi-select trong mỗi group — customer chọn bao nhiêu tùy ý
+  const [selections, setSelections] = useState<Record<string, VariantOption[]>>(
+    Object.fromEntries(groups.map((g) => [g.id, [] as VariantOption[]])),
+  );
 
-  const selectedOptions = Object.values(selections).filter(
-    Boolean,
-  ) as VariantOption[];
+  const selectedOptions = Object.values(selections).flat();
   const totalPrice = selectedOptions.reduce(
     (sum, opt) => sum + Number(opt.price),
     0,
@@ -330,11 +328,16 @@ function VariantSelector({ groups }: { groups: VariantGroup[] }) {
     }).format(n);
 
   function toggleOption(groupId: string, opt: VariantOption) {
-    setSelections((prev) => ({
-      ...prev,
-      // Click lại option đang chọn → bỏ chọn
-      [groupId]: prev[groupId]?.id === opt.id ? null : opt,
-    }));
+    setSelections((prev) => {
+      const current = prev[groupId] ?? [];
+      const exists = current.some((o) => o.id === opt.id);
+      return {
+        ...prev,
+        [groupId]: exists
+          ? current.filter((o) => o.id !== opt.id)
+          : [...current, opt],
+      };
+    });
   }
 
   return (
@@ -346,7 +349,7 @@ function VariantSelector({ groups }: { groups: VariantGroup[] }) {
               {group.name}
             </p>
             <span className="text-[9px] text-white/30 uppercase tracking-widest">
-              — tùy chọn
+              — chọn nhiều tùy ý
             </span>
           </div>
           {group.description && (
@@ -354,7 +357,9 @@ function VariantSelector({ groups }: { groups: VariantGroup[] }) {
           )}
           <div className="space-y-2">
             {group.options.map((opt) => {
-              const isSelected = selections[group.id]?.id === opt.id;
+              const isSelected = (selections[group.id] ?? []).some(
+                (o) => o.id === opt.id,
+              );
               return (
                 <button
                   key={opt.id}

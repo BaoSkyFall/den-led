@@ -8,12 +8,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useToast } from "@/components/ui/use-toast";
 import { gql } from "@/gql";
 import { cn, keytoUrl } from "@/lib/utils";
 import { useQuery } from "@urql/next";
-import { Check } from "lucide-react";
+import { Check, Loader2, Upload } from "lucide-react";
 import Image from "next/image";
-import { ReactNode, useState } from "react";
+import { ReactNode, useRef, useState } from "react";
 
 const MediasQuery = gql(/* GraphQL */ `
   query MultiImageDialogMediasQuery($first: Int, $after: Cursor) {
@@ -51,8 +52,11 @@ export default function MultiImageDialog({
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [cursor, setCursor] = useState<string | undefined>();
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
-  const [{ data, fetching }] = useQuery({
+  const [{ data, fetching }, refetch] = useQuery({
     query: MediasQuery,
     variables: { first: 24, after: cursor },
     pause: !open,
@@ -85,6 +89,54 @@ export default function MultiImageDialog({
     if (!next) setSelected(new Set());
   }
 
+  async function handleUpload(files: FileList | null) {
+    if (!files || files.length === 0) return;
+
+    setUploading(true);
+    const formData = new FormData();
+    Array.from(files).forEach((file, i) => {
+      formData.append(`files[${i}]`, file);
+    });
+
+    try {
+      const res = await fetch("/api/medias", {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Upload thất bại");
+      }
+      const uploaded = (await res.json()) as Array<{
+        id: string;
+        key: string;
+        alt: string;
+      }>;
+
+      refetch({ requestPolicy: "network-only" });
+
+      // Auto-select uploaded medias so user can just click "Thêm"
+      setSelected((prev) => {
+        const next = new Set(prev);
+        uploaded.forEach((m) => next.add(m.id));
+        return next;
+      });
+
+      toast({
+        title: `Đã upload ${uploaded.length} ảnh`,
+        description: "Ảnh mới đã được chọn sẵn.",
+      });
+    } catch (err) {
+      toast({
+        title: "Lỗi upload",
+        description: (err as Error).message,
+      });
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{renderTrigger}</DialogTrigger>
@@ -93,9 +145,43 @@ export default function MultiImageDialog({
           <DialogTitle>Chọn nhiều ảnh</DialogTitle>
           <p className="text-xs text-muted-foreground">
             Nhấn vào ảnh để chọn / bỏ chọn. Ảnh đã trong gallery được đánh dấu
-            xám.
+            xám. Có thể upload ảnh mới từ máy tính.
           </p>
         </DialogHeader>
+
+        <div className="flex items-center justify-between border-b pb-3">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={(e) => handleUpload(e.target.files)}
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="inline-flex items-center gap-2 border border-slate-300 hover:border-amber-500 hover:bg-amber-50 text-slate-700 text-sm font-medium px-4 py-2 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {uploading ? (
+              <>
+                <Loader2 size={14} className="animate-spin" />
+                Đang upload...
+              </>
+            ) : (
+              <>
+                <Upload size={14} />
+                Upload từ máy tính
+              </>
+            )}
+          </button>
+          <p className="text-xs text-muted-foreground">
+            Đã chọn:{" "}
+            <span className="font-bold text-amber-600">{selected.size}</span>{" "}
+            ảnh
+          </p>
+        </div>
 
         <div className="flex-1 overflow-y-auto py-4">
           {fetching && items.length === 0 ? (
@@ -104,7 +190,8 @@ export default function MultiImageDialog({
             </p>
           ) : items.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-10">
-              Chưa có ảnh nào trong thư viện. Vào Admin → Hình Ảnh để upload.
+              Chưa có ảnh nào trong thư viện. Nhấn “Upload từ máy tính” để thêm
+              ảnh.
             </p>
           ) : (
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
@@ -176,29 +263,22 @@ export default function MultiImageDialog({
         </div>
 
         <DialogFooter className="border-t pt-4">
-          <div className="flex items-center justify-between w-full">
-            <p className="text-sm text-slate-600">
-              Đã chọn:{" "}
-              <span className="font-bold text-amber-600">{selected.size}</span>{" "}
-              ảnh
-            </p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => handleOpenChange(false)}
-                className="text-sm text-slate-600 hover:text-slate-900 px-4 py-2 rounded-md hover:bg-slate-100"
-              >
-                Huỷ
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirm}
-                disabled={selected.size === 0}
-                className="bg-amber-500 hover:bg-amber-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-black font-semibold text-sm px-5 py-2 rounded-md transition-colors"
-              >
-                Thêm {selected.size > 0 && `(${selected.size})`}
-              </button>
-            </div>
+          <div className="flex items-center justify-end w-full gap-2">
+            <button
+              type="button"
+              onClick={() => handleOpenChange(false)}
+              className="text-sm text-slate-600 hover:text-slate-900 px-4 py-2 rounded-md hover:bg-slate-100"
+            >
+              Huỷ
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirm}
+              disabled={selected.size === 0}
+              className="bg-amber-500 hover:bg-amber-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-black font-semibold text-sm px-5 py-2 rounded-md transition-colors"
+            >
+              Thêm {selected.size > 0 && `(${selected.size})`}
+            </button>
           </div>
         </DialogFooter>
       </DialogContent>
