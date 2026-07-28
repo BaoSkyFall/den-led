@@ -3,13 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import {
-  ChevronRight,
-  Zap,
-  Award,
-  Shield,
-  ChevronLeft,
-} from "lucide-react";
+import { ChevronRight, Zap, Award, Shield, ChevronLeft } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -284,9 +278,17 @@ function SpecialsSection() {
             href="/shop"
             className="inline-flex items-center gap-3 text-xs font-bold tracking-[0.2em] uppercase text-white hover:text-amber-500 transition-colors group"
           >
-            <ChevronLeft size={14} strokeWidth={1.5} className="group-hover:-translate-x-1 transition-transform" />
+            <ChevronLeft
+              size={14}
+              strokeWidth={1.5}
+              className="group-hover:-translate-x-1 transition-transform"
+            />
             <span>Xem Tất Cả Sản Phẩm</span>
-            <ChevronRight size={14} strokeWidth={1.5} className="group-hover:translate-x-1 transition-transform" />
+            <ChevronRight
+              size={14}
+              strokeWidth={1.5}
+              className="group-hover:translate-x-1 transition-transform"
+            />
           </Link>
         </div>
       </div>
@@ -333,8 +335,10 @@ function FeatureCollage() {
             <div
               className="absolute inset-0"
               style={{
-                maskImage: "linear-gradient(to right, transparent, #0a0a0a 60%)",
-                WebkitMaskImage: "linear-gradient(to right, transparent, #0a0a0a 60%)",
+                maskImage:
+                  "linear-gradient(to right, transparent, #0a0a0a 60%)",
+                WebkitMaskImage:
+                  "linear-gradient(to right, transparent, #0a0a0a 60%)",
               }}
             />
 

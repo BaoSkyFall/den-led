@@ -10,7 +10,7 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "Đèn LED Motors | Độ Đèn LED Xe Máy Cao Cấp",
+  title: "Sân Chơi Đèn LED | Độ Đèn LED Xe Máy Cao Cấp",
   description: "Dịch vụ độ đèn LED xe máy cao cấp - SH, Air Blade, Vario",
 };
 

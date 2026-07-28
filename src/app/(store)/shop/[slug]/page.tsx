@@ -564,122 +564,122 @@ export default function ProductDetailPage({ params }: Props) {
 
   return (
     <main className="max-w-[1400px] mx-auto px-4 sm:px-6 pt-24 lg:pt-32 pb-16 lg:pb-24 text-white">
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-2 mb-10">
-          <Link
-            href="/"
-            className="text-[10px] uppercase tracking-[0.2em] text-white/30 hover:text-white transition-colors"
-          >
-            Home
-          </Link>
-          <ChevronRight size={10} className="text-white/20" />
-          <Link
-            href="/shop"
-            className="text-[10px] uppercase tracking-[0.2em] text-white/30 hover:text-white transition-colors"
-          >
-            Garage
-          </Link>
-          <ChevronRight size={10} className="text-white/20" />
-          <span className="text-[10px] uppercase tracking-[0.2em] text-amber-500">
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2 mb-10">
+        <Link
+          href="/"
+          className="text-[10px] uppercase tracking-[0.2em] text-white/30 hover:text-white transition-colors"
+        >
+          Home
+        </Link>
+        <ChevronRight size={10} className="text-white/20" />
+        <Link
+          href="/shop"
+          className="text-[10px] uppercase tracking-[0.2em] text-white/30 hover:text-white transition-colors"
+        >
+          Garage
+        </Link>
+        <ChevronRight size={10} className="text-white/20" />
+        <span className="text-[10px] uppercase tracking-[0.2em] text-amber-500">
+          {product.name}
+        </span>
+      </div>
+
+      {/* 2-column layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 xl:gap-20 items-start">
+        {/* LEFT — Gallery */}
+        <ImageGallery images={gallery} catalog={catalog} />
+
+        {/* RIGHT — Info + Variants */}
+        <div className="lg:pt-2 min-w-0">
+          {/* Badge */}
+          {product.badge && (
+            <span className="inline-block text-[9px] font-bold tracking-[0.25em] uppercase bg-amber-500 text-black px-3 py-1 mb-4">
+              {product.badge === "new_product"
+                ? "NEW"
+                : product.badge === "best_sale"
+                  ? "BEST SALE"
+                  : "FEATURED"}
+            </span>
+          )}
+
+          {/* Name */}
+          <h1 className="text-4xl xl:text-5xl font-black uppercase tracking-tighter text-white mb-3 leading-[0.95]">
             {product.name}
-          </span>
-        </div>
+          </h1>
 
-        {/* 2-column layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 xl:gap-20 items-start">
-          {/* LEFT — Gallery */}
-          <ImageGallery images={gallery} catalog={catalog} />
-
-          {/* RIGHT — Info + Variants */}
-          <div className="lg:pt-2 min-w-0">
-            {/* Badge */}
-            {product.badge && (
-              <span className="inline-block text-[9px] font-bold tracking-[0.25em] uppercase bg-amber-500 text-black px-3 py-1 mb-4">
-                {product.badge === "new_product"
-                  ? "NEW"
-                  : product.badge === "best_sale"
-                    ? "BEST SALE"
-                    : "FEATURED"}
+          {/* Min price */}
+          {minTotal > 0 ? (
+            <p className="text-lg font-bold text-white/60 mb-8">
+              Từ{" "}
+              <span className="text-amber-500 font-black">
+                {formatVND(minTotal)}
               </span>
-            )}
-
-            {/* Name */}
-            <h1 className="text-4xl xl:text-5xl font-black uppercase tracking-tighter text-white mb-3 leading-[0.95]">
-              {product.name}
-            </h1>
-
-            {/* Min price */}
-            {minTotal > 0 ? (
-              <p className="text-lg font-bold text-white/60 mb-8">
-                Từ{" "}
-                <span className="text-amber-500 font-black">
-                  {formatVND(minTotal)}
-                </span>
-              </p>
-            ) : (
-              <p className="text-lg font-bold text-white/60 mb-8">
-                Liên hệ để báo giá
-              </p>
-            )}
-
-            <div className="w-12 h-px bg-amber-500 mb-8" />
-
-            {/* Variants */}
-            {product.variantGroups.length > 0 ? (
-              <VariantSelector groups={product.variantGroups} />
-            ) : (
-              <a
-                href="tel:+84949955644"
-                className="inline-flex items-center gap-2 bg-amber-500 text-black text-xs font-bold tracking-[0.2em] uppercase px-8 py-4 hover:bg-amber-400 transition-colors"
-              >
-                <Phone size={14} strokeWidth={2} />
-                Liên hệ ngay
-              </a>
-            )}
-          </div>
-        </div>
-
-        {/* Description section */}
-        {product.description && (
-          <div className="mt-16 lg:mt-24 border-t border-white/10 pt-10 lg:pt-16">
-            <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-amber-500 mb-4">
-              Mô tả sản phẩm
             </p>
-            <h2 className="text-xl lg:text-2xl font-black uppercase tracking-tight text-white mb-6">
-              {product.name}
-            </h2>
-            <div
-              className="text-white/60 leading-relaxed max-w-2xl text-sm prose-invert [&_h2]:text-white [&_h3]:text-white/80 [&_strong]:text-white [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_a]:text-amber-500 [&_a]:underline"
-              dangerouslySetInnerHTML={{ __html: product.description }}
-            />
-          </div>
-        )}
+          ) : (
+            <p className="text-lg font-bold text-white/60 mb-8">
+              Liên hệ để báo giá
+            </p>
+          )}
 
-        {/* Catalog reference section */}
-        <div className="mt-16 border border-white/10 p-6">
+          <div className="w-12 h-px bg-amber-500 mb-8" />
+
+          {/* Variants */}
+          {product.variantGroups.length > 0 ? (
+            <VariantSelector groups={product.variantGroups} />
+          ) : (
+            <a
+              href="tel:+84949955644"
+              className="inline-flex items-center gap-2 bg-amber-500 text-black text-xs font-bold tracking-[0.2em] uppercase px-8 py-4 hover:bg-amber-400 transition-colors"
+            >
+              <Phone size={14} strokeWidth={2} />
+              Liên hệ ngay
+            </a>
+          )}
+        </div>
+      </div>
+
+      {/* Description section */}
+      {product.description && (
+        <div className="mt-16 lg:mt-24 border-t border-white/10 pt-10 lg:pt-16">
           <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-amber-500 mb-4">
-            Tham khảo catalog
+            Mô tả sản phẩm
           </p>
-          <div className="relative aspect-[16/7] overflow-hidden">
-            <Image
-              src={catalog}
-              alt={`${product.name} catalog`}
-              fill
-              className="object-cover object-top"
-            />
-          </div>
+          <h2 className="text-xl lg:text-2xl font-black uppercase tracking-tight text-white mb-6">
+            {product.name}
+          </h2>
+          <div
+            className="text-white/60 leading-relaxed max-w-2xl text-sm prose-invert [&_h2]:text-white [&_h3]:text-white/80 [&_strong]:text-white [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_a]:text-amber-500 [&_a]:underline"
+            dangerouslySetInnerHTML={{ __html: product.description }}
+          />
         </div>
+      )}
 
-        {/* Back link */}
-        <div className="mt-12">
-          <Link
-            href="/shop"
-            className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-white/40 hover:text-amber-500 transition-colors"
-          >
-            <ChevronLeft size={12} />
-            Quay lại danh sách xe
-          </Link>
+      {/* Catalog reference section */}
+      <div className="mt-16 border border-white/10 p-6">
+        <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-amber-500 mb-4">
+          Tham khảo catalog
+        </p>
+        <div className="relative aspect-[16/7] overflow-hidden">
+          <Image
+            src={catalog}
+            alt={`${product.name} catalog`}
+            fill
+            className="object-cover object-top"
+          />
         </div>
+      </div>
+
+      {/* Back link */}
+      <div className="mt-12">
+        <Link
+          href="/shop"
+          className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-white/40 hover:text-amber-500 transition-colors"
+        >
+          <ChevronLeft size={12} />
+          Quay lại danh sách xe
+        </Link>
+      </div>
     </main>
   );
 }

@@ -3,11 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import {
-  ChevronRight,
-  Search,
-  SlidersHorizontal,
-} from "lucide-react";
+import { ChevronRight, Search, SlidersHorizontal } from "lucide-react";
 
 type Product = {
   id: string;
@@ -113,7 +109,10 @@ function ProductCard({ product }: { product: Product }) {
           </div>
           <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/50 group-hover:text-amber-500 transition-colors flex items-center gap-1">
             Xem
-            <ChevronRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
+            <ChevronRight
+              size={12}
+              className="group-hover:translate-x-0.5 transition-transform"
+            />
           </span>
         </div>
       </div>

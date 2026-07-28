@@ -152,7 +152,8 @@ function ProductForm({ product }: ProductsFormProps) {
               />
             </FormControl>
             <FormDescription>
-              Đường dẫn hiển thị trên URL: /shop/<span className="text-slate-700 font-medium">slug</span>
+              Đường dẫn hiển thị trên URL: /shop/
+              <span className="text-slate-700 font-medium">slug</span>
             </FormDescription>
             <FormMessage />
           </FormItem>
@@ -204,7 +205,10 @@ function ProductForm({ product }: ProductsFormProps) {
                       <SelectContent>
                         {data.collectionsCollection.edges.map(
                           ({ node: collection }) => (
-                            <SelectItem value={collection.id} key={collection.id}>
+                            <SelectItem
+                              value={collection.id}
+                              key={collection.id}
+                            >
                               {collection.label}
                             </SelectItem>
                           ),
@@ -252,7 +256,8 @@ function ProductForm({ product }: ProductsFormProps) {
                 />
               </FormControl>
               <FormDescription>
-                Dùng khi sản phẩm chưa có variant. Có variant sẽ hiển thị giá thấp nhất.
+                Dùng khi sản phẩm chưa có variant. Có variant sẽ hiển thị giá
+                thấp nhất.
               </FormDescription>
               <FormMessage />
             </FormItem>
