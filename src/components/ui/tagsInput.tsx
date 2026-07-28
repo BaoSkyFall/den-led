@@ -69,7 +69,7 @@ const TagsInput: FC<TagsInputProps> = ({
         value={input}
         onChange={handleInputChange}
         onKeyDown={handleKeyDown}
-        placeholder={placeholder || "Project Tag"}
+        placeholder={placeholder || "Nhập tag rồi nhấn Enter"}
         onBlur={handleBlur} // Notify React Hook Form on blur
       />
       <button type="button" onClick={addTag}>

@@ -18,7 +18,8 @@ export default function AdminMobileNav({ items }: Props) {
         <div className="flex items-center gap-1 px-3 py-2 min-w-max">
           {items.map((item) => {
             const Icon = Icons[item.icon ?? "chevronLeft"];
-            const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+            const isActive =
+              pathname === item.href || pathname.startsWith(item.href + "/");
             return item.href ? (
               <Link
                 key={item.href}
@@ -43,7 +44,9 @@ export default function AdminMobileNav({ items }: Props) {
         <div className="flex items-center justify-around px-2 py-1">
           {items.slice(0, 5).map((item) => {
             const Icon = Icons[item.icon ?? "chevronLeft"];
-            const isActive = pathname === item.href || pathname.startsWith((item.href ?? "") + "/");
+            const isActive =
+              pathname === item.href ||
+              pathname.startsWith((item.href ?? "") + "/");
             return item.href ? (
               <Link
                 key={item.href}
@@ -53,7 +56,12 @@ export default function AdminMobileNav({ items }: Props) {
                   isActive ? "text-foreground" : "text-muted-foreground",
                 )}
               >
-                <Icon className={cn("h-5 w-5 shrink-0", isActive && "text-foreground")} />
+                <Icon
+                  className={cn(
+                    "h-5 w-5 shrink-0",
+                    isActive && "text-foreground",
+                  )}
+                />
                 <span className="text-[9px] font-medium leading-none truncate max-w-[52px] text-center">
                   {item.title}
                 </span>

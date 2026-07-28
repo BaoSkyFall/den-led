@@ -1,5 +1,4 @@
 import { getCurrentUser, isAdmin } from "@/features/users/actions";
-import MainFooter from "@/components/layouts/MainFooter";
 import Navbar from "@/components/layouts/MainNavbar";
 import { redirect } from "next/navigation";
 import { ReactNode } from "react";
@@ -13,10 +12,9 @@ async function AdminLayout({ children }: Props) {
     redirect(`/sign-in?error=Only authenticated users can access`);
 
   return (
-    <main>
+    <main className="min-h-screen bg-slate-50">
       <Navbar adminLayout={true} />
       {children}
-      <MainFooter />
     </main>
   );
 }

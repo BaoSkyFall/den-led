@@ -8,7 +8,13 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: `${process.env.NEXT_PUBLIC_S3_BUCKET}.s3.${process.env.NEXT_PUBLIC_S3_REGION}.amazonaws.com`,
+        hostname: "*.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      },
+      {
+        protocol: "https",
+        hostname: "*.supabase.in",
+        pathname: "/storage/v1/object/public/**",
       },
       {
         protocol: "https",

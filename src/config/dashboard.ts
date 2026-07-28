@@ -13,7 +13,7 @@ export const dashboardConfig: DashboardConfig = {
       items: [],
     },
     {
-      title: "Bộ Sưu Tập",
+      title: "Danh Mục",
       href: "/admin/collections",
       icon: "folder",
       items: [],

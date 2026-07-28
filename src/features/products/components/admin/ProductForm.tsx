@@ -1,7 +1,7 @@
 "use client";
 
 import { createProductAction, updateProductAction } from "@/_actions/products";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -39,6 +39,7 @@ import { Suspense, useTransition } from "react";
 import VariantManager from "./VariantManager";
 import { useForm } from "react-hook-form";
 import { gql } from "urql";
+import { Save, X } from "lucide-react";
 
 type ProductsFormProps = {
   product?: SelectProducts;
@@ -57,26 +58,41 @@ export const ProductFormQuery = gql(/* GraphQL */ `
   }
 `);
 
-function ProductFrom({ product }: ProductsFormProps) {
+function Section({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+      <header className="px-5 py-4 border-b border-slate-200 bg-slate-50/50">
+        <h2 className="text-sm font-bold text-slate-900">{title}</h2>
+        {description && (
+          <p className="text-xs text-slate-500 mt-0.5">{description}</p>
+        )}
+      </header>
+      <div className="p-5 space-y-5">{children}</div>
+    </section>
+  );
+}
+
+function ProductForm({ product }: ProductsFormProps) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const { toast } = useToast();
 
-  const [{ data }] = useQuery({
-    query: ProductFormQuery,
-  });
+  const [{ data }] = useQuery({ query: ProductFormQuery });
 
   const form = useForm<InsertProducts>({
     resolver: zodResolver(createInsertSchema(products)),
     defaultValues: { ...product },
   });
 
-  const {
-    register,
-    control,
-    handleSubmit,
-    formState: { errors },
-  } = form;
+  const { register, control, handleSubmit } = form;
 
   const onSubmit = handleSubmit(async (data: InsertProducts) => {
     startTransition(async () => {
@@ -85,34 +101,40 @@ function ProductFrom({ product }: ProductsFormProps) {
           ? await updateProductAction(product.id, data)
           : await createProductAction(data);
 
+        toast({
+          title: product ? "Đã cập nhật sản phẩm" : "Đã tạo sản phẩm mới",
+          description: data.name,
+        });
+
         router.push("/admin/products");
         router.refresh();
-
-        toast({
-          title: `Product is ${product ? "updated" : "created"}.`,
-          description: `${data.name}`,
-        });
       } catch (err) {
-        // console.log("unexpected Error Occured")
+        toast({
+          title: "Có lỗi xảy ra",
+          description: "Không thể lưu sản phẩm. Vui lòng thử lại.",
+        });
       }
     });
   });
 
-  console.log("!!data", data);
   return (
     <Form {...form}>
       <form
         id="project-form"
-        className="gap-x-5 flex gap-y-5 flex-col px-3"
         onSubmit={onSubmit}
+        className="pb-24 lg:pb-8 space-y-5 max-w-4xl"
       >
-        <div className="flex flex-col gap-y-5 max-w-[500px]">
+        {/* Basic info */}
+        <Section
+          title="Thông Tin Cơ Bản"
+          description="Tên, đường dẫn và mô tả sản phẩm"
+        >
           <FormItem>
-            <FormLabel className="text-sm">Tên Sản Phẩm*</FormLabel>
+            <FormLabel>Tên Sản Phẩm *</FormLabel>
             <FormControl>
               <Input
                 aria-invalid={!!form.formState.errors.name}
-                placeholder="Nhập tên sản phẩm."
+                placeholder="vd: SH 2026 Độ Đèn Bi Cầu"
                 {...register("name")}
               />
             </FormControl>
@@ -120,7 +142,7 @@ function ProductFrom({ product }: ProductsFormProps) {
           </FormItem>
 
           <FormItem>
-            <FormLabel className="text-sm">Slug (đường dẫn)*</FormLabel>
+            <FormLabel>Slug (đường dẫn URL) *</FormLabel>
             <FormControl>
               <Input
                 defaultValue={product?.slug}
@@ -129,6 +151,9 @@ function ProductFrom({ product }: ProductsFormProps) {
                 {...register("slug")}
               />
             </FormControl>
+            <FormDescription>
+              Đường dẫn hiển thị trên URL: /shop/<span className="text-slate-700 font-medium">slug</span>
+            </FormDescription>
             <FormMessage />
           </FormItem>
 
@@ -137,42 +162,28 @@ function ProductFrom({ product }: ProductsFormProps) {
             name="description"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-sm">Mô Tả Sản Phẩm</FormLabel>
+                <FormLabel>Mô Tả Sản Phẩm</FormLabel>
                 <FormControl>
                   <RichTextEditor
                     value={field.value ?? ""}
                     onChange={field.onChange}
-                    placeholder="Nhập mô tả sản phẩm (hỗ trợ định dạng)..."
+                    placeholder="Nhập mô tả chi tiết sản phẩm..."
                   />
                 </FormControl>
                 <FormDescription>
-                  Hỗ trợ in đậm, nghiêng, tiêu đề, danh sách, và link.
+                  Hỗ trợ định dạng: in đậm, nghiêng, tiêu đề, danh sách, link.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
+        </Section>
 
-          {/* <FormField
-            control={form.control}
-            name="featured"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow">
-                <FormControl>
-                  <FormLabel>Featured*</FormLabel>
-                  <Checkbox
-                    defaultChecked={false}
-                    checked={field.value || false}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-
-                <FormDescription>
-                  You can manage your mobile notifications in the{" "}
-                </FormDescription>
-              </FormItem>
-            )}
-          /> */}
+        {/* Categorization */}
+        <Section
+          title="Phân Loại"
+          description="Bộ sưu tập, nhãn hiển thị và tags"
+        >
           <Suspense>
             {data && data.collectionsCollection && (
               <FormField
@@ -193,10 +204,7 @@ function ProductFrom({ product }: ProductsFormProps) {
                       <SelectContent>
                         {data.collectionsCollection.edges.map(
                           ({ node: collection }) => (
-                            <SelectItem
-                              value={collection.id}
-                              key={collection.id}
-                            >
+                            <SelectItem value={collection.id} key={collection.id}>
                               {collection.label}
                             </SelectItem>
                           ),
@@ -204,7 +212,7 @@ function ProductFrom({ product }: ProductsFormProps) {
                       </SelectContent>
                     </Select>
                     <FormDescription>
-                      Chọn bộ sưu tập cho sản phẩm này.
+                      Nhóm sản phẩm vào một bộ sưu tập.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -216,45 +224,62 @@ function ProductFrom({ product }: ProductsFormProps) {
           <BadgeSelectField name="badge" label={""} />
 
           <FormItem>
-            <FormLabel className="text-sm">Đánh Giá (0–5)*</FormLabel>
-            <FormControl>
-              <Input
-                defaultValue={product?.rating}
-                aria-invalid={!!form.formState.errors.rating}
-                placeholder="vd: 4.5"
-                {...register("rating")}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-
-          <FormItem>
-            <FormLabel className="text-sm">Tags</FormLabel>
+            <FormLabel>Tags</FormLabel>
             <FormControl>
               <TagsField name={"tags"} defaultValue={product?.tags || []} />
             </FormControl>
+            <FormDescription>
+              Nhập từ khoá rồi nhấn Enter để thêm.
+            </FormDescription>
             <FormMessage />
           </FormItem>
+        </Section>
 
-          <FormItem>
-            <FormLabel className="text-sm">Giá Cơ Bản (fallback)</FormLabel>
-            <FormControl>
-              <Input
-                defaultValue={product?.price}
-                aria-invalid={!!form.formState.errors.price}
-                placeholder="vd: 0 (dùng variant để đặt giá)"
-                {...register("price")}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
+        {/* Pricing & rating */}
+        <Section
+          title="Giá & Đánh Giá"
+          description="Giá cơ bản (fallback) và điểm đánh giá hiển thị"
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <FormItem>
+              <FormLabel>Giá Cơ Bản (VND)</FormLabel>
+              <FormControl>
+                <Input
+                  defaultValue={product?.price}
+                  aria-invalid={!!form.formState.errors.price}
+                  placeholder="0"
+                  {...register("price")}
+                />
+              </FormControl>
+              <FormDescription>
+                Dùng khi sản phẩm chưa có variant. Có variant sẽ hiển thị giá thấp nhất.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
 
+            <FormItem>
+              <FormLabel>Đánh Giá (0–5) *</FormLabel>
+              <FormControl>
+                <Input
+                  defaultValue={product?.rating}
+                  aria-invalid={!!form.formState.errors.rating}
+                  placeholder="vd: 4.5"
+                  {...register("rating")}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          </div>
+        </Section>
+
+        {/* Media */}
+        <Section title="Hình Ảnh" description="Ảnh đại diện hiển thị trên card">
           <FormField
             control={form.control}
             name="featuredImageId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Ảnh Đại Diện*</FormLabel>
+                <FormLabel>Ảnh Đại Diện *</FormLabel>
                 <Suspense>
                   <ImageDialog
                     defaultValue={product?.featuredImageId}
@@ -262,52 +287,59 @@ function ProductFrom({ product }: ProductsFormProps) {
                     value={field.value}
                   />
                 </Suspense>
-
                 <FormDescription>
-                  Kéo thả hoặc chọn ảnh từ thư viện hình ảnh.
+                  Kéo thả ảnh vào hoặc chọn từ thư viện.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
-        </div>
+        </Section>
 
-        <div className="py-8 flex gap-x-5 items-center">
-          <Button disabled={isPending} variant={"outline"} form="project-form">
-            {product ? "Cập Nhật" : "Tạo Mới"}
-            {isPending && (
-              <Spinner
-                className="mr-2 h-4 w-4 animate-spin"
-                aria-hidden="true"
-              />
-            )}
-          </Button>
-          <Link href="/admin/products" className={buttonVariants()}>
-            Huỷ
-          </Link>
+        {/* Variants — only for existing products */}
+        {product?.id && (
+          <Section
+            title="Gói Dịch Vụ (Variants)"
+            description="Quản lý các gói dịch vụ và mức giá cho sản phẩm này"
+          >
+            <Suspense
+              fallback={
+                <p className="text-xs text-muted-foreground">Đang tải...</p>
+              }
+            >
+              <VariantManager productId={product.id} />
+            </Suspense>
+          </Section>
+        )}
+
+        {/* Sticky action bar */}
+        <div className="fixed bottom-14 md:bottom-0 left-0 right-0 md:left-auto md:right-auto md:relative z-30 border-t md:border md:rounded-lg bg-white shadow-lg md:shadow-none">
+          <div className="max-w-4xl mx-auto px-4 md:px-5 py-3 flex items-center justify-end gap-3">
+            <Link
+              href="/admin/products"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors"
+            >
+              <X size={14} />
+              Huỷ
+            </Link>
+            <Button
+              type="submit"
+              form="project-form"
+              disabled={isPending}
+              className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-black font-semibold px-6 py-2 shadow-sm"
+            >
+              {isPending ? (
+                <Spinner className="h-4 w-4 animate-spin" aria-hidden="true" />
+              ) : (
+                <Save size={14} />
+              )}
+              {product ? "Lưu Thay Đổi" : "Tạo Sản Phẩm"}
+            </Button>
+          </div>
         </div>
       </form>
-
-      {/* Variant management — only available for existing products */}
-      {product?.id && (
-        <div className="max-w-[500px] px-3 border-t pt-6 mt-2">
-          <h3 className="text-base font-semibold mb-1">
-            Gói Dịch Vụ (Variants)
-          </h3>
-          <p className="text-xs text-muted-foreground mb-4">
-            Quản lý gói dịch vụ và các mức giá cho sản phẩm này.
-          </p>
-          <Suspense
-            fallback={
-              <p className="text-xs text-muted-foreground">Đang tải...</p>
-            }
-          >
-            <VariantManager productId={product.id} />
-          </Suspense>
-        </div>
-      )}
     </Form>
   );
 }
 
-export default ProductFrom;
+export default ProductForm;

@@ -12,6 +12,20 @@ import { z } from "zod";
 const BUCKET = "products";
 
 export async function POST(request: NextRequest) {
+  const cookieStore = cookies();
+
+  // Auth check: only admin users can upload
+  const authClient = createClient({ cookieStore });
+  const {
+    data: { user },
+  } = await authClient.auth.getUser();
+  if (!user?.app_metadata?.isAdmin) {
+    return NextResponse.json(
+      { message: "Chỉ admin mới được upload ảnh." },
+      { status: 403 },
+    );
+  }
+
   const formData = await request.formData();
   const data = Object.fromEntries(formData) as z.infer<typeof mediaSchema>;
   const validation = mediaSchema.safeParse(data);
@@ -20,7 +34,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(validation.error.format(), { status: 400 });
   }
 
-  const supabase = createClient({ cookieStore: cookies() });
+  // Use service role client to bypass RLS for storage upload
+  const supabase = createClient({ cookieStore, isAdmin: true });
 
   let statusCode = 201;
   let errorMessage = "Unexpected Error";

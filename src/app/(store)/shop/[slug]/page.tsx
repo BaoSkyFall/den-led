@@ -4,17 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { useState, useEffect } from "react";
-import {
-  ChevronLeft,
-  Phone,
-  Facebook,
-  Instagram,
-  Twitter,
-  Check,
-  ChevronRight,
-  Menu,
-  X,
-} from "lucide-react";
+import { ChevronLeft, Phone, Check, ChevronRight } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -314,96 +304,6 @@ function BiCauLoader() {
   );
 }
 
-// ─── Header ───────────────────────────────────────────────────────────────────
-
-function Header() {
-  const [open, setOpen] = useState(false);
-  const NAV_LINKS = [
-    { label: "Home", href: "/" },
-    { label: "Garage", href: "/shop" },
-    { label: "About Us", href: "/#about" },
-    { label: "Contact", href: "/#contact" },
-  ];
-
-  return (
-    <>
-      <header className="fixed top-0 w-full z-50 h-20 backdrop-blur-md bg-[#111111]/90 border-b border-white/5">
-        <div className="max-w-[1400px] mx-auto px-6 h-full flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/"
-              className="w-12 h-12 bg-amber-500 flex flex-col items-center justify-center px-1"
-            >
-              <span className="text-[7px] tracking-widest font-bold text-black leading-none text-center">
-                SÂN CHƠI
-              </span>
-              <span className="text-[10px] tracking-tight font-black text-black leading-none text-center">
-                ĐÈN LED
-              </span>
-            </Link>
-          </div>
-          <nav className="hidden lg:flex items-center gap-10">
-            {NAV_LINKS.map(({ label, href }) => (
-              <Link
-                key={label}
-                href={href}
-                className="text-xs font-bold tracking-[0.2em] uppercase text-white/60 hover:text-white transition-colors"
-              >
-                {label}
-              </Link>
-            ))}
-          </nav>
-          <div className="flex items-center gap-4">
-            <a
-              href="tel:+84949955644"
-              className="hidden lg:flex items-center gap-2 bg-amber-500 text-black text-xs font-bold tracking-[0.2em] uppercase px-5 py-3 hover:bg-amber-400 transition-colors"
-            >
-              <Phone size={12} strokeWidth={2} />
-              <span>0949955644</span>
-            </a>
-            <button
-              className="lg:hidden text-white"
-              onClick={() => setOpen(true)}
-            >
-              <Menu size={22} strokeWidth={1.5} />
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {open && (
-        <div className="fixed inset-0 z-[100] bg-[#0a0a0a] flex flex-col p-8">
-          <button
-            className="self-end text-white mb-12"
-            onClick={() => setOpen(false)}
-          >
-            <X size={24} strokeWidth={1.5} />
-          </button>
-          <nav className="flex flex-col gap-8">
-            {NAV_LINKS.map(({ label, href }) => (
-              <Link
-                key={label}
-                href={href}
-                onClick={() => setOpen(false)}
-                className="text-3xl font-black uppercase tracking-tighter text-white hover:text-amber-500 transition-colors"
-              >
-                {label}
-              </Link>
-            ))}
-          </nav>
-          <a
-            href="tel:+84949955644"
-            className="mt-auto flex items-center gap-2 bg-amber-500 text-black text-xs font-bold tracking-[0.2em] uppercase px-5 py-4 w-fit"
-          >
-            <Phone size={14} strokeWidth={2} />
-            <span>0949955644</span>
-          </a>
-        </div>
-      )}
-    </>
-  );
-}
-
 // ─── Image Gallery ────────────────────────────────────────────────────────────
 
 function ImageGallery({
@@ -417,7 +317,7 @@ function ImageGallery({
   const allImages = [...images, catalog];
 
   return (
-    <div className="flex flex-col gap-4 lg:sticky lg:top-24">
+    <div className="flex flex-col gap-4">
       {/* Main image */}
       <div className="relative aspect-[4/3] bg-[#0a0a0a] overflow-hidden">
         <Image
@@ -524,14 +424,14 @@ function VariantSelector({ groups }: { groups: VariantGroup[] }) {
                 <button
                   key={opt.id}
                   onClick={() => toggleOption(group.id, opt)}
-                  className={`w-full text-left p-4 border transition-all duration-200 ${
+                  className={`w-full text-left p-3 sm:p-4 border transition-all duration-200 ${
                     isSelected
                       ? "border-amber-500 bg-amber-500/10"
                       : "border-white/10 hover:border-white/30"
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-3">
+                  <div className="flex items-start justify-between gap-3 min-w-0">
+                    <div className="flex items-start gap-3 min-w-0 flex-1">
                       <div
                         className={`mt-0.5 w-4 h-4 shrink-0 border flex items-center justify-center ${
                           isSelected
@@ -547,18 +447,18 @@ function VariantSelector({ groups }: { groups: VariantGroup[] }) {
                           />
                         )}
                       </div>
-                      <div>
-                        <p className="text-sm font-bold uppercase tracking-wide text-white">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold uppercase tracking-wide text-white break-words">
                           {opt.name}
                         </p>
                         {opt.features.length > 0 && (
-                          <p className="text-[11px] text-white/40 mt-1 leading-relaxed">
+                          <p className="text-[11px] text-white/40 mt-1 leading-relaxed break-words">
                             {opt.features.slice(0, 3).join(" · ")}
                           </p>
                         )}
                       </div>
                     </div>
-                    <p className="text-sm font-black text-amber-500 shrink-0">
+                    <p className="text-xs sm:text-sm font-black text-amber-500 shrink-0 whitespace-nowrap">
                       {formatVND(Number(opt.price))}
                     </p>
                   </div>
@@ -638,8 +538,14 @@ export default function ProductDetailPage({ params }: Props) {
     return notFound();
   }
 
+  const resolveKey = (k: string | null | undefined): string => {
+    if (!k) return "/catalog.pdf/1.jpg";
+    if (k.startsWith("http") || k.startsWith("/")) return k;
+    return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/products/${k}`;
+  };
+
   const images = PRODUCT_IMAGES[params.slug];
-  const gallery = images?.gallery ?? [product.imageKey ?? "/catalog.pdf/1.jpg"];
+  const gallery = images?.gallery ?? [resolveKey(product.imageKey)];
   const catalog = images?.catalog ?? "/catalog.pdf/1.jpg";
 
   const minTotal = product.variantGroups.reduce((sum, g) => {
@@ -657,25 +563,7 @@ export default function ProductDetailPage({ params }: Props) {
     }).format(n);
 
   return (
-    <div className="min-h-screen bg-[#111111] text-white">
-      {/* Social sidebar */}
-      <aside className="hidden lg:flex fixed left-8 top-1/2 -translate-y-1/2 z-40 flex-col gap-5">
-        {[Instagram, Facebook, Twitter].map((Icon, i) => (
-          <a
-            key={i}
-            href="#"
-            aria-label="social"
-            className="text-gray-500 hover:text-amber-500 transition-colors"
-          >
-            <Icon size={16} strokeWidth={1.5} />
-          </a>
-        ))}
-        <div className="w-px h-16 bg-white/10 mx-auto mt-2" />
-      </aside>
-
-      <Header />
-
-      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 pt-24 lg:pt-32 pb-16 lg:pb-24">
+    <main className="max-w-[1400px] mx-auto px-4 sm:px-6 pt-24 lg:pt-32 pb-16 lg:pb-24 text-white">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 mb-10">
           <Link
@@ -698,12 +586,12 @@ export default function ProductDetailPage({ params }: Props) {
         </div>
 
         {/* 2-column layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 xl:gap-20">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 xl:gap-20 items-start">
           {/* LEFT — Gallery */}
           <ImageGallery images={gallery} catalog={catalog} />
 
           {/* RIGHT — Info + Variants */}
-          <div className="lg:pt-2">
+          <div className="lg:pt-2 min-w-0">
             {/* Badge */}
             {product.badge && (
               <span className="inline-block text-[9px] font-bold tracking-[0.25em] uppercase bg-amber-500 text-black px-3 py-1 mb-4">
@@ -785,29 +673,13 @@ export default function ProductDetailPage({ params }: Props) {
         {/* Back link */}
         <div className="mt-12">
           <Link
-            href="/"
+            href="/shop"
             className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-white/40 hover:text-amber-500 transition-colors"
           >
             <ChevronLeft size={12} />
-            Quay lại trang chủ
+            Quay lại danh sách xe
           </Link>
         </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t border-white/5 py-8 bg-[#0a0a0a]">
-        <div className="max-w-[1400px] mx-auto px-6 flex flex-col lg:flex-row items-center justify-between gap-4">
-          <p className="text-[10px] uppercase tracking-[0.2em] text-white/20">
-            © 2026 Sân Chơi Đèn Led. All rights reserved.
-          </p>
-          <a
-            href="tel:+84949955644"
-            className="text-[10px] uppercase tracking-[0.2em] text-white/40 hover:text-amber-500 transition-colors"
-          >
-            0949955644
-          </a>
-        </div>
-      </footer>
-    </div>
+    </main>
   );
 }

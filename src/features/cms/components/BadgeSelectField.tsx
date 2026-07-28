@@ -34,29 +34,29 @@ function BadgeSelectField({ name, label }: BadgeSelectFieldProps) {
       name="badge"
       render={({ field }) => (
         <FormItem>
-          <FormLabel>Badge</FormLabel>
+          <FormLabel>Nhãn Hiển Thị</FormLabel>
           <Select
             onValueChange={field.onChange}
             defaultValue={field.value || undefined}
           >
             <FormControl>
               <SelectTrigger>
-                <SelectValue placeholder="Add a badge for the Product" />
+                <SelectValue placeholder="Chọn nhãn (tuỳ chọn)" />
               </SelectTrigger>
             </FormControl>
 
             <SelectContent>
               <SelectGroup>
-                <SelectLabel>Badge</SelectLabel>
-                <SelectItem value="new_product">New Product</SelectItem>
-                <SelectItem value="best_sale">Best Sale</SelectItem>
-                <SelectItem value="featured">featured</SelectItem>
+                <SelectLabel>Nhãn</SelectLabel>
+                <SelectItem value="new_product">Sản phẩm mới</SelectItem>
+                <SelectItem value="best_sale">Bán chạy</SelectItem>
+                <SelectItem value="featured">Nổi bật</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
 
           <FormDescription>
-            Select a Badge if you want the Product card attached a badge.
+            Chọn nhãn hiển thị trên card sản phẩm (không bắt buộc).
           </FormDescription>
           <FormMessage />
         </FormItem>
