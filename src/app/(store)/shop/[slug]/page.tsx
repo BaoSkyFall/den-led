@@ -44,35 +44,6 @@ type ProductDetail = {
   gallery: GalleryItem[];
 };
 
-// ─── Static product data map (extends DB data with local images) ───────────────
-
-const PRODUCT_IMAGES: Record<
-  string,
-  { hero: string; gallery: string[]; catalog: string }
-> = {
-  "sh-2026": {
-    hero: "/assets/den-led/SH/SH 2026/DSC08596.jpg",
-    gallery: [
-      "/assets/den-led/SH/SH 2026/DSC01116.jpg",
-      "/assets/den-led/SH/SH 2026/DSC08596.jpg",
-    ],
-    catalog: "/catalog.pdf/1.jpg",
-  },
-  "air-blade-2026": {
-    hero: "/assets/den-led/AB/AB2026/DSC07552.jpg",
-    gallery: [
-      "/assets/den-led/AB/AB2026/DSC07552.jpg",
-      "/assets/den-led/AB/AB2026/DSC06405.jpg",
-    ],
-    catalog: "/catalog.pdf/12.jpg",
-  },
-  "vario-2026": {
-    hero: "/assets/den-led/Vario/Vario 2026/DSC06430.jpg",
-    gallery: ["/assets/den-led/Vario/Vario 2026/DSC06430.jpg"],
-    catalog: "/catalog.pdf/7.jpg",
-  },
-};
-
 // ─── Bi Cầu LED Loader ────────────────────────────────────────────────────────
 
 function BiCauLoader() {
@@ -97,18 +68,16 @@ function BiCauLoader() {
                         inset 0 0 12px rgba(251,191,36,0.3);
           }
         }
-        @keyframes bcCorePulse {
+        @keyframes bcLogoPulse {
           0%,100% {
-            box-shadow: 0 0 14px 6px #fff,
-                        0 0 30px 14px rgba(251,191,36,0.7),
-                        0 0 60px 30px rgba(251,191,36,0.25);
-            transform: translate(-50%,-50%) scale(1);
+            filter: drop-shadow(0 0 6px rgba(251,191,36,0.55))
+                    drop-shadow(0 0 18px rgba(251,191,36,0.35));
+            transform: scale(1);
           }
           50% {
-            box-shadow: 0 0 22px 10px #fff,
-                        0 0 50px 24px rgba(251,191,36,0.9),
-                        0 0 90px 50px rgba(251,191,36,0.35);
-            transform: translate(-50%,-50%) scale(1.12);
+            filter: drop-shadow(0 0 12px rgba(251,191,36,0.85))
+                    drop-shadow(0 0 32px rgba(251,191,36,0.55));
+            transform: scale(1.06);
           }
         }
         @keyframes bcBeam {
@@ -222,69 +191,32 @@ function BiCauLoader() {
             </svg>
           </div>
 
-          {/* Shroud */}
+          {/* DRL angel-eye — amber pulse (kept as halo behind logo) */}
           <div
             className="absolute rounded-full"
             style={{
-              inset: 8,
-              background:
-                "radial-gradient(circle at 38% 32%, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.7) 100%)",
-              border: "1px solid rgba(255,255,255,0.05)",
-            }}
-          />
-
-          {/* DRL angel-eye — amber pulse */}
-          <div
-            className="absolute rounded-full"
-            style={{
-              inset: 22,
+              inset: 18,
               border: "2px solid rgba(251,191,36,0.8)",
               animation: "bcDrlGlow 1.6s ease-in-out infinite",
             }}
           />
 
-          {/* Projector glass */}
+          {/* Logo — centre pulse */}
           <div
-            className="absolute rounded-full"
+            className="absolute"
             style={{
-              inset: 27,
-              background:
-                "radial-gradient(circle at 40% 35%, rgba(255,255,255,0.07) 0%, rgba(10,10,10,0.9) 100%)",
-              border: "1px solid rgba(255,255,255,0.04)",
+              inset: 22,
+              animation: "bcLogoPulse 2s ease-in-out infinite",
             }}
-          />
-
-          {/* LED chip cluster — 3 dots */}
-          {[
-            { top: "38%", left: "50%" },
-            { top: "63%", left: "35%" },
-            { top: "63%", left: "65%" },
-          ].map(({ top, left }, i) => (
-            <div
-              key={i}
-              className="absolute rounded-full bg-white"
-              style={{
-                width: 3,
-                height: 3,
-                top,
-                left,
-                transform: "translate(-50%,-50%)",
-                animation: `bcChip 1.6s ease-in-out infinite ${i * 0.18}s`,
-              }}
+          >
+            <Image
+              src="/logo.png"
+              alt="Sân Chơi Đèn Led"
+              fill
+              priority
+              className="object-contain"
             />
-          ))}
-
-          {/* Core LED — centre pulse */}
-          <div
-            className="absolute bg-white rounded-full"
-            style={{
-              width: 12,
-              height: 12,
-              top: "50%",
-              left: "50%",
-              animation: "bcCorePulse 2s ease-in-out infinite",
-            }}
-          />
+          </div>
         </div>
       </div>
 
@@ -314,22 +246,17 @@ function BiCauLoader() {
 
 // ─── Image Gallery ────────────────────────────────────────────────────────────
 
-function ImageGallery({
-  images,
-  catalog,
-}: {
-  images: string[];
-  catalog: string;
-}) {
+function ImageGallery({ images }: { images: string[] }) {
   const [active, setActive] = useState(0);
-  const allImages = [...images, catalog];
+
+  if (images.length === 0) return null;
 
   return (
     <div className="flex flex-col gap-4">
       {/* Main image */}
       <div className="relative aspect-[4/3] bg-[#0a0a0a] overflow-hidden">
         <Image
-          src={allImages[active] ?? "/catalog.pdf/1.jpg"}
+          src={images[active]}
           alt="Product"
           fill
           className="object-cover object-center"
@@ -337,18 +264,18 @@ function ImageGallery({
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#111111]/30 to-transparent" />
         {/* Nav arrows */}
-        {allImages.length > 1 && (
+        {images.length > 1 && (
           <>
             <button
               onClick={() =>
-                setActive((p) => (p - 1 + allImages.length) % allImages.length)
+                setActive((p) => (p - 1 + images.length) % images.length)
               }
               className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/60 text-white p-2 hover:bg-amber-500 hover:text-black transition-colors"
             >
               <ChevronLeft size={16} />
             </button>
             <button
-              onClick={() => setActive((p) => (p + 1) % allImages.length)}
+              onClick={() => setActive((p) => (p + 1) % images.length)}
               className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/60 text-white p-2 hover:bg-amber-500 hover:text-black transition-colors"
             >
               <ChevronRight size={16} />
@@ -358,9 +285,9 @@ function ImageGallery({
       </div>
 
       {/* Thumbnails */}
-      {allImages.length > 1 && (
+      {images.length > 1 && (
         <div className="flex gap-2 overflow-x-auto">
-          {allImages.map((img, i) => (
+          {images.map((img, i) => (
             <button
               key={i}
               onClick={() => setActive(i)}
@@ -546,19 +473,14 @@ export default function ProductDetailPage({ params }: Props) {
     return notFound();
   }
 
-  const resolveKey = (k: string | null | undefined): string => {
-    if (!k) return "/catalog.pdf/1.jpg";
+  const resolveKey = (k: string): string => {
     if (k.startsWith("http") || k.startsWith("/")) return k;
     return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/products/${k}`;
   };
 
-  const seededImages = PRODUCT_IMAGES[params.slug];
-  // Priority: DB gallery > seeded static > featured image
-  const gallery: string[] =
-    product.gallery && product.gallery.length > 0
-      ? product.gallery.map((g) => resolveKey(g.key))
-      : seededImages?.gallery ?? [resolveKey(product.imageKey)];
-  const catalog = seededImages?.catalog ?? "/catalog.pdf/1.jpg";
+  const gallery: string[] = (product.gallery ?? []).map((g) =>
+    resolveKey(g.key),
+  );
 
   const minTotal = product.variantGroups.reduce((sum, g) => {
     const cheapest = g.options.reduce(
@@ -600,7 +522,7 @@ export default function ProductDetailPage({ params }: Props) {
       {/* 2-column layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 xl:gap-20 items-start">
         {/* LEFT — Gallery */}
-        <ImageGallery images={gallery} catalog={catalog} />
+        <ImageGallery images={gallery} />
 
         {/* RIGHT — Info + Variants */}
         <div className="lg:pt-2 min-w-0">
@@ -666,21 +588,6 @@ export default function ProductDetailPage({ params }: Props) {
           />
         </div>
       )}
-
-      {/* Catalog reference section */}
-      <div className="mt-16 border border-white/10 p-6">
-        <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-amber-500 mb-4">
-          Tham khảo catalog
-        </p>
-        <div className="relative aspect-[16/7] overflow-hidden">
-          <Image
-            src={catalog}
-            alt={`${product.name} catalog`}
-            fill
-            className="object-cover object-top"
-          />
-        </div>
-      </div>
 
       {/* Back link */}
       <div className="mt-12">

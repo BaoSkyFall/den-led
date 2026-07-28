@@ -57,7 +57,7 @@ export default function StoreFooter() {
                   Sân Chơi Đèn Led
                 </p>
                 <p className="text-sm font-bold uppercase text-white tracking-wide">
-                  Chuyên Độ Đèn Xe Máy
+                  Không chỉ để sáng, Mà để khác biệt.
                 </p>
               </div>
             </div>
