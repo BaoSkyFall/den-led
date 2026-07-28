@@ -557,7 +557,7 @@ export default function ProductDetailPage({ params }: Props) {
   const gallery: string[] =
     product.gallery && product.gallery.length > 0
       ? product.gallery.map((g) => resolveKey(g.key))
-      : (seededImages?.gallery ?? [resolveKey(product.imageKey)]);
+      : seededImages?.gallery ?? [resolveKey(product.imageKey)];
   const catalog = seededImages?.catalog ?? "/catalog.pdf/1.jpg";
 
   const minTotal = product.variantGroups.reduce((sum, g) => {

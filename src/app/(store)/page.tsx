@@ -309,9 +309,9 @@ function FeatureCollage() {
                 src="/assets/den-led/Winner/DSC07725.jpg"
                 alt="Độ đèn Winner bi cầu LED"
                 fill
-                className="object-cover object-center grayscale"
+                className="object-cover object-center "
               />
-              <div className="absolute inset-0 bg-[#111111]/30" />
+              <div className="absolute " />
             </div>
             <div className="absolute top-1/2 -right-6 lg:-right-12 -translate-y-1/2 z-20 bg-amber-500 px-4 py-8 hidden lg:flex flex-col items-center gap-1">
               <span className="text-[8px] font-black tracking-[0.15em] uppercase text-black">

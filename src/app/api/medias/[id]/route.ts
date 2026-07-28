@@ -15,10 +15,7 @@ export async function GET(
   });
 
   if (!media)
-    return NextResponse.json(
-      { message: "Media not found." },
-      { status: 404 },
-    );
+    return NextResponse.json({ message: "Media not found." }, { status: 404 });
 
   return NextResponse.json(media);
 }
