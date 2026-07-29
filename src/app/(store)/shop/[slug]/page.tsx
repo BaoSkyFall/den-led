@@ -526,13 +526,13 @@ export default function ProductDetailPage({ params }: Props) {
     resolveKey(g.key),
   );
 
-  const minTotal = product.variantGroups.reduce((sum, g) => {
-    const cheapest = g.options.reduce(
-      (min, o) => (Number(o.price) < Number(min.price) ? o : min),
-      g.options[0],
-    );
-    return sum + (cheapest ? Number(cheapest.price) : 0);
-  }, 0);
+  // "Từ ..." price = the single cheapest variant option across ALL groups
+  // (same logic as the home + shop list pages via /api/products/list). The
+  // old "sum of cheapest-per-group" logic double-counted groups the customer
+  // may not even select, giving an inflated starting price.
+  const minTotal = product.variantGroups
+    .flatMap((g) => g.options.map((o) => Number(o.price)))
+    .reduce<number>((m, p) => (m === 0 || p < m ? p : m), 0);
 
   const formatVND = (n: number) =>
     new Intl.NumberFormat("vi-VN", {
