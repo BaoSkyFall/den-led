@@ -37,7 +37,7 @@ import { useRouter } from "next/navigation";
 import { Suspense, useTransition } from "react";
 import VariantManager from "./VariantManager";
 import GalleryManager from "./GalleryManager";
-import ProductSectionsEditor from "@/features/product-sections/admin/ProductSectionsEditor";
+import ProductSectionsEditorDialog from "@/features/product-sections/admin/ProductSectionsEditorDialog";
 import { useForm } from "react-hook-form";
 import { gql } from "urql";
 import { Save, X } from "lucide-react";
@@ -158,16 +158,16 @@ function ProductForm({ product }: ProductsFormProps) {
             </FormDescription>
             <FormMessage />
           </FormItem>
-
         </Section>
 
-        {/* Blog-style product description */}
+        {/* Blog-style product description — opens in a fullscreen dialog to
+            give the editor real estate without fighting the outer form scroll */}
         {product && (
           <Section
             title="Mô Tả Sản Phẩm (Blog-style)"
-            description="Chia mô tả thành nhiều section, mỗi section có nhiều block: tiêu đề, đoạn văn, ảnh, YouTube, danh sách, bảng thông số, FAQ..."
+            description="Chỉnh sửa trong dialog toàn màn hình để có nhiều không gian, không đụng scroll của form ngoài."
           >
-            <ProductSectionsEditor productId={product.id} />
+            <ProductSectionsEditorDialog productId={product.id} />
           </Section>
         )}
 
