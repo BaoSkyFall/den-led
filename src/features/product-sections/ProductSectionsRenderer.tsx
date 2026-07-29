@@ -49,7 +49,7 @@ export default function ProductSectionsRenderer({
   if (!sections || sections.length === 0) return null;
 
   return (
-    <div className="space-y-16 lg:space-y-24">
+    <div className="space-y-11 lg:space-y-16">
       {sections.map((section) => (
         <SectionView
           key={section.id}
@@ -82,11 +82,7 @@ function SectionView({
       )}
       <div className="space-y-6">
         {(section.blocks ?? []).map((block) => (
-          <BlockView
-            key={block.id}
-            block={block}
-            mediaLookup={mediaLookup}
-          />
+          <BlockView key={block.id} block={block} mediaLookup={mediaLookup} />
         ))}
       </div>
     </section>
