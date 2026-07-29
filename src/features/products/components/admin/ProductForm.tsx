@@ -32,12 +32,12 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@urql/next";
 import { createInsertSchema } from "drizzle-zod";
-import RichTextEditor from "@/components/ui/RichTextEditor";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Suspense, useTransition } from "react";
 import VariantManager from "./VariantManager";
 import GalleryManager from "./GalleryManager";
+import ProductSectionsEditor from "@/features/product-sections/admin/ProductSectionsEditor";
 import { useForm } from "react-hook-form";
 import { gql } from "urql";
 import { Save, X } from "lucide-react";
@@ -159,27 +159,17 @@ function ProductForm({ product }: ProductsFormProps) {
             <FormMessage />
           </FormItem>
 
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Mô Tả Sản Phẩm</FormLabel>
-                <FormControl>
-                  <RichTextEditor
-                    value={field.value ?? ""}
-                    onChange={field.onChange}
-                    placeholder="Nhập mô tả chi tiết sản phẩm..."
-                  />
-                </FormControl>
-                <FormDescription>
-                  Hỗ trợ định dạng: in đậm, nghiêng, tiêu đề, danh sách, link.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
         </Section>
+
+        {/* Blog-style product description */}
+        {product && (
+          <Section
+            title="Mô Tả Sản Phẩm (Blog-style)"
+            description="Chia mô tả thành nhiều section, mỗi section có nhiều block: tiêu đề, đoạn văn, ảnh, YouTube, danh sách, bảng thông số, FAQ..."
+          >
+            <ProductSectionsEditor productId={product.id} />
+          </Section>
+        )}
 
         {/* Categorization */}
         <Section

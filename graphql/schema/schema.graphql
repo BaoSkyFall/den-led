@@ -1670,7 +1670,6 @@ type products implements Node {
   id: String!
   name: String!
   slug: String!
-  description: String
   featured: Boolean
   badge: String
   rating: BigFloat!
@@ -1803,7 +1802,6 @@ input productsFilter {
   id: StringFilter
   name: StringFilter
   slug: StringFilter
-  description: StringFilter
   featured: BooleanFilter
   badge: StringFilter
   rating: BigFloatFilter
@@ -1833,7 +1831,6 @@ input productsInsertInput {
   id: String
   name: String
   slug: String
-  description: String
   featured: Boolean
   badge: String
   rating: BigFloat
@@ -1859,7 +1856,6 @@ input productsOrderBy {
   id: OrderByDirection
   name: OrderByDirection
   slug: OrderByDirection
-  description: OrderByDirection
   featured: OrderByDirection
   badge: OrderByDirection
   rating: OrderByDirection
@@ -1875,7 +1871,6 @@ input productsUpdateInput {
   id: String
   name: String
   slug: String
-  description: String
   featured: Boolean
   badge: String
   rating: BigFloat

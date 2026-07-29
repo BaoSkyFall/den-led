@@ -27,7 +27,6 @@ export const CartItemCardFragment = gql(/* GraphQL */ `
     slug
     name
     price
-    description
     featuredImage: medias {
       id
       key
@@ -71,10 +70,6 @@ function CartItemCard({
             {product.name}
           </Link>
         </CardTitle>
-
-        <CardDescription className="grow line-clamp-2">
-          {product.description}
-        </CardDescription>
 
         <QuantityInput
           value={quantity}

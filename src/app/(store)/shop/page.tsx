@@ -9,7 +9,6 @@ type Product = {
   id: string;
   name: string;
   slug: string;
-  description: string | null;
   badge: string | null;
   rating: string;
   price: string;
@@ -94,12 +93,6 @@ function ProductCard({ product }: { product: Product }) {
           </h3>
         </div>
 
-        {product.description && (
-          <p className="text-[11px] text-white/40 leading-relaxed mb-4 line-clamp-2">
-            {product.description}
-          </p>
-        )}
-
         <div className="flex items-end justify-between pt-3 border-t border-white/5">
           <div>
             <p className="text-[9px] font-bold tracking-[0.2em] uppercase text-white/30 mb-0.5">
@@ -154,11 +147,7 @@ export default function ShopPage() {
     }
     if (query.trim()) {
       const q = query.trim().toLowerCase();
-      out = out.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          p.description?.toLowerCase().includes(q),
-      );
+      out = out.filter((p) => p.name.toLowerCase().includes(q));
     }
     return out;
   }, [products, filter, query]);

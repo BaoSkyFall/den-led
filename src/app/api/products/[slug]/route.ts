@@ -24,7 +24,6 @@ export async function GET(
         id,
         name,
         slug,
-        description,
         badge,
         price,
         featured_image_id,
@@ -120,17 +119,52 @@ export async function GET(
       };
     });
 
+    // Sections + blocks (blog-style product description) — same 2-query pattern
+    const { data: sectionRows } = await supabase
+      .from("product_sections")
+      .select('id, title, description, "order"')
+      .eq("productId", (product as any).id)
+      .order("order", { ascending: true });
+
+    const sectionIds = (sectionRows ?? []).map((s: any) => s.id);
+    const blocksBySection = new Map<string, any[]>();
+    if (sectionIds.length > 0) {
+      const { data: blockRows } = await supabase
+        .from("section_blocks")
+        .select('id, "sectionId", type, "order", data')
+        .in("sectionId", sectionIds)
+        .order("order", { ascending: true });
+      for (const b of blockRows ?? []) {
+        const list = blocksBySection.get((b as any).sectionId) ?? [];
+        list.push({
+          id: (b as any).id,
+          type: (b as any).type,
+          order: (b as any).order,
+          data: (b as any).data ?? {},
+        });
+        blocksBySection.set((b as any).sectionId, list);
+      }
+    }
+
+    const sections = (sectionRows ?? []).map((s: any) => ({
+      id: s.id,
+      title: s.title ?? "",
+      description: s.description ?? null,
+      order: s.order,
+      blocks: blocksBySection.get(s.id) ?? [],
+    }));
+
     const p = product as any;
     return NextResponse.json({
       id: p.id,
       name: p.name,
       slug: p.slug,
-      description: p.description,
       badge: p.badge,
       price: p.price,
       imageKey: p.medias?.key ?? null,
       variantGroups: groupsWithOptions,
       gallery,
+      sections,
     });
   } catch (err) {
     console.error("[/api/products/[slug]] Unexpected error:", err);

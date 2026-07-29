@@ -29,7 +29,6 @@ export const OrdersListFragment = gql(/* GraphQL */ `
               price
               name
               slug
-              description
               featuredImage: medias {
                 id
                 key
@@ -95,9 +94,6 @@ function OrdersList({ orders }: OrdersListProps) {
                         >
                           {product.name}
                         </Link>
-                        <p className="line-clamp-2 tracking-tighter leading-tight">
-                          {product.description}
-                        </p>
                       </div>
                     </div>
                   );

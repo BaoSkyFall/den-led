@@ -25,7 +25,7 @@ const documents = {
     types.CollectionRouteQueryDocument,
   "\n  query OrderPageQuery($first: Int!, $userId: UUID) {\n    ordersCollection(\n      first: $first\n      orderBy: [{ created_at: DescNullsLast }]\n      filter: { user_id: { eq: $userId } }\n    ) {\n      __typename\n      edges {\n        ...OrdersListFragment\n      }\n    }\n\n    productsCollection(first: 8) {\n      edges {\n        ...BuyAgainCardFragment\n      }\n    }\n  }\n":
     types.OrderPageQueryDocument,
-  "\n  fragment CartItemCardFragment on products {\n    id\n    slug\n    name\n    price\n    description\n    featuredImage: medias {\n      id\n      key\n      alt\n    }\n  }\n":
+  "\n  fragment CartItemCardFragment on products {\n    id\n    slug\n    name\n    price\n    featuredImage: medias {\n      id\n      key\n      alt\n    }\n  }\n":
     types.CartItemCardFragmentFragmentDoc,
   "\n  query FetchGuestCartQuery(\n    $cartItems: [String!]\n    $first: Int\n    $after: Cursor\n  ) {\n    productsCollection(\n      first: $first\n      after: $after\n      filter: { id: { in: $cartItems } }\n    ) {\n      edges {\n        node {\n          id\n          ...CartItemCardFragment\n        }\n      }\n    }\n  }\n":
     types.FetchGuestCartQueryDocument,
@@ -61,13 +61,13 @@ const documents = {
     types.MultiImageDialogMediasQueryDocument,
   "\n  query MediasPageContentQuery($first: Int, $after: Cursor) {\n    mediasCollection(\n      first: $first\n      after: $after\n      orderBy: [{ created_at: DescNullsLast }]\n    ) {\n      __typename\n      edges {\n        node {\n          id\n          key\n          alt\n        }\n      }\n      pageInfo {\n        hasNextPage\n        hasPreviousPage\n        endCursor\n      }\n    }\n  }\n":
     types.MediasPageContentQueryDocument,
-  "\n  fragment BuyAgainCardFragment on productsEdge {\n    node {\n      id\n      featured\n      price\n      name\n      slug\n      description\n      featuredImage: medias {\n        id\n        key\n        alt\n      }\n    }\n  }\n":
+  "\n  fragment BuyAgainCardFragment on productsEdge {\n    node {\n      id\n      featured\n      price\n      name\n      slug\n      featuredImage: medias {\n        id\n        key\n        alt\n      }\n    }\n  }\n":
     types.BuyAgainCardFragmentFragmentDoc,
-  "\n  fragment OrdersListFragment on ordersEdge {\n    node {\n      id\n      amount\n      order_status\n      created_at\n      item: order_linesCollection {\n        edges {\n          node {\n            id\n            products {\n              id\n              featured\n              price\n              name\n              slug\n              description\n              featuredImage: medias {\n                id\n                key\n                alt\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n":
+  "\n  fragment OrdersListFragment on ordersEdge {\n    node {\n      id\n      amount\n      order_status\n      created_at\n      item: order_linesCollection {\n        edges {\n          node {\n            id\n            products {\n              id\n              featured\n              price\n              name\n              slug\n              featuredImage: medias {\n                id\n                key\n                alt\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n":
     types.OrdersListFragmentFragmentDoc,
   "\n  fragment OrderColumnsFragment on orders {\n    id\n    order_status\n    payment_status\n    order_linesCollection {\n      edges {\n        node {\n          id\n          product_id\n        }\n      }\n    }\n  }\n":
     types.OrderColumnsFragmentFragmentDoc,
-  "\n  fragment ProductCardFragment on products {\n    id\n    name\n    description\n    rating\n    slug\n    badge\n    price\n    featuredImage: medias {\n      id\n      key\n      alt\n    }\n    collections {\n      id\n      label\n      slug\n    }\n  }\n":
+  "\n  fragment ProductCardFragment on products {\n    id\n    name\n    rating\n    slug\n    badge\n    price\n    featuredImage: medias {\n      id\n      key\n      alt\n    }\n    collections {\n      id\n      label\n      slug\n    }\n  }\n":
     types.ProductCardFragmentFragmentDoc,
   "\n  fragment ProductImageShowcaseFragment on products {\n    id\n    featuredImage: medias {\n      id\n      key\n      alt\n    }\n\n    images: product_mediasCollection(orderBy: [{ priority: DescNullsLast }]) {\n      edges {\n        node {\n          media {\n            id\n            key\n            alt\n          }\n        }\n      }\n    }\n  }\n":
     types.ProductImageShowcaseFragmentFragmentDoc,
@@ -77,7 +77,7 @@ const documents = {
     types.RecomendationProductsQueryDocument,
   "\n  query ProductFormQuery {\n    collectionsCollection(orderBy: [{ label: AscNullsLast }]) {\n      __typename\n      edges {\n        node {\n          id\n          label\n        }\n      }\n    }\n  }\n":
     types.ProductFormQueryDocument,
-  "\n  fragment ProductColumnFragment on products {\n    id\n    name\n    description\n    rating\n    slug\n    badge\n    price\n    badge\n    featured\n    featuredImage: medias {\n      id\n      key\n      alt\n    }\n    collections {\n      id\n      label\n      slug\n    }\n  }\n":
+  "\n  fragment ProductColumnFragment on products {\n    id\n    name\n    rating\n    slug\n    badge\n    price\n    badge\n    featured\n    featuredImage: medias {\n      id\n      key\n      alt\n    }\n    collections {\n      id\n      label\n      slug\n    }\n  }\n":
     types.ProductColumnFragmentFragmentDoc,
   "\n  query Search(\n    $search: String\n    $lower: BigFloat\n    $upper: BigFloat\n    $collections: [String!]\n    $first: Int!\n    $after: Cursor\n    $orderBy: [productsOrderBy!]\n  ) {\n    productsCollection(\n      filter: {\n        and: [\n          { name: { ilike: $search } }\n          { price: { gt: $lower, lt: $upper } }\n          { collection_id: { in: $collections } }\n        ]\n      }\n      first: $first\n      after: $after\n      orderBy: $orderBy\n    ) {\n      edges {\n        node {\n          id\n\n          ...ProductCardFragment\n        }\n      }\n      pageInfo {\n        hasNextPage\n        endCursor\n      }\n    }\n  }\n":
     types.SearchDocument,
@@ -141,8 +141,8 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: "\n  fragment CartItemCardFragment on products {\n    id\n    slug\n    name\n    price\n    description\n    featuredImage: medias {\n      id\n      key\n      alt\n    }\n  }\n",
-): (typeof documents)["\n  fragment CartItemCardFragment on products {\n    id\n    slug\n    name\n    price\n    description\n    featuredImage: medias {\n      id\n      key\n      alt\n    }\n  }\n"];
+  source: "\n  fragment CartItemCardFragment on products {\n    id\n    slug\n    name\n    price\n    featuredImage: medias {\n      id\n      key\n      alt\n    }\n  }\n",
+): (typeof documents)["\n  fragment CartItemCardFragment on products {\n    id\n    slug\n    name\n    price\n    featuredImage: medias {\n      id\n      key\n      alt\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -249,14 +249,14 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: "\n  fragment BuyAgainCardFragment on productsEdge {\n    node {\n      id\n      featured\n      price\n      name\n      slug\n      description\n      featuredImage: medias {\n        id\n        key\n        alt\n      }\n    }\n  }\n",
-): (typeof documents)["\n  fragment BuyAgainCardFragment on productsEdge {\n    node {\n      id\n      featured\n      price\n      name\n      slug\n      description\n      featuredImage: medias {\n        id\n        key\n        alt\n      }\n    }\n  }\n"];
+  source: "\n  fragment BuyAgainCardFragment on productsEdge {\n    node {\n      id\n      featured\n      price\n      name\n      slug\n      featuredImage: medias {\n        id\n        key\n        alt\n      }\n    }\n  }\n",
+): (typeof documents)["\n  fragment BuyAgainCardFragment on productsEdge {\n    node {\n      id\n      featured\n      price\n      name\n      slug\n      featuredImage: medias {\n        id\n        key\n        alt\n      }\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: "\n  fragment OrdersListFragment on ordersEdge {\n    node {\n      id\n      amount\n      order_status\n      created_at\n      item: order_linesCollection {\n        edges {\n          node {\n            id\n            products {\n              id\n              featured\n              price\n              name\n              slug\n              description\n              featuredImage: medias {\n                id\n                key\n                alt\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n",
-): (typeof documents)["\n  fragment OrdersListFragment on ordersEdge {\n    node {\n      id\n      amount\n      order_status\n      created_at\n      item: order_linesCollection {\n        edges {\n          node {\n            id\n            products {\n              id\n              featured\n              price\n              name\n              slug\n              description\n              featuredImage: medias {\n                id\n                key\n                alt\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n"];
+  source: "\n  fragment OrdersListFragment on ordersEdge {\n    node {\n      id\n      amount\n      order_status\n      created_at\n      item: order_linesCollection {\n        edges {\n          node {\n            id\n            products {\n              id\n              featured\n              price\n              name\n              slug\n              featuredImage: medias {\n                id\n                key\n                alt\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n",
+): (typeof documents)["\n  fragment OrdersListFragment on ordersEdge {\n    node {\n      id\n      amount\n      order_status\n      created_at\n      item: order_linesCollection {\n        edges {\n          node {\n            id\n            products {\n              id\n              featured\n              price\n              name\n              slug\n              featuredImage: medias {\n                id\n                key\n                alt\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -267,8 +267,8 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: "\n  fragment ProductCardFragment on products {\n    id\n    name\n    description\n    rating\n    slug\n    badge\n    price\n    featuredImage: medias {\n      id\n      key\n      alt\n    }\n    collections {\n      id\n      label\n      slug\n    }\n  }\n",
-): (typeof documents)["\n  fragment ProductCardFragment on products {\n    id\n    name\n    description\n    rating\n    slug\n    badge\n    price\n    featuredImage: medias {\n      id\n      key\n      alt\n    }\n    collections {\n      id\n      label\n      slug\n    }\n  }\n"];
+  source: "\n  fragment ProductCardFragment on products {\n    id\n    name\n    rating\n    slug\n    badge\n    price\n    featuredImage: medias {\n      id\n      key\n      alt\n    }\n    collections {\n      id\n      label\n      slug\n    }\n  }\n",
+): (typeof documents)["\n  fragment ProductCardFragment on products {\n    id\n    name\n    rating\n    slug\n    badge\n    price\n    featuredImage: medias {\n      id\n      key\n      alt\n    }\n    collections {\n      id\n      label\n      slug\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -297,8 +297,8 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: "\n  fragment ProductColumnFragment on products {\n    id\n    name\n    description\n    rating\n    slug\n    badge\n    price\n    badge\n    featured\n    featuredImage: medias {\n      id\n      key\n      alt\n    }\n    collections {\n      id\n      label\n      slug\n    }\n  }\n",
-): (typeof documents)["\n  fragment ProductColumnFragment on products {\n    id\n    name\n    description\n    rating\n    slug\n    badge\n    price\n    badge\n    featured\n    featuredImage: medias {\n      id\n      key\n      alt\n    }\n    collections {\n      id\n      label\n      slug\n    }\n  }\n"];
+  source: "\n  fragment ProductColumnFragment on products {\n    id\n    name\n    rating\n    slug\n    badge\n    price\n    badge\n    featured\n    featuredImage: medias {\n      id\n      key\n      alt\n    }\n    collections {\n      id\n      label\n      slug\n    }\n  }\n",
+): (typeof documents)["\n  fragment ProductColumnFragment on products {\n    id\n    name\n    rating\n    slug\n    badge\n    price\n    badge\n    featured\n    featuredImage: medias {\n      id\n      key\n      alt\n    }\n    collections {\n      id\n      label\n      slug\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

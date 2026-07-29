@@ -17,7 +17,6 @@ export const BuyAgainCardFragment = gql(/* GraphQL */ `
       price
       name
       slug
-      description
       featuredImage: medias {
         id
         key

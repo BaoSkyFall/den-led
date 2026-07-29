@@ -5,6 +5,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { useState, useEffect } from "react";
 import { ChevronLeft, Phone, Check, ChevronRight } from "lucide-react";
+import ProductSectionsRenderer from "@/features/product-sections/ProductSectionsRenderer";
+import type { ProductSection } from "@/features/product-sections/types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -36,12 +38,12 @@ type ProductDetail = {
   id: string;
   name: string;
   slug: string;
-  description: string | null;
   badge: string | null;
   price: string;
   imageKey: string | null;
   variantGroups: VariantGroup[];
   gallery: GalleryItem[];
+  sections: ProductSection[];
 };
 
 // ─── Bi Cầu LED Loader ────────────────────────────────────────────────────────
@@ -596,18 +598,15 @@ export default function ProductDetailPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Description section */}
-      {product.description && (
+      {/* Blog-style multi-section product description */}
+      {product.sections && product.sections.length > 0 && (
         <div className="mt-16 lg:mt-24 border-t border-white/10 pt-10 lg:pt-16">
-          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-amber-500 mb-4">
-            Mô tả sản phẩm
-          </p>
-          <h2 className="text-xl lg:text-2xl font-black uppercase tracking-tight text-white mb-6">
-            {product.name}
-          </h2>
-          <div
-            className="text-white/60 leading-relaxed max-w-2xl text-sm prose-invert [&_h2]:text-white [&_h3]:text-white/80 [&_strong]:text-white [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_a]:text-amber-500 [&_a]:underline"
-            dangerouslySetInnerHTML={{ __html: product.description }}
+          <ProductSectionsRenderer
+            sections={product.sections}
+            mediaLookup={(mediaId) => {
+              const g = product.gallery.find((x) => x.mediaId === mediaId);
+              return g ? { key: g.key, alt: g.alt } : null;
+            }}
           />
         </div>
       )}

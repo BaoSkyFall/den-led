@@ -158,7 +158,6 @@ export const products = pgTable(
       .$defaultFn(() => createId()),
     name: varchar("name", { length: 191 }).notNull(),
     slug: varchar("slug", { length: 191 }).notNull().unique(),
-    description: text("description"),
     featured: boolean("featured").default(false),
     badge: text("badge", { enum: ["new_product", "best_sale", "featured"] }),
     rating: decimal("rating", { precision: 2, scale: 1 })
@@ -418,6 +417,49 @@ export const medias = pgTable("medias", {
 
 export type SelectMedia = InferSelectModel<typeof medias>;
 export type InsertMedia = InferInsertModel<typeof medias>;
+
+// ─── Product sections (blog-style multi-section descriptions) ────────────────
+
+export const productSections = pgTable("product_sections", {
+  id: text("id")
+    .notNull()
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  productId: text("productId")
+    .notNull()
+    .references(() => products.id, { onDelete: "cascade" }),
+  title: text("title").notNull().default(""),
+  description: text("description"),
+  order: integer("order").notNull().default(0),
+  createdAt: timestamp("createdAt", { withTimezone: true, mode: "string" })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true, mode: "string" })
+    .defaultNow()
+    .notNull(),
+});
+
+export type SelectProductSection = InferSelectModel<typeof productSections>;
+export type InsertProductSection = InferInsertModel<typeof productSections>;
+
+export const sectionBlocks = pgTable("section_blocks", {
+  id: text("id")
+    .notNull()
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  sectionId: text("sectionId")
+    .notNull()
+    .references(() => productSections.id, { onDelete: "cascade" }),
+  type: text("type").notNull(),
+  order: integer("order").notNull().default(0),
+  data: json("data").notNull().default({}),
+  createdAt: timestamp("createdAt", { withTimezone: true, mode: "string" })
+    .defaultNow()
+    .notNull(),
+});
+
+export type SelectSectionBlock = InferSelectModel<typeof sectionBlocks>;
+export type InsertSectionBlock = InferInsertModel<typeof sectionBlocks>;
 
 // https://stackoverflow.com/questions/24923469/modeling-product-variants
 

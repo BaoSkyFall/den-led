@@ -17,7 +17,6 @@ export const ProductColumnFragment = gql(/* GraphQL */ `
   fragment ProductColumnFragment on products {
     id
     name
-    description
     rating
     slug
     badge
