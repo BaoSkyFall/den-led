@@ -5,7 +5,10 @@ import db from "@/lib/supabase/db";
 import { productSections, sectionBlocks } from "@/lib/supabase/schema";
 import { asc, eq, inArray } from "drizzle-orm";
 import { NextResponse } from "next/server";
-import type { ProductSection, SectionBlock } from "@/features/product-sections/types";
+import type {
+  ProductSection,
+  SectionBlock,
+} from "@/features/product-sections/types";
 
 // GET /api/product-sections/[productId] — list sections + blocks in order (admin)
 export async function GET(
@@ -92,7 +95,8 @@ export async function PUT(
         sectionId,
         type: b.type,
         order: j,
-        data: (b.data ?? {}) as unknown as typeof sectionBlocks.$inferInsert.data,
+        data: (b.data ??
+          {}) as unknown as typeof sectionBlocks.$inferInsert.data,
       });
     });
   });
