@@ -69,7 +69,7 @@ function SectionView({
   mediaLookup?: MediaLookup;
 }) {
   return (
-    <section className="max-w-3xl mx-auto">
+    <section className="max-w-3xl mx-auto lg:mx-0">
       {section.title && (
         <h2 className="text-3xl lg:text-4xl font-black uppercase tracking-tight text-white mb-3">
           {section.title}
