@@ -106,9 +106,9 @@ export default function ProductSectionsEditor({ productId }: Props) {
       const data = await res.json();
       toast({ title: `Đã lưu ${data.count ?? 0} section` });
       // Refresh IDs from server so subsequent saves match DB rows.
-      const refreshed = await fetch(
-        `/api/product-sections/${productId}`,
-      ).then((r) => r.json());
+      const refreshed = await fetch(`/api/product-sections/${productId}`).then(
+        (r) => r.json(),
+      );
       if (Array.isArray(refreshed)) setSections(refreshed);
     });
   }
@@ -379,9 +379,7 @@ function SectionEditor(props: {
         <textarea
           value={section.description ?? ""}
           placeholder="Mô tả ngắn (optional)"
-          onChange={(e) =>
-            onChange({ description: e.target.value || null })
-          }
+          onChange={(e) => onChange({ description: e.target.value || null })}
           rows={2}
           className="w-full text-sm text-slate-600 border border-slate-200 focus:border-amber-500 outline-none rounded-md px-3 py-2 resize-none"
         />
@@ -414,34 +412,29 @@ function SectionEditor(props: {
 // Add-block menu
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Always-visible chip picker — the previous absolute-positioned dropdown got
+// clipped by the section card's overflow-hidden and by the dialog's scroll
+// container, hiding half of the options. Chips are laid out inline so admin
+// always sees all 11 available block types.
 function AddBlockMenu({ onPick }: { onPick: (t: BlockType) => void }) {
-  const [open, setOpen] = useState(false);
   return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="w-full border border-dashed border-slate-300 hover:border-amber-500 hover:bg-amber-50 text-slate-600 text-xs font-medium py-2 rounded-md inline-flex items-center justify-center gap-1"
-      >
-        <Plus size={14} /> Thêm Block
-      </button>
-      {open && (
-        <div className="absolute z-30 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-md shadow-lg p-1 grid grid-cols-2 gap-1">
-          {BLOCK_TYPES.map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => {
-                onPick(t);
-                setOpen(false);
-              }}
-              className="text-left text-xs px-3 py-2 rounded hover:bg-amber-50 hover:text-amber-700"
-            >
-              {BLOCK_LABELS[t]}
-            </button>
-          ))}
-        </div>
-      )}
+    <div className="border-t border-dashed border-slate-200 pt-3 mt-3">
+      <p className="text-[10px] font-bold tracking-widest uppercase text-slate-400 mb-2">
+        + Thêm block
+      </p>
+      <div className="flex flex-wrap gap-1.5">
+        {BLOCK_TYPES.map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => onPick(t)}
+            className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded border border-slate-200 hover:border-amber-500 hover:bg-amber-50 hover:text-amber-700 text-slate-600 transition-colors"
+          >
+            <Plus size={11} strokeWidth={2.5} />
+            {BLOCK_LABELS[t]}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
