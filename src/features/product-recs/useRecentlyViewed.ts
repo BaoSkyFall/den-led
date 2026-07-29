@@ -47,19 +47,16 @@ export function useRecentlyViewed(): {
     setItems(read());
   }, []);
 
-  const track = useCallback(
-    (entry: Omit<RecentlyViewedEntry, "viewedAt">) => {
-      if (!entry?.slug) return;
-      const now = Date.now();
-      const next: RecentlyViewedEntry = { ...entry, viewedAt: now };
-      const current = read();
-      const deduped = current.filter((e) => e.slug !== entry.slug);
-      const list = [next, ...deduped].slice(0, MAX_ITEMS);
-      write(list);
-      setItems(list);
-    },
-    [],
-  );
+  const track = useCallback((entry: Omit<RecentlyViewedEntry, "viewedAt">) => {
+    if (!entry?.slug) return;
+    const now = Date.now();
+    const next: RecentlyViewedEntry = { ...entry, viewedAt: now };
+    const current = read();
+    const deduped = current.filter((e) => e.slug !== entry.slug);
+    const list = [next, ...deduped].slice(0, MAX_ITEMS);
+    write(list);
+    setItems(list);
+  }, []);
 
   const clear = useCallback(() => {
     write([]);

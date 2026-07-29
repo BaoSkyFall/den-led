@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import ProductRecCard from "./ProductRecCard";
+import ProductRecCarousel from "./ProductRecCarousel";
 import type { MiniProduct } from "./types";
 
 type Props = {
@@ -15,9 +15,9 @@ type Props = {
 export default function RecommendedSection({
   family,
   excludeSlug,
-  limit = 4,
+  limit = 6,
   title = "Sản Phẩm Đề Xuất",
-  eyebrow = "Có Thể Anh Cũng Thích",
+  eyebrow = "Có Thể Bạn Cũng Thích",
 }: Props) {
   const [items, setItems] = useState<MiniProduct[] | null>(null);
 
@@ -35,19 +35,12 @@ export default function RecommendedSection({
   if (items === null) {
     return (
       <section className="mt-12 lg:mt-16 border-t border-white/10 pt-8">
-        <div className="mb-6">
-          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-amber-500 mb-2">
-            {eyebrow}
-          </p>
-          <h2 className="text-xl lg:text-2xl font-black uppercase tracking-tight text-white">
-            {title}
-          </h2>
-        </div>
-        <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
+        <SectionHeader eyebrow={eyebrow} title={title} />
+        <div className="flex gap-3 overflow-hidden">
           {Array.from({ length: 4 }).map((_, i) => (
             <div
               key={i}
-              className="aspect-[16/10] bg-white/5 animate-pulse"
+              className="shrink-0 basis-[calc(50%-6px)] md:basis-[calc(33.333%-8px)] lg:basis-[calc(25%-9px)] aspect-[16/10] bg-white/5 animate-pulse"
             />
           ))}
         </div>
@@ -59,27 +52,31 @@ export default function RecommendedSection({
 
   return (
     <section className="mt-12 lg:mt-16 border-t border-white/10 pt-8">
-      <div className="mb-6">
-        <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-amber-500 mb-2">
-          {eyebrow}
-        </p>
-        <h2 className="text-xl lg:text-2xl font-black uppercase tracking-tight text-white">
-          {title}
-        </h2>
-      </div>
-      <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
-        {items.map((p) => (
-          <ProductRecCard
-            key={p.id}
-            name={p.name}
-            slug={p.slug}
-            imageKey={p.imageKey}
-            minPrice={p.minVariantPrice}
-            fallbackPrice={p.price}
-            badge={p.badge}
-          />
-        ))}
-      </div>
+      <SectionHeader eyebrow={eyebrow} title={title} />
+      <ProductRecCarousel
+        items={items.map((p) => ({
+          key: p.id,
+          name: p.name,
+          slug: p.slug,
+          imageKey: p.imageKey,
+          minPrice: p.minVariantPrice,
+          fallbackPrice: p.price,
+          badge: p.badge,
+        }))}
+      />
     </section>
+  );
+}
+
+function SectionHeader({ eyebrow, title }: { eyebrow: string; title: string }) {
+  return (
+    <div className="mb-6">
+      <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-amber-500 mb-2">
+        {eyebrow}
+      </p>
+      <h2 className="text-xl lg:text-2xl font-black uppercase tracking-tight text-white">
+        {title}
+      </h2>
+    </div>
   );
 }

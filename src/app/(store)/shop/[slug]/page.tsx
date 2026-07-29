@@ -494,10 +494,7 @@ export default function ProductDetailPage({ params }: Props) {
       // Record this visit for the Recently-Viewed section
       const minPrice = data.variantGroups
         .flatMap((g) => g.options.map((o) => Number(o.price)))
-        .reduce<number | null>(
-          (m, p) => (m === null || p < m ? p : m),
-          null,
-        );
+        .reduce<number | null>((m, p) => (m === null || p < m ? p : m), null);
       track({
         slug: data.slug,
         name: data.name,
@@ -637,11 +634,11 @@ export default function ProductDetailPage({ params }: Props) {
       <RecommendedSection
         family={product.vehicleFamily}
         excludeSlug={product.slug}
-        limit={4}
+        limit={6}
       />
 
       {/* Recently viewed — from browser localStorage */}
-      <RecentlyViewedSection excludeSlug={product.slug} limit={4} />
+      <RecentlyViewedSection excludeSlug={product.slug} limit={6} />
 
       {/* Back link */}
       <div className="mt-12">

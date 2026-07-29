@@ -73,7 +73,10 @@ export default function ProductRecCard({
           <p className="text-xs font-black text-amber-500">{price}</p>
           <span className="text-[9px] font-bold tracking-[0.15em] uppercase text-white/40 group-hover:text-amber-500 transition-colors flex items-center gap-1">
             Xem
-            <ChevronRight size={10} className="transition-transform group-hover:translate-x-0.5" />
+            <ChevronRight
+              size={10}
+              className="transition-transform group-hover:translate-x-0.5"
+            />
           </span>
         </div>
       </div>
