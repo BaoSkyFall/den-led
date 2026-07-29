@@ -236,22 +236,41 @@ function ProductForm({ product }: ProductsFormProps) {
           description="Giá cơ bản (fallback) và điểm đánh giá hiển thị"
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <FormItem>
-              <FormLabel>Giá Cơ Bản (VND)</FormLabel>
-              <FormControl>
-                <Input
-                  defaultValue={product?.price}
-                  aria-invalid={!!form.formState.errors.price}
-                  placeholder="0"
-                  {...register("price")}
-                />
-              </FormControl>
-              <FormDescription>
-                Dùng khi sản phẩm chưa có variant. Có variant sẽ hiển thị giá
-                thấp nhất.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
+            <FormField
+              control={form.control}
+              name="price"
+              render={({ field }) => {
+                const raw = String(field.value ?? "").replace(/[^0-9]/g, "");
+                const formatted = raw
+                  ? new Intl.NumberFormat("en-US").format(Number(raw))
+                  : "";
+                return (
+                  <FormItem>
+                    <FormLabel>Giá Cơ Bản (VND)</FormLabel>
+                    <FormControl>
+                      <Input
+                        inputMode="numeric"
+                        aria-invalid={!!form.formState.errors.price}
+                        placeholder="vd: 1,500,000"
+                        value={formatted}
+                        onChange={(e) => {
+                          const digits = e.target.value.replace(/[^0-9]/g, "");
+                          field.onChange(digits);
+                        }}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Dùng khi sản phẩm chưa có variant. Có variant sẽ hiển thị
+                      giá thấp nhất. Không có giới hạn tiền triệu / tỷ.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
+            />
 
             <FormItem>
               <FormLabel>Đánh Giá (0–5) *</FormLabel>

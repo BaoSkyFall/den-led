@@ -165,9 +165,9 @@ export const products = pgTable(
       .default("4"),
     tags: json("tags").$type<string[]>().default([]).notNull(),
     images: json("images").$type<string[]>().default([]).notNull(),
-    price: decimal("price", { precision: 8, scale: 2 })
+    price: decimal("price", { precision: 12, scale: 0 })
       .notNull()
-      .default("0.00"),
+      .default("0"),
     totalComments: integer("totalComments").default(0).notNull(),
     createdAt: timestamp("created_at", {
       withTimezone: true,
@@ -269,7 +269,7 @@ export const orderLines = pgTable(
       .notNull()
       .references(() => orders.id, { onDelete: "restrict" }),
     quantity: integer("quantity").notNull(),
-    price: decimal("price", { precision: 8, scale: 2 }).notNull(),
+    price: decimal("price", { precision: 12, scale: 0 }).notNull(),
     createdAt: timestamp("created_at", {
       withTimezone: true,
     })

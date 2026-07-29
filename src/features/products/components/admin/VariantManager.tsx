@@ -218,12 +218,34 @@ export default function VariantManager({ productId }: Props) {
                     }
                   />
                   <Input
-                    className="h-8 text-sm w-32"
-                    placeholder="Giá (VND)"
-                    defaultValue={String(opt.price)}
-                    type="number"
+                    key={opt.id + "-" + String(opt.price)}
+                    className="h-8 text-sm w-36"
+                    placeholder="vd: 1,500,000"
+                    inputMode="numeric"
+                    defaultValue={
+                      opt.price
+                        ? new Intl.NumberFormat("en-US").format(
+                            Number(String(opt.price).replace(/[^0-9]/g, "")),
+                          )
+                        : ""
+                    }
+                    onChange={(e) => {
+                      const digits = e.target.value.replace(/[^0-9]/g, "");
+                      const formatted = digits
+                        ? new Intl.NumberFormat("en-US").format(Number(digits))
+                        : "";
+                      // Reflect grouped format live without losing caret jump
+                      if (e.target.value !== formatted) {
+                        e.target.value = formatted;
+                      }
+                    }}
                     onBlur={(e) =>
-                      updateOption(group.id, opt.id, "price", e.target.value)
+                      updateOption(
+                        group.id,
+                        opt.id,
+                        "price",
+                        e.target.value.replace(/[^0-9]/g, ""),
+                      )
                     }
                   />
                   <Button
