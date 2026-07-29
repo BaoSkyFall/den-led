@@ -7,6 +7,9 @@ import { useState, useEffect } from "react";
 import { ChevronLeft, Phone, Check, ChevronRight } from "lucide-react";
 import ProductSectionsRenderer from "@/features/product-sections/ProductSectionsRenderer";
 import type { ProductSection } from "@/features/product-sections/types";
+import RecommendedSection from "@/features/product-recs/RecommendedSection";
+import RecentlyViewedSection from "@/features/product-recs/RecentlyViewedSection";
+import { useRecentlyViewed } from "@/features/product-recs/useRecentlyViewed";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -41,6 +44,7 @@ type ProductDetail = {
   badge: string | null;
   price: string;
   imageKey: string | null;
+  vehicleFamily: string | null;
   variantGroups: VariantGroup[];
   gallery: GalleryItem[];
   sections: ProductSection[];
@@ -476,6 +480,7 @@ export default function ProductDetailPage({ params }: Props) {
   const [product, setProduct] = useState<ProductDetail | null | undefined>(
     undefined,
   );
+  const { track } = useRecentlyViewed();
 
   useEffect(() => {
     async function fetchProduct() {
@@ -484,10 +489,27 @@ export default function ProductDetailPage({ params }: Props) {
         setProduct(null);
         return;
       }
-      const data = await res.json();
+      const data = (await res.json()) as ProductDetail;
       setProduct(data);
+      // Record this visit for the Recently-Viewed section
+      const minPrice = data.variantGroups
+        .flatMap((g) => g.options.map((o) => Number(o.price)))
+        .reduce<number | null>(
+          (m, p) => (m === null || p < m ? p : m),
+          null,
+        );
+      track({
+        slug: data.slug,
+        name: data.name,
+        imageKey: data.imageKey,
+        vehicleFamily: data.vehicleFamily,
+        minVariantPrice: minPrice !== null ? String(minPrice) : null,
+        badge: data.badge,
+      });
     }
     fetchProduct();
+    // Only re-run when slug changes; `track` is stable via useCallback
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.slug]);
 
   if (product === undefined) {
@@ -610,6 +632,16 @@ export default function ProductDetailPage({ params }: Props) {
           />
         </div>
       )}
+
+      {/* Recommendation — same vehicle family first, top up with newest others */}
+      <RecommendedSection
+        family={product.vehicleFamily}
+        excludeSlug={product.slug}
+        limit={4}
+      />
+
+      {/* Recently viewed — from browser localStorage */}
+      <RecentlyViewedSection excludeSlug={product.slug} limit={4} />
 
       {/* Back link */}
       <div className="mt-12">

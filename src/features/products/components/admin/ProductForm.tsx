@@ -38,6 +38,7 @@ import { Suspense, useTransition } from "react";
 import VariantManager from "./VariantManager";
 import GalleryManager from "./GalleryManager";
 import ProductSectionsEditorDialog from "@/features/product-sections/admin/ProductSectionsEditorDialog";
+import { VEHICLE_FAMILY_OPTIONS } from "@/features/product-recs/types";
 import { useForm } from "react-hook-form";
 import { gql } from "urql";
 import { Save, X } from "lucide-react";
@@ -217,6 +218,37 @@ function ProductForm({ product }: ProductsFormProps) {
           </Suspense>
 
           <BadgeSelectField name="badge" label={""} />
+
+          <FormField
+            control={form.control}
+            name="vehicleFamily"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Loại Xe</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value || undefined}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Chọn dòng xe (SH, Air Blade, ...)" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {VEHICLE_FAMILY_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  Dùng để nhóm &quot;Sản phẩm đề xuất&quot; theo dòng xe.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <FormItem>
             <FormLabel>Tags</FormLabel>

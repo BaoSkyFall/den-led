@@ -26,6 +26,7 @@ export async function GET() {
         badge,
         rating,
         price,
+        vehicle_family,
         featured_image_id,
         medias:featured_image_id(id, key, alt)
       `,
@@ -59,6 +60,7 @@ export async function GET() {
       name: p.name,
       slug: p.slug,
       badge: p.badge,
+      vehicleFamily: p.vehicle_family ?? null,
       rating: p.rating,
       price: p.price,
       imageKey: p.medias?.key ?? null,
