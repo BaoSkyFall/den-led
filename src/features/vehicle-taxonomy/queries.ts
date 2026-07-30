@@ -153,19 +153,17 @@ export const getBrandTree = async (): Promise<BrandTreeBrand[]> => {
     with: { models: { with: { generations: true } } },
   });
 
-  return rows
-    .sort(byOrderThenLabel)
-    .map((b) => ({
-      id: b.id,
-      label: b.label,
-      models: [...b.models].sort(byOrderThenLabel).map((m) => ({
-        id: m.id,
-        label: m.label,
-        generations: [...m.generations]
-          .sort(byOrderThenLabel)
-          .map((g) => ({ id: g.id, label: g.label })),
-      })),
-    }));
+  return rows.sort(byOrderThenLabel).map((b) => ({
+    id: b.id,
+    label: b.label,
+    models: [...b.models].sort(byOrderThenLabel).map((m) => ({
+      id: m.id,
+      label: m.label,
+      generations: [...m.generations]
+        .sort(byOrderThenLabel)
+        .map((g) => ({ id: g.id, label: g.label })),
+    })),
+  }));
 };
 
 export const listBrands = async (): Promise<SelectBrand[]> => {

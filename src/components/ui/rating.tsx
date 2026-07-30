@@ -8,8 +8,7 @@ type Props = {
   precision: number;
 };
 
-export interface RatingProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface RatingProps extends React.InputHTMLAttributes<HTMLInputElement> {
   readOnly?: boolean;
   value: number;
   precision: number;

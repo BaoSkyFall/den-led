@@ -3,8 +3,7 @@ import React from "react";
 import { Icons } from "./icons";
 import { cn } from "@/lib/utils";
 
-export interface QuantitiyInputProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface QuantitiyInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   onChange?: (...event: any[]) => void;
   value: number;
   addOneHandler: () => void;

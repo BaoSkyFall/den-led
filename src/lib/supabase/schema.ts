@@ -236,7 +236,10 @@ export const modelsRelations = relations(models, ({ one, many }) => ({
   generations: many(generations),
 }));
 export const generationsRelations = relations(generations, ({ one, many }) => ({
-  model: one(models, { fields: [generations.modelId], references: [models.id] }),
+  model: one(models, {
+    fields: [generations.modelId],
+    references: [models.id],
+  }),
   products: many(products),
 }));
 

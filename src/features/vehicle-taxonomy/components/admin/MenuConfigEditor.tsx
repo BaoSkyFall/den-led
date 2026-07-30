@@ -47,7 +47,10 @@ function MenuConfigEditor({ tree }: MenuConfigEditorProps) {
   // Re-seed after router.refresh() brings fresh server data.
   useEffect(() => setItems(tree), [tree]);
 
-  const commit = (optimistic: MenuConfigModel[], fn: () => Promise<unknown>) => {
+  const commit = (
+    optimistic: MenuConfigModel[],
+    fn: () => Promise<unknown>,
+  ) => {
     const previous = items;
     setItems(optimistic);
     startTransition(async () => {
@@ -95,7 +98,9 @@ function MenuConfigEditor({ tree }: MenuConfigEditorProps) {
   const toggleModel = (modelIndex: number) => {
     const model = items[modelIndex];
     const isActive = !model.isActive;
-    const next = items.map((m, i) => (i === modelIndex ? { ...m, isActive } : m));
+    const next = items.map((m, i) =>
+      i === modelIndex ? { ...m, isActive } : m,
+    );
     commit(next, () => setModelActiveAction(model.id, isActive));
   };
 
@@ -135,7 +140,10 @@ function MenuConfigEditor({ tree }: MenuConfigEditorProps) {
           menu. Sản phẩm không bị thay đổi — bật lại là hiện y như cũ.
         </p>
         {isPending && (
-          <Spinner className="h-4 w-4 animate-spin shrink-0" aria-hidden="true" />
+          <Spinner
+            className="h-4 w-4 animate-spin shrink-0"
+            aria-hidden="true"
+          />
         )}
       </div>
 
@@ -250,7 +258,9 @@ function MenuConfigEditor({ tree }: MenuConfigEditorProps) {
                           size="sm"
                           className="h-5 px-1"
                           disabled={isPending || genIndex === 0}
-                          onClick={() => moveGeneration(modelIndex, genIndex, -1)}
+                          onClick={() =>
+                            moveGeneration(modelIndex, genIndex, -1)
+                          }
                           aria-label={`Đưa ${generation.label} lên trên`}
                         >
                           <ChevronUp size={14} />
@@ -264,7 +274,9 @@ function MenuConfigEditor({ tree }: MenuConfigEditorProps) {
                             isPending ||
                             genIndex === model.generations.length - 1
                           }
-                          onClick={() => moveGeneration(modelIndex, genIndex, 1)}
+                          onClick={() =>
+                            moveGeneration(modelIndex, genIndex, 1)
+                          }
                           aria-label={`Đưa ${generation.label} xuống dưới`}
                         >
                           <ChevronDown size={14} />

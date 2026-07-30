@@ -297,8 +297,8 @@ function ProductForm({ product, brands }: ProductsFormProps) {
                   onChange={field.onChange}
                 />
                 <FormDescription>
-                  Chọn Hãng -&gt; Dòng xe -&gt; Đời xe. Dùng cho menu và sản phẩm
-                  đề xuất.
+                  Chọn Hãng -&gt; Dòng xe -&gt; Đời xe. Dùng cho menu và sản
+                  phẩm đề xuất.
                 </FormDescription>
                 <FormMessage />
               </FormItem>

@@ -52,7 +52,10 @@ function ModelGenerationManager({
   const [generationDrafts, setGenerationDrafts] = useState<
     Record<string, Draft>
   >({});
-  const [editing, setEditing] = useState<{ kind: "model" | "generation"; id: string } | null>(null);
+  const [editing, setEditing] = useState<{
+    kind: "model" | "generation";
+    id: string;
+  } | null>(null);
   const [editDraft, setEditDraft] = useState<Draft>(emptyDraft);
 
   const run = (fn: () => Promise<unknown>, successTitle: string) => {
@@ -121,14 +124,17 @@ function ModelGenerationManager({
     if (!label) return;
 
     const { kind, id } = editing;
-    run(async () => {
-      if (kind === "model") {
-        await updateModelAction(id, { label, slug });
-      } else {
-        await updateGenerationAction(id, { label, slug });
-      }
-      setEditing(null);
-    }, kind === "model" ? "Đã cập nhật dòng xe" : "Đã cập nhật đời xe");
+    run(
+      async () => {
+        if (kind === "model") {
+          await updateModelAction(id, { label, slug });
+        } else {
+          await updateGenerationAction(id, { label, slug });
+        }
+        setEditing(null);
+      },
+      kind === "model" ? "Đã cập nhật dòng xe" : "Đã cập nhật đời xe",
+    );
   };
 
   const isEditing = (kind: "model" | "generation", id: string) =>
@@ -142,12 +148,15 @@ function ModelGenerationManager({
             Dòng Xe &amp; Đời Xe
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Thêm, đổi tên và xoá dòng xe / đời xe của hãng này. Thứ tự và ẩn/hiện
-            được chỉnh ở trang Cấu Hình Menu.
+            Thêm, đổi tên và xoá dòng xe / đời xe của hãng này. Thứ tự và
+            ẩn/hiện được chỉnh ở trang Cấu Hình Menu.
           </p>
         </div>
         {isPending && (
-          <Spinner className="h-4 w-4 animate-spin shrink-0" aria-hidden="true" />
+          <Spinner
+            className="h-4 w-4 animate-spin shrink-0"
+            aria-hidden="true"
+          />
         )}
       </header>
 
@@ -306,7 +315,9 @@ function ModelGenerationManager({
                               variant="ghost"
                               size="sm"
                               disabled={isPending}
-                              onClick={() => startEdit("generation", generation)}
+                              onClick={() =>
+                                startEdit("generation", generation)
+                              }
                               aria-label={`Sửa đời xe ${generation.label}`}
                             >
                               <Pencil size={14} />
@@ -330,10 +341,7 @@ function ModelGenerationManager({
                                   disabled={isPending}
                                   aria-label={`Xoá đời xe ${generation.label}`}
                                 >
-                                  <Trash2
-                                    size={14}
-                                    className="text-red-500"
-                                  />
+                                  <Trash2 size={14} className="text-red-500" />
                                 </Button>
                               }
                             />

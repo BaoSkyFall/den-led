@@ -1,10 +1,9 @@
 import React, { ReactNode } from "react";
 
-interface HeaderProps
-  extends React.DetailedHTMLProps<
-    React.HTMLAttributes<HTMLDivElement>,
-    HTMLDivElement
-  > {
+interface HeaderProps extends React.DetailedHTMLProps<
+  React.HTMLAttributes<HTMLDivElement>,
+  HTMLDivElement
+> {
   heading: string;
   description?: string;
   children?: ReactNode;
