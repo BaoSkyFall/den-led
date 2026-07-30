@@ -1,12 +1,13 @@
 "use client";
 
-import { ChevronDown, ChevronUp, Eye, EyeOff } from "lucide-react";
+import { ChevronDown, ChevronUp, Info } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -134,10 +135,19 @@ function MenuConfigEditor({ tree }: MenuConfigEditorProps) {
 
   return (
     <div className="space-y-3 max-w-4xl">
+      <div className="flex items-start gap-2.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2.5">
+        <Info size={16} className="mt-0.5 shrink-0 text-amber-600" />
+        <p className="text-xs leading-relaxed text-amber-900">
+          <span className="font-semibold">Lưu ý:</span> nếu Dòng Xe không có sản
+          phẩm thì trên Menu sẽ không hiện — kể cả khi công tắc đang bật. Menu
+          chỉ hiển thị những mục dẫn tới sản phẩm đang bán.
+        </p>
+      </div>
+
       <div className="flex items-center justify-between gap-3">
         <p className="text-xs text-slate-500">
-          Ẩn một dòng xe sẽ ẩn luôn toàn bộ đời xe và sản phẩm bên dưới khỏi
-          menu. Sản phẩm không bị thay đổi — bật lại là hiện y như cũ.
+          Tắt công tắc của một dòng xe sẽ ẩn luôn toàn bộ đời xe và sản phẩm bên
+          dưới khỏi menu. Sản phẩm không bị thay đổi — bật lại là hiện y như cũ.
         </p>
         {isPending && (
           <Spinner
@@ -150,6 +160,12 @@ function MenuConfigEditor({ tree }: MenuConfigEditorProps) {
       <ul className="space-y-2">
         {items.map((model, modelIndex) => {
           const open = !!expanded[model.id];
+          // Mirrors the storefront pruning: no active product anywhere under
+          // this model means it is absent from the menu whatever the switch says.
+          const productTotal = model.generations.reduce(
+            (sum, g) => sum + g.productCount,
+            0,
+          );
 
           return (
             <li
@@ -215,6 +231,12 @@ function MenuConfigEditor({ tree }: MenuConfigEditorProps) {
                   </span>
                 </button>
 
+                {productTotal === 0 && (
+                  <span className="shrink-0 rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">
+                    Chưa có sản phẩm · không hiện trên menu
+                  </span>
+                )}
+
                 <Link
                   href={`/admin/brands/${model.brandId}`}
                   className="text-xs text-slate-500 hover:text-slate-900 hover:underline shrink-0 px-2"
@@ -222,17 +244,18 @@ function MenuConfigEditor({ tree }: MenuConfigEditorProps) {
                   Sửa
                 </Link>
 
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={isPending}
-                  onClick={() => toggleModel(modelIndex)}
-                  className="inline-flex items-center gap-1.5 shrink-0"
-                >
-                  {model.isActive ? <Eye size={14} /> : <EyeOff size={14} />}
-                  {model.isActive ? "Hiện" : "Ẩn"}
-                </Button>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Switch
+                    checked={model.isActive}
+                    onCheckedChange={() => toggleModel(modelIndex)}
+                    disabled={isPending}
+                    title={model.isActive ? "Đang hiện" : "Đang ẩn"}
+                    aria-label={`Hiện ${model.label} trên menu`}
+                  />
+                  <span className="text-xs text-slate-500 w-12">
+                    {model.isActive ? "Hiện" : "Ẩn"}
+                  </span>
+                </div>
               </div>
 
               {open && (
@@ -286,25 +309,33 @@ function MenuConfigEditor({ tree }: MenuConfigEditorProps) {
                       <span className="text-sm text-slate-800 truncate">
                         {generation.label}
                       </span>
-                      <span className="text-xs text-slate-400 shrink-0">
-                        {generation.productCount} sản phẩm
+                      <span
+                        className={cn(
+                          "text-xs shrink-0",
+                          generation.productCount === 0
+                            ? "text-amber-700"
+                            : "text-slate-400",
+                        )}
+                      >
+                        {generation.productCount === 0
+                          ? "Chưa có sản phẩm · không hiện trên menu"
+                          : `${generation.productCount} sản phẩm`}
                       </span>
 
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={isPending}
-                        onClick={() => toggleGeneration(modelIndex, genIndex)}
-                        className="inline-flex items-center gap-1.5 shrink-0 ml-auto"
-                      >
-                        {generation.isActive ? (
-                          <Eye size={14} />
-                        ) : (
-                          <EyeOff size={14} />
-                        )}
-                        {generation.isActive ? "Hiện" : "Ẩn"}
-                      </Button>
+                      <div className="flex items-center gap-2 shrink-0 ml-auto">
+                        <Switch
+                          checked={generation.isActive}
+                          onCheckedChange={() =>
+                            toggleGeneration(modelIndex, genIndex)
+                          }
+                          disabled={isPending}
+                          title={generation.isActive ? "Đang hiện" : "Đang ẩn"}
+                          aria-label={`Hiện ${generation.label} trên menu`}
+                        />
+                        <span className="text-xs text-slate-500 w-12">
+                          {generation.isActive ? "Hiện" : "Ẩn"}
+                        </span>
+                      </div>
                     </div>
                   ))}
                 </div>
