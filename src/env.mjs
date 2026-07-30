@@ -14,6 +14,9 @@ export const env = createEnv({
     STRIPE_WEBHOOK_SECERT_KEY: z.string().optional(),
     S3_ACCESS_KEY_ID: z.string().optional(),
     S3_SECRET_ACCESS_KEY: z.string().optional(),
+    // SePay webhook HMAC-SHA256 secret. Optional at build; the webhook route
+    // fails closed at runtime when it's missing.
+    SEPAY_WEBHOOK_SECRET: z.string().optional(),
   },
 
   /**
@@ -52,6 +55,7 @@ export const env = createEnv({
     STRIPE_WEBHOOK_SECERT_KEY: process.env.STRIPE_WEBHOOK_SECERT_KEY,
     S3_ACCESS_KEY_ID: process.env.S3_ACCESS_KEY_ID,
     S3_SECRET_ACCESS_KEY: process.env.S3_SECRET_ACCESS_KEY,
+    SEPAY_WEBHOOK_SECRET: process.env.SEPAY_WEBHOOK_SECRET,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation.

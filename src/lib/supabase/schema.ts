@@ -1,11 +1,13 @@
 import { createId } from "@paralleldrive/cuid2";
 import { InferInsertModel, InferSelectModel, relations } from "drizzle-orm";
 import {
+  bigint,
   boolean,
   decimal,
   foreignKey,
   integer,
   json,
+  jsonb,
   pgTable,
   primaryKey,
   text,
@@ -416,6 +418,41 @@ export const orderLinesRelations = relations(orderLines, ({ one }) => ({
     references: [orders.id],
   }),
 }));
+
+// ─── SePay incoming-payment webhook transactions ────────────────────────────
+
+export const sepayTransactions = pgTable("sepay_transactions", {
+  id: text("id")
+    .notNull()
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  // SePay's own transaction id — unique, used for idempotency.
+  sepayId: bigint("sepay_id", { mode: "number" }).notNull().unique(),
+  gateway: text("gateway"),
+  transactionDate: text("transaction_date"),
+  accountNumber: text("account_number"),
+  subAccount: text("sub_account"),
+  code: text("code"),
+  content: text("content"),
+  transferType: text("transfer_type"),
+  description: text("description"),
+  transferAmount: decimal("transfer_amount", { precision: 14, scale: 0 }),
+  referenceCode: text("reference_code"),
+  accumulated: decimal("accumulated", { precision: 16, scale: 0 }),
+  // Extracted "DH######" payment code from `content` (null if none) — used
+  // later for order reconciliation, which is out of scope for this build.
+  paymentCode: text("payment_code"),
+  matchedOrderId: text("matched_order_id").references(() => orders.id, {
+    onDelete: "set null",
+  }),
+  raw: jsonb("raw").notNull().default({}),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+    .defaultNow()
+    .notNull(),
+});
+
+export type SelectSepayTransaction = InferSelectModel<typeof sepayTransactions>;
+export type InsertSepayTransaction = InferInsertModel<typeof sepayTransactions>;
 
 export const address = pgTable("address", {
   id: text("id")
