@@ -367,8 +367,7 @@ function VariantSelector({ groups }: { groups: VariantGroup[] }) {
       return { ...prev, [id]: clamped };
     });
 
-  const toggleSelect = (id: string) =>
-    setQty(id, (qtys[id] ?? 0) > 0 ? 0 : 1);
+  const toggleSelect = (id: string) => setQty(id, (qtys[id] ?? 0) > 0 ? 0 : 1);
 
   return (
     <div className="space-y-6">
@@ -401,34 +400,10 @@ function VariantSelector({ groups }: { groups: VariantGroup[] }) {
 
               const body = (
                 <>
-                  {/* Control */}
+                  {/* Left control column — checkbox (select) or a spacer of the
+                      same width (quantity) so every option name lines up. */}
                   {isQuantity ? (
-                    <div
-                      className="flex items-center gap-1 shrink-0"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <button
-                        type="button"
-                        aria-label="Giảm"
-                        onClick={() => setQty(opt.id, q - 1)}
-                        disabled={q === 0}
-                        className="w-6 h-6 flex items-center justify-center border border-white/20 text-white disabled:opacity-30 hover:border-amber-500 hover:text-amber-500 transition-colors"
-                      >
-                        −
-                      </button>
-                      <span className="w-6 text-center text-xs font-bold text-white tabular-nums">
-                        {q}
-                      </span>
-                      <button
-                        type="button"
-                        aria-label="Tăng"
-                        onClick={() => setQty(opt.id, q + 1)}
-                        disabled={q >= QTY_MAX}
-                        className="w-6 h-6 flex items-center justify-center border border-white/20 text-white disabled:opacity-30 hover:border-amber-500 hover:text-amber-500 transition-colors"
-                      >
-                        +
-                      </button>
-                    </div>
+                    <span className="w-4 shrink-0" aria-hidden />
                   ) : (
                     <span
                       className={`w-4 h-4 shrink-0 border flex items-center justify-center ${
@@ -438,7 +413,11 @@ function VariantSelector({ groups }: { groups: VariantGroup[] }) {
                       }`}
                     >
                       {selected && (
-                        <Check size={10} strokeWidth={3} className="text-black" />
+                        <Check
+                          size={10}
+                          strokeWidth={3}
+                          className="text-black"
+                        />
                       )}
                     </span>
                   )}
@@ -459,10 +438,40 @@ function VariantSelector({ groups }: { groups: VariantGroup[] }) {
                     )}
                   </div>
 
-                  {/* Price */}
-                  <p className="text-xs font-black text-amber-500 shrink-0 whitespace-nowrap">
-                    {formatVND(Number(opt.price))}
-                  </p>
+                  {/* Right: stepper (quantity mode) sits next to the price */}
+                  <div className="flex items-center gap-3 shrink-0">
+                    {isQuantity && (
+                      <div
+                        className="flex items-center gap-1"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <button
+                          type="button"
+                          aria-label="Giảm"
+                          onClick={() => setQty(opt.id, q - 1)}
+                          disabled={q === 0}
+                          className="w-6 h-6 flex items-center justify-center border border-white/20 text-white disabled:opacity-30 hover:border-amber-500 hover:text-amber-500 transition-colors"
+                        >
+                          −
+                        </button>
+                        <span className="w-6 text-center text-xs font-bold text-white tabular-nums">
+                          {q}
+                        </span>
+                        <button
+                          type="button"
+                          aria-label="Tăng"
+                          onClick={() => setQty(opt.id, q + 1)}
+                          disabled={q >= QTY_MAX}
+                          className="w-6 h-6 flex items-center justify-center border border-white/20 text-white disabled:opacity-30 hover:border-amber-500 hover:text-amber-500 transition-colors"
+                        >
+                          +
+                        </button>
+                      </div>
+                    )}
+                    <p className="text-xs font-black text-amber-500 whitespace-nowrap">
+                      {formatVND(Number(opt.price))}
+                    </p>
+                  </div>
                 </>
               );
 
