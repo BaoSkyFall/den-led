@@ -4,7 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { useState, useEffect, useMemo } from "react";
-import { ChevronLeft, Phone, Check, ChevronRight } from "lucide-react";
+import {
+  ChevronLeft,
+  Phone,
+  Check,
+  ChevronRight,
+  ChevronDown,
+} from "lucide-react";
 import ProductSectionsRenderer from "@/features/product-sections/ProductSectionsRenderer";
 import type { ProductSection } from "@/features/product-sections/types";
 import RecommendedSection from "@/features/product-recs/RecommendedSection";
@@ -339,6 +345,18 @@ function VariantSelector({ groups }: { groups: VariantGroup[] }) {
   // select-mode option: 0 ↔ 1. quantity-mode option: 0..QTY_MAX.
   const [qtys, setQtys] = useState<Record<string, number>>({});
 
+  // Accordion open state — first group open, the rest collapsed. Non-mutex.
+  const [open, setOpen] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(groups.map((g, i) => [g.id, i === 0])),
+  );
+
+  const toggleGroup = (id: string) =>
+    setOpen((prev) => ({ ...prev, [id]: !prev[id] }));
+
+  const allOpen = groups.length > 0 && groups.every((g) => open[g.id]);
+  const setAll = (val: boolean) =>
+    setOpen(Object.fromEntries(groups.map((g) => [g.id, val])));
+
   const optionById = useMemo(() => {
     const m = new Map<string, VariantOption>();
     for (const g of groups) for (const o of g.options) m.set(o.id, o);
@@ -370,27 +388,79 @@ function VariantSelector({ groups }: { groups: VariantGroup[] }) {
   const toggleSelect = (id: string) => setQty(id, (qtys[id] ?? 0) > 0 ? 0 : 1);
 
   return (
-    <div className="space-y-6">
-      {groups.map((group) => (
-        <div key={group.id}>
-          {/* Group title — bigger than option names */}
-          <div className="flex items-baseline gap-2 mb-1">
-            <h3 className="text-sm font-black uppercase tracking-wide text-white">
-              {group.name}
-            </h3>
-            <span className="text-[9px] text-white/30 uppercase tracking-widest">
-              — tùy chọn
-            </span>
-          </div>
-          {group.description && (
-            <p className="text-[11px] text-white/40 mb-2.5">
-              {group.description}
-            </p>
-          )}
+    <div className="space-y-4">
+      {/* Global expand/collapse toggle */}
+      {groups.length > 1 && (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => setAll(!allOpen)}
+            className="text-[10px] font-bold tracking-[0.15em] uppercase text-white/40 hover:text-amber-500 transition-colors"
+          >
+            {allOpen ? "Thu gọn tất cả" : "Mở tất cả"}
+          </button>
+        </div>
+      )}
 
-          {/* Dense row list */}
-          <div className="divide-y divide-white/[0.06] border-y border-white/[0.06]">
-            {group.options.map((opt) => {
+      {groups.map((group) => {
+        const isOpen = open[group.id] ?? false;
+        const prices = group.options.map((o) => Number(o.price));
+        const minPrice = prices.length ? Math.min(...prices) : 0;
+        const maxPrice = prices.length ? Math.max(...prices) : 0;
+        const selectedCount = group.options.filter(
+          (o) => (qtys[o.id] ?? 0) > 0,
+        ).length;
+
+        return (
+          <div
+            key={group.id}
+            className="border border-white/[0.08] overflow-hidden"
+          >
+            {/* Header — click to expand/collapse */}
+            <button
+              type="button"
+              onClick={() => toggleGroup(group.id)}
+              className="w-full flex items-center gap-3 px-3 py-3 text-left hover:bg-white/[0.03] transition-colors"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-sm font-black uppercase tracking-wide text-white">
+                    {group.name}
+                  </h3>
+                  <span className="text-[9px] text-white/30 uppercase tracking-widest">
+                    {group.options.length} gói
+                  </span>
+                  {!isOpen && selectedCount > 0 && (
+                    <span className="text-[9px] font-bold uppercase tracking-wider bg-amber-500 text-black px-1.5 py-0.5">
+                      {selectedCount} đã chọn
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-amber-500/80 font-bold mt-0.5">
+                  {minPrice === maxPrice
+                    ? formatVND(minPrice)
+                    : `${formatVND(minPrice)} – ${formatVND(maxPrice)}`}
+                </p>
+              </div>
+              <ChevronDown
+                size={16}
+                className={`shrink-0 text-white/40 transition-transform ${
+                  isOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {isOpen && (
+              <div className="px-1 pb-1">
+                {group.description && (
+                  <p className="text-[11px] text-white/40 px-2 pt-1 pb-2">
+                    {group.description}
+                  </p>
+                )}
+
+                {/* Dense row list */}
+                <div className="divide-y divide-white/[0.06]">
+                  {group.options.map((opt) => {
               const q = qtys[opt.id] ?? 0;
               const selected = q > 0;
               const isQuantity = opt.selectionMode === "quantity";
@@ -477,24 +547,27 @@ function VariantSelector({ groups }: { groups: VariantGroup[] }) {
 
               // quantity-mode rows contain nested buttons → must be a <div>;
               // select-mode rows are a single toggle → <button> for a11y.
-              return isQuantity ? (
-                <div key={opt.id} className={rowClass}>
-                  {body}
+                    return isQuantity ? (
+                      <div key={opt.id} className={rowClass}>
+                        {body}
+                      </div>
+                    ) : (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => toggleSelect(opt.id)}
+                        className={`w-full text-left ${rowClass}`}
+                      >
+                        {body}
+                      </button>
+                    );
+                  })}
                 </div>
-              ) : (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => toggleSelect(opt.id)}
-                  className={`w-full text-left ${rowClass}`}
-                >
-                  {body}
-                </button>
-              );
-            })}
+              </div>
+            )}
           </div>
-        </div>
-      ))}
+        );
+      })}
 
       {/* Price summary */}
       <div className="border-t border-white/10 pt-6">
