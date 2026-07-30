@@ -86,7 +86,6 @@
     "nanoid": "^5.0.5",
     "next": "^14.2.35",
     "next-themes": "^0.2.1",
-    "npm": "^10.4.0",
     "persist-and-sync": "^1.2.1",
     "postgres": "^3.4.3",
     "react": "^18",
