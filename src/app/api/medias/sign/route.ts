@@ -30,11 +30,17 @@ export async function POST(request: Request) {
     const body = (await request.json()) as { files?: SignFileInput[] };
     files = Array.isArray(body?.files) ? body.files : [];
   } catch {
-    return NextResponse.json({ message: "Body không hợp lệ." }, { status: 400 });
+    return NextResponse.json(
+      { message: "Body không hợp lệ." },
+      { status: 400 },
+    );
   }
 
   if (files.length === 0) {
-    return NextResponse.json({ message: "Không có file nào." }, { status: 400 });
+    return NextResponse.json(
+      { message: "Không có file nào." },
+      { status: 400 },
+    );
   }
 
   const supabase = createClient({ cookieStore, isAdmin: true });

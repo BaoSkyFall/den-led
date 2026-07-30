@@ -30,7 +30,10 @@ export async function POST(request: Request) {
     const body = (await request.json()) as { items?: ConfirmItem[] };
     items = Array.isArray(body?.items) ? body.items : [];
   } catch {
-    return NextResponse.json({ message: "Body không hợp lệ." }, { status: 400 });
+    return NextResponse.json(
+      { message: "Body không hợp lệ." },
+      { status: 400 },
+    );
   }
 
   // Only accept keys shaped like our signed uploads (public/<name>) and within

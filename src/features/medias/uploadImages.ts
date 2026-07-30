@@ -64,7 +64,8 @@ export async function uploadImagesViaSignedUrl(
   });
 
   if (!signRes.ok) {
-    const msg = (await signRes.json().catch(() => ({})))?.message ?? "Lỗi ký URL";
+    const msg =
+      (await signRes.json().catch(() => ({})))?.message ?? "Lỗi ký URL";
     validIndexes.forEach((i) => onFileStatus?.(i, "error", msg));
     throw new Error(msg);
   }

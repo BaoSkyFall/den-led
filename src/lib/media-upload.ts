@@ -23,7 +23,11 @@ export function validateImageFile(file: {
   size: number;
   name?: string;
 }): string | null {
-  if (!MEDIA_ALLOWED_MIME.includes(file.type as (typeof MEDIA_ALLOWED_MIME)[number])) {
+  if (
+    !MEDIA_ALLOWED_MIME.includes(
+      file.type as (typeof MEDIA_ALLOWED_MIME)[number],
+    )
+  ) {
     return `Định dạng không hỗ trợ (chỉ JPG, PNG, WEBP, GIF).`;
   }
   if (file.size > MEDIA_MAX_FILE_SIZE) {
