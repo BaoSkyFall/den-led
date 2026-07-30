@@ -2,10 +2,7 @@ import { ReactNode } from "react";
 import StoreHeader from "@/components/store/StoreHeader";
 import StoreFooter from "@/components/store/StoreFooter";
 import SocialSidebar from "@/components/store/SocialSidebar";
-import {
-  getNavTree,
-  getVehicleFormOptions,
-} from "@/features/vehicle-taxonomy";
+import { getNavTree, getVehicleFormOptions } from "@/features/vehicle-taxonomy";
 
 type Props = { children: ReactNode };
 
