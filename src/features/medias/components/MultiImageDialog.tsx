@@ -15,6 +15,7 @@ import { useQuery } from "@urql/next";
 import { Check, Loader2, Upload } from "lucide-react";
 import Image from "next/image";
 import { ReactNode, useRef, useState } from "react";
+import { uploadImagesViaSignedUrl } from "../uploadImages";
 
 const MediasQuery = gql(/* GraphQL */ `
   query MultiImageDialogMediasQuery($first: Int, $after: Cursor) {
@@ -93,39 +94,31 @@ export default function MultiImageDialog({
     if (!files || files.length === 0) return;
 
     setUploading(true);
-    const formData = new FormData();
-    Array.from(files).forEach((file, i) => {
-      formData.append(`files[${i}]`, file);
-    });
-
+    let errorCount = 0;
     try {
-      const res = await fetch("/api/medias", {
-        method: "POST",
-        body: formData,
+      // Signed-URL direct upload — no serverless body cap, validated client-side.
+      const uploaded = await uploadImagesViaSignedUrl(Array.from(files), {
+        onFileStatus: (_i, status, error) => {
+          if (status === "error") {
+            errorCount++;
+            toast({ title: "Ảnh lỗi", description: error });
+          }
+        },
       });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || "Upload thất bại");
+
+      if (uploaded.length > 0) {
+        refetch({ requestPolicy: "network-only" });
+        // Auto-select uploaded medias so user can just click "Thêm"
+        setSelected((prev) => {
+          const next = new Set(prev);
+          uploaded.forEach((m) => next.add(m.id));
+          return next;
+        });
+        toast({
+          title: `Đã upload ${uploaded.length} ảnh`,
+          description: errorCount ? undefined : "Ảnh mới đã được chọn sẵn.",
+        });
       }
-      const uploaded = (await res.json()) as Array<{
-        id: string;
-        key: string;
-        alt: string;
-      }>;
-
-      refetch({ requestPolicy: "network-only" });
-
-      // Auto-select uploaded medias so user can just click "Thêm"
-      setSelected((prev) => {
-        const next = new Set(prev);
-        uploaded.forEach((m) => next.add(m.id));
-        return next;
-      });
-
-      toast({
-        title: `Đã upload ${uploaded.length} ảnh`,
-        description: "Ảnh mới đã được chọn sẵn.",
-      });
     } catch (err) {
       toast({
         title: "Lỗi upload",
