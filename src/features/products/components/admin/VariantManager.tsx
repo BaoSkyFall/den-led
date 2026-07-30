@@ -116,7 +116,7 @@ export default function VariantManager({ productId }: Props) {
   function updateOption(
     groupId: string,
     optionId: string,
-    field: "name" | "price",
+    field: "name" | "price" | "selectionMode",
     value: string,
   ) {
     startTransition(async () => {
@@ -217,6 +217,22 @@ export default function VariantManager({ productId }: Props) {
                       updateOption(group.id, opt.id, "name", e.target.value)
                     }
                   />
+                  <select
+                    className="h-8 text-xs rounded-md border border-input bg-background px-2 shrink-0"
+                    defaultValue={opt.selectionMode ?? "select"}
+                    onChange={(e) =>
+                      updateOption(
+                        group.id,
+                        opt.id,
+                        "selectionMode",
+                        e.target.value,
+                      )
+                    }
+                    title="Kiểu chọn"
+                  >
+                    <option value="select">Chọn</option>
+                    <option value="quantity">Số lượng</option>
+                  </select>
                   <Input
                     key={opt.id + "-" + String(opt.price)}
                     className="h-8 text-sm w-36"

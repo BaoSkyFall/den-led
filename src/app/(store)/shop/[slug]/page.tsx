@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ChevronLeft, Phone, Check, ChevronRight } from "lucide-react";
 import ProductSectionsRenderer from "@/features/product-sections/ProductSectionsRenderer";
 import type { ProductSection } from "@/features/product-sections/types";
@@ -20,6 +20,7 @@ type VariantOption = {
   features: string[];
   images: string[];
   displayOrder: number;
+  selectionMode: "select" | "quantity";
 };
 
 type VariantGroup = {
@@ -331,18 +332,24 @@ function ImageGallery({ images }: { images: string[] }) {
 
 // ─── Variant Selector ─────────────────────────────────────────────────────────
 
-function VariantSelector({ groups }: { groups: VariantGroup[] }) {
-  // Multi-select trong mỗi group — customer chọn bao nhiêu tùy ý
-  const [selections, setSelections] = useState<Record<string, VariantOption[]>>(
-    Object.fromEntries(groups.map((g) => [g.id, [] as VariantOption[]])),
-  );
+const QTY_MAX = 10;
 
-  const selectedOptions = Object.values(selections).flat();
-  const totalPrice = selectedOptions.reduce(
-    (sum, opt) => sum + Number(opt.price),
-    0,
-  );
-  const hasSelection = selectedOptions.length > 0;
+function VariantSelector({ groups }: { groups: VariantGroup[] }) {
+  // Per-option quantity map. 0 / absent = chưa chọn.
+  // select-mode option: 0 ↔ 1. quantity-mode option: 0..QTY_MAX.
+  const [qtys, setQtys] = useState<Record<string, number>>({});
+
+  const optionById = useMemo(() => {
+    const m = new Map<string, VariantOption>();
+    for (const g of groups) for (const o of g.options) m.set(o.id, o);
+    return m;
+  }, [groups]);
+
+  const totalPrice = Object.entries(qtys).reduce((sum, [id, q]) => {
+    const opt = optionById.get(id);
+    return opt ? sum + Number(opt.price) * q : sum;
+  }, 0);
+  const hasSelection = Object.values(qtys).some((q) => q > 0);
 
   const formatVND = (n: number) =>
     new Intl.NumberFormat("vi-VN", {
@@ -350,81 +357,129 @@ function VariantSelector({ groups }: { groups: VariantGroup[] }) {
       currency: "VND",
     }).format(n);
 
-  function toggleOption(groupId: string, opt: VariantOption) {
-    setSelections((prev) => {
-      const current = prev[groupId] ?? [];
-      const exists = current.some((o) => o.id === opt.id);
-      return {
-        ...prev,
-        [groupId]: exists
-          ? current.filter((o) => o.id !== opt.id)
-          : [...current, opt],
-      };
+  const setQty = (id: string, next: number) =>
+    setQtys((prev) => {
+      const clamped = Math.max(0, Math.min(QTY_MAX, next));
+      if (clamped === 0) {
+        const { [id]: _drop, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [id]: clamped };
     });
-  }
+
+  const toggleSelect = (id: string) =>
+    setQty(id, (qtys[id] ?? 0) > 0 ? 0 : 1);
 
   return (
     <div className="space-y-6">
       {groups.map((group) => (
         <div key={group.id}>
-          <div className="flex items-center gap-3 mb-3">
-            <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-amber-500">
+          {/* Group title — bigger than option names */}
+          <div className="flex items-baseline gap-2 mb-1">
+            <h3 className="text-sm font-black uppercase tracking-wide text-white">
               {group.name}
-            </p>
+            </h3>
             <span className="text-[9px] text-white/30 uppercase tracking-widest">
-              — chọn nhiều tùy ý
+              — tùy chọn
             </span>
           </div>
           {group.description && (
-            <p className="text-xs text-white/40 mb-3">{group.description}</p>
+            <p className="text-[11px] text-white/40 mb-2.5">
+              {group.description}
+            </p>
           )}
-          <div className="space-y-2">
+
+          {/* Dense row list */}
+          <div className="divide-y divide-white/[0.06] border-y border-white/[0.06]">
             {group.options.map((opt) => {
-              const isSelected = (selections[group.id] ?? []).some(
-                (o) => o.id === opt.id,
-              );
-              return (
-                <button
-                  key={opt.id}
-                  onClick={() => toggleOption(group.id, opt)}
-                  className={`w-full text-left p-3 sm:p-4 border transition-all duration-200 ${
-                    isSelected
-                      ? "border-amber-500 bg-amber-500/10"
-                      : "border-white/10 hover:border-white/30"
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-3 min-w-0">
-                    <div className="flex items-start gap-3 min-w-0 flex-1">
-                      <div
-                        className={`mt-0.5 w-4 h-4 shrink-0 border flex items-center justify-center ${
-                          isSelected
-                            ? "border-amber-500 bg-amber-500"
-                            : "border-white/30"
+              const q = qtys[opt.id] ?? 0;
+              const selected = q > 0;
+              const isQuantity = opt.selectionMode === "quantity";
+              const rowClass = `group flex items-center gap-3 px-2 py-2 min-h-[44px] transition-colors ${
+                selected ? "bg-amber-500/10" : "hover:bg-white/[0.03]"
+              }`;
+
+              const body = (
+                <>
+                  {/* Control */}
+                  {isQuantity ? (
+                    <div
+                      className="flex items-center gap-1 shrink-0"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        type="button"
+                        aria-label="Giảm"
+                        onClick={() => setQty(opt.id, q - 1)}
+                        disabled={q === 0}
+                        className="w-6 h-6 flex items-center justify-center border border-white/20 text-white disabled:opacity-30 hover:border-amber-500 hover:text-amber-500 transition-colors"
+                      >
+                        −
+                      </button>
+                      <span className="w-6 text-center text-xs font-bold text-white tabular-nums">
+                        {q}
+                      </span>
+                      <button
+                        type="button"
+                        aria-label="Tăng"
+                        onClick={() => setQty(opt.id, q + 1)}
+                        disabled={q >= QTY_MAX}
+                        className="w-6 h-6 flex items-center justify-center border border-white/20 text-white disabled:opacity-30 hover:border-amber-500 hover:text-amber-500 transition-colors"
+                      >
+                        +
+                      </button>
+                    </div>
+                  ) : (
+                    <span
+                      className={`w-4 h-4 shrink-0 border flex items-center justify-center ${
+                        selected
+                          ? "border-amber-500 bg-amber-500"
+                          : "border-white/30"
+                      }`}
+                    >
+                      {selected && (
+                        <Check size={10} strokeWidth={3} className="text-black" />
+                      )}
+                    </span>
+                  )}
+
+                  {/* Name + features */}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium text-white truncate">
+                      {opt.name}
+                    </p>
+                    {opt.features.length > 0 && (
+                      <p
+                        className={`text-[10px] text-white/40 leading-snug mt-0.5 truncate ${
+                          selected ? "block" : "hidden md:group-hover:block"
                         }`}
                       >
-                        {isSelected && (
-                          <Check
-                            size={10}
-                            strokeWidth={3}
-                            className="text-black"
-                          />
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-bold uppercase tracking-wide text-white break-words">
-                          {opt.name}
-                        </p>
-                        {opt.features.length > 0 && (
-                          <p className="text-[11px] text-white/40 mt-1 leading-relaxed break-words">
-                            {opt.features.slice(0, 3).join(" · ")}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <p className="text-xs sm:text-sm font-black text-amber-500 shrink-0 whitespace-nowrap">
-                      {formatVND(Number(opt.price))}
-                    </p>
+                        {opt.features.slice(0, 3).join(" · ")}
+                      </p>
+                    )}
                   </div>
+
+                  {/* Price */}
+                  <p className="text-xs font-black text-amber-500 shrink-0 whitespace-nowrap">
+                    {formatVND(Number(opt.price))}
+                  </p>
+                </>
+              );
+
+              // quantity-mode rows contain nested buttons → must be a <div>;
+              // select-mode rows are a single toggle → <button> for a11y.
+              return isQuantity ? (
+                <div key={opt.id} className={rowClass}>
+                  {body}
+                </div>
+              ) : (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => toggleSelect(opt.id)}
+                  className={`w-full text-left ${rowClass}`}
+                >
+                  {body}
                 </button>
               );
             })}

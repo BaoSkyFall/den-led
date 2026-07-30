@@ -717,6 +717,7 @@ export const variantOptions = pgTable("variant_options", {
   images: text("images").array().default([]),
   features: text("features").array().default([]),
   displayOrder: integer("display_order").default(0),
+  selectionMode: text("selection_mode").notNull().default("select"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });

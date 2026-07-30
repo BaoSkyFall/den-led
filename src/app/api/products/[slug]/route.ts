@@ -54,7 +54,9 @@ export async function GET(
 
     const { data: options } = await supabase
       .from("variant_options")
-      .select("id, group_id, name, price, images, features, display_order")
+      .select(
+        "id, group_id, name, price, images, features, display_order, selection_mode",
+      )
       .in(
         "group_id",
         (groups ?? []).map((g: any) => g.id),
@@ -75,6 +77,9 @@ export async function GET(
           images: o.images ?? [],
           features: o.features ?? [],
           displayOrder: o.display_order,
+          selectionMode: (o.selection_mode ?? "select") as
+            | "select"
+            | "quantity",
         })),
     }));
 
