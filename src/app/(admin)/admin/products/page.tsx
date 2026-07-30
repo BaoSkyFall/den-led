@@ -29,7 +29,11 @@ async function ProductsPage({ searchParams }: AdminProjectsPageProps) {
     }
   `);
 
-  const { data } = await getClient().query(AdminProductsPageQuery, {});
+  const { data, error } = await getClient().query(AdminProductsPageQuery, {});
+
+  if (error) {
+    throw new Error(`Failed to load products: ${error.message}`);
+  }
 
   if (!data) return notFound();
 

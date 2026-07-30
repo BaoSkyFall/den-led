@@ -59,7 +59,9 @@ export async function POST(request: NextRequest) {
             const updatedOrder = await db
               .update(orders)
               .set({
-                amount: `${checkoutSession.amount_total / 100}`,
+                // VND is a zero-decimal currency for Stripe — amount_total is
+                // already the whole-unit amount, not cents.
+                amount: `${checkoutSession.amount_total}`,
                 email: customer_details!.email,
                 name: customer_details!.name,
                 order_status: "PREPARING",

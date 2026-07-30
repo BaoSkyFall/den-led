@@ -11,6 +11,7 @@ export const makeClient = (access_token?: string) => {
   return createClient({
     url: `${env.NEXT_PUBLIC_SUPABASE_URL}/graphql/v1`,
     exchanges: [cacheExchange, fetchExchange],
+    preferGetMethod: false,
     fetchOptions: () => {
       const headers = {
         apikey: env.NEXT_PUBLIC_SUPABASE_ANON_KEY,

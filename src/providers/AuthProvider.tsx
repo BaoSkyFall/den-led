@@ -1,7 +1,6 @@
 "use client";
 
 import { CartItems, useCartStore } from "@/features/carts";
-import { useToast } from "@/components/ui/use-toast";
 import { AuthUser, Session } from "@supabase/supabase-js";
 import { nanoid } from "nanoid";
 import { createContext, useContext, useEffect, useState } from "react";
@@ -34,7 +33,6 @@ export const SupabaseAuthProvider: React.FC<SupabaseAuthProviderProps> = ({
   const [session, setSession] = useState<Session | null>(null);
   const removeAllCartStorage = useCartStore((s) => s.removeAllProducts);
   const setWishlist = useWishlistStore((s) => s.setWishlist);
-  const { toast } = useToast();
 
   useEffect(() => {
     const {
@@ -98,10 +96,10 @@ export const SupabaseAuthProvider: React.FC<SupabaseAuthProviderProps> = ({
               setWishlist(wishlistItems);
             });
 
-          toast({
-            title: "Welcome Back.",
-            description: "Your are arleady signed in.",
-          });
+          // No toast here: SignInForm already shows "Đăng nhập thành công"
+          // right after a real sign-in. This SIGNED_IN branch also fires on
+          // every page load/navigation where a session is simply restored
+          // from storage, so a toast here spams the user repeatedly.
           break;
         case "SIGNED_OUT":
           setUser(null);

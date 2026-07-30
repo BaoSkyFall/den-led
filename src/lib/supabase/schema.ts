@@ -214,7 +214,7 @@ export const orders = pgTable(
       .notNull()
       .primaryKey()
       .$defaultFn(() => createId()),
-    amount: decimal("amount", { precision: 8, scale: 2 }).notNull(),
+    amount: decimal("amount", { precision: 12, scale: 0 }).notNull(),
     currency: text("currency").notNull(),
     email: text("email"),
     name: text("name"),
