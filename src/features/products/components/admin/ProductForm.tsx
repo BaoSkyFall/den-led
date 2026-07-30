@@ -34,18 +34,34 @@ import { useQuery } from "@urql/next";
 import { createInsertSchema } from "drizzle-zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Suspense, useTransition } from "react";
+import { Suspense, useState, useTransition } from "react";
 import VariantManager from "./VariantManager";
 import GalleryManager from "./GalleryManager";
+import TaxonomyPicker from "./TaxonomyPicker";
 import ProductSectionsEditorDialog from "@/features/product-sections/admin/ProductSectionsEditorDialog";
-import { VEHICLE_FAMILY_OPTIONS } from "@/features/product-recs/types";
+import type { BrandTreeBrand } from "@/features/vehicle-taxonomy/types";
+import { cn } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import { gql } from "urql";
-import { Save, X } from "lucide-react";
+import { ChevronDown, Save, X } from "lucide-react";
 
 type ProductsFormProps = {
   product?: SelectProducts;
+  /** Full Brand -> Model -> Generation tree, fetched by the server page. */
+  brands: BrandTreeBrand[];
 };
+
+// Every collapsible section, in render order. Used by "Mở tất cả / Đóng tất cả"
+// and by the invalid-submit handler that has to reveal hidden errors.
+const SECTION_KEYS = [
+  "basic",
+  "description",
+  "category",
+  "pricing",
+  "image",
+  "gallery",
+  "variants",
+] as const;
 export const ProductFormQuery = gql(/* GraphQL */ `
   query ProductFormQuery {
     collectionsCollection(orderBy: [{ label: AscNullsLast }]) {
@@ -64,60 +80,94 @@ function Section({
   title,
   description,
   children,
+  open,
+  onToggle,
 }: {
   title: string;
   description?: string;
   children: React.ReactNode;
+  open: boolean;
+  onToggle: () => void;
 }) {
   return (
     <section className="bg-white border border-slate-200 rounded-lg overflow-hidden">
-      <header className="px-5 py-4 border-b border-slate-200 bg-slate-50/50">
-        <h2 className="text-sm font-bold text-slate-900">{title}</h2>
-        {description && (
-          <p className="text-xs text-slate-500 mt-0.5">{description}</p>
-        )}
-      </header>
-      <div className="p-5 space-y-5">{children}</div>
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        className="w-full text-left px-5 py-4 border-b border-slate-200 bg-slate-50/50 flex items-center justify-between gap-3"
+      >
+        <span className="min-w-0">
+          <h2 className="text-sm font-bold text-slate-900">{title}</h2>
+          {description && (
+            <p className="text-xs text-slate-500 mt-0.5">{description}</p>
+          )}
+        </span>
+        <ChevronDown
+          size={16}
+          className={cn("shrink-0 transition-transform", open && "rotate-180")}
+        />
+      </button>
+      {/* Children stay MOUNTED and are hidden with CSS. Unmounting would reset
+          the uncontrolled inputs (name/slug/rating use defaultValue) and throw
+          away in-progress Gallery/Variant/Sections edits. */}
+      <div className={cn("p-5 space-y-5", !open && "hidden")}>{children}</div>
     </section>
   );
 }
 
-function ProductForm({ product }: ProductsFormProps) {
+function ProductForm({ product, brands }: ProductsFormProps) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const { toast } = useToast();
 
   const [{ data }] = useQuery({ query: ProductFormQuery });
 
+  // All sections start collapsed — an absent key means closed.
+  const [openMap, setOpenMap] = useState<Record<string, boolean>>({});
+  const toggleSection = (key: string) =>
+    setOpenMap((prev) => ({ ...prev, [key]: !prev[key] }));
+  const setAllOpen = (open: boolean) =>
+    setOpenMap(Object.fromEntries(SECTION_KEYS.map((key) => [key, open])));
+  const allOpen = SECTION_KEYS.every((key) => openMap[key]);
+
   const form = useForm<InsertProducts>({
     resolver: zodResolver(createInsertSchema(products)),
-    defaultValues: { ...product },
+    defaultValues: { ...product, status: product?.status ?? "active" },
   });
 
   const { register, control, handleSubmit } = form;
 
-  const onSubmit = handleSubmit(async (data: InsertProducts) => {
-    startTransition(async () => {
-      try {
-        product
-          ? await updateProductAction(product.id, data)
-          : await createProductAction(data);
+  const onSubmit = handleSubmit(
+    async (data: InsertProducts) => {
+      startTransition(async () => {
+        try {
+          product
+            ? await updateProductAction(product.id, data)
+            : await createProductAction(data);
 
-        toast({
-          title: product ? "Đã cập nhật sản phẩm" : "Đã tạo sản phẩm mới",
-          description: data.name,
-        });
+          toast({
+            title: product ? "Đã cập nhật sản phẩm" : "Đã tạo sản phẩm mới",
+            description: data.name,
+          });
 
-        router.push("/admin/products");
-        router.refresh();
-      } catch (err) {
-        toast({
-          title: "Có lỗi xảy ra",
-          description: "Không thể lưu sản phẩm. Vui lòng thử lại.",
-        });
-      }
-    });
-  });
+          router.push("/admin/products");
+          router.refresh();
+        } catch (err) {
+          toast({
+            title: "Có lỗi xảy ra",
+            description: "Không thể lưu sản phẩm. Vui lòng thử lại.",
+          });
+        }
+      });
+    },
+    // Collapsed sections hide their own validation errors, so Save would look
+    // like it silently did nothing. Reveal everything instead.
+    () => {
+      setAllOpen(true);
+      toast({ title: "Vui lòng kiểm tra lại các trường bắt buộc" });
+    },
+  );
 
   return (
     <Form {...form}>
@@ -126,10 +176,22 @@ function ProductForm({ product }: ProductsFormProps) {
         onSubmit={onSubmit}
         className="pb-24 lg:pb-8 space-y-5 max-w-4xl"
       >
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => setAllOpen(!allOpen)}
+            className="text-xs font-medium text-slate-600 hover:text-slate-900 hover:underline"
+          >
+            {allOpen ? "Đóng tất cả" : "Mở tất cả"}
+          </button>
+        </div>
+
         {/* Basic info */}
         <Section
           title="Thông Tin Cơ Bản"
           description="Tên, đường dẫn và mô tả sản phẩm"
+          open={!!openMap.basic}
+          onToggle={() => toggleSection("basic")}
         >
           <FormItem>
             <FormLabel>Tên Sản Phẩm *</FormLabel>
@@ -167,6 +229,8 @@ function ProductForm({ product }: ProductsFormProps) {
           <Section
             title="Mô Tả Sản Phẩm (Blog-style)"
             description="Chỉnh sửa trong dialog toàn màn hình để có nhiều không gian, không đụng scroll của form ngoài."
+            open={!!openMap.description}
+            onToggle={() => toggleSection("description")}
           >
             <ProductSectionsEditorDialog productId={product.id} />
           </Section>
@@ -175,7 +239,9 @@ function ProductForm({ product }: ProductsFormProps) {
         {/* Categorization */}
         <Section
           title="Phân Loại"
-          description="Bộ sưu tập, nhãn hiển thị và tags"
+          description="Bộ sưu tập, phân loại xe, trạng thái và tags"
+          open={!!openMap.category}
+          onToggle={() => toggleSection("category")}
         >
           <Suspense>
             {data && data.collectionsCollection && (
@@ -221,29 +287,46 @@ function ProductForm({ product }: ProductsFormProps) {
 
           <FormField
             control={form.control}
-            name="vehicleFamily"
+            name="generationId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Loại Xe</FormLabel>
+                <FormLabel>Phân Loại Xe *</FormLabel>
+                <TaxonomyPicker
+                  brands={brands}
+                  value={field.value ?? null}
+                  onChange={field.onChange}
+                />
+                <FormDescription>
+                  Chọn Hãng -&gt; Dòng xe -&gt; Đời xe. Dùng cho menu và sản phẩm
+                  đề xuất.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="status"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Trạng Thái</FormLabel>
                 <Select
                   onValueChange={field.onChange}
-                  defaultValue={field.value || undefined}
+                  defaultValue={field.value ?? "active"}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Chọn dòng xe (SH, Air Blade, ...)" />
+                      <SelectValue />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {VEHICLE_FAMILY_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="active">Đang hiển thị</SelectItem>
+                    <SelectItem value="inactive">Đang ẩn</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormDescription>
-                  Dùng để nhóm &quot;Sản phẩm đề xuất&quot; theo dòng xe.
+                  Ẩn sản phẩm khỏi menu mà không cần tắt cả đời xe.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -266,6 +349,8 @@ function ProductForm({ product }: ProductsFormProps) {
         <Section
           title="Giá & Đánh Giá"
           description="Giá cơ bản (fallback) và điểm đánh giá hiển thị"
+          open={!!openMap.pricing}
+          onToggle={() => toggleSection("pricing")}
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <FormField
@@ -323,6 +408,8 @@ function ProductForm({ product }: ProductsFormProps) {
         <Section
           title="Ảnh Đại Diện"
           description="Ảnh chính hiển thị trên card và làm ảnh mặc định"
+          open={!!openMap.image}
+          onToggle={() => toggleSection("image")}
         >
           <FormField
             control={form.control}
@@ -351,6 +438,8 @@ function ProductForm({ product }: ProductsFormProps) {
           <Section
             title="Gallery Ảnh Sản Phẩm"
             description="Nhiều ảnh hiển thị trong trang chi tiết. Ảnh đầu tiên là ảnh lớn nhất."
+            open={!!openMap.gallery}
+            onToggle={() => toggleSection("gallery")}
           >
             <Suspense
               fallback={
@@ -367,6 +456,8 @@ function ProductForm({ product }: ProductsFormProps) {
           <Section
             title="Gói Dịch Vụ (Variants)"
             description="Quản lý các gói dịch vụ và mức giá cho sản phẩm này"
+            open={!!openMap.variants}
+            onToggle={() => toggleSection("variants")}
           >
             <Suspense
               fallback={

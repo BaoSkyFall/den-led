@@ -1,5 +1,6 @@
 import AdminShell from "@/components/admin/AdminShell";
 import { ProductForm } from "@/features/products";
+import { getBrandTree } from "@/features/vehicle-taxonomy/queries";
 import db from "@/lib/supabase/db";
 import { products } from "@/lib/supabase/schema";
 import { eq } from "drizzle-orm";
@@ -20,13 +21,15 @@ async function EditProjectPage({
   });
   if (!product) return notFound();
 
+  const brands = await getBrandTree();
+
   return (
     <AdminShell
       heading="Chỉnh Sửa Sản Phẩm"
       description="Cập nhật thông tin sản phẩm rồi nhấn Update để lưu thay đổi."
     >
       <Suspense>
-        <ProductForm product={product} />
+        <ProductForm product={product} brands={brands} />
       </Suspense>
     </AdminShell>
   );

@@ -19,6 +19,18 @@ export const dashboardConfig: DashboardConfig = {
       items: [],
     },
     {
+      title: "Hãng Xe",
+      href: "/admin/brands",
+      icon: "tag",
+      items: [],
+    },
+    {
+      title: "Cấu Hình Menu",
+      href: "/admin/menu",
+      icon: "menu",
+      items: [],
+    },
+    {
       title: "Hình Ảnh",
       href: "/admin/medias",
       icon: "image",

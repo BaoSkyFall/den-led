@@ -21,6 +21,12 @@ type DeleteDialogProps = {
   description?: string;
   cancelLabel?: string;
   actionLabel?: string;
+  /**
+   * Replaces the default destructive button, for places where a full-width
+   * labelled button does not fit (e.g. compact icon rows). Must render a single
+   * element — it is passed to `AlertDialogTrigger asChild`.
+   */
+  trigger?: React.ReactNode;
 };
 
 function DeleteDialog({
@@ -30,11 +36,14 @@ function DeleteDialog({
   triggerLabel,
   actionLabel,
   cancelLabel,
+  trigger,
 }: DeleteDialogProps) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="destructive">{triggerLabel || "Delete"}</Button>
+        {trigger ?? (
+          <Button variant="destructive">{triggerLabel || "Delete"}</Button>
+        )}
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>

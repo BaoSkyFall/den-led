@@ -15,7 +15,9 @@ export async function GET() {
       { auth: { persistSession: false } },
     );
 
-    // Fetch products + featured image
+    // Fetch products + featured image.
+    // `status = 'active'` is storefront-wide: this route feeds both the home
+    // page specials grid and /shop, so an inactive product disappears from both.
     const { data: products, error } = await supabase
       .from("products")
       .select(
@@ -26,11 +28,11 @@ export async function GET() {
         badge,
         rating,
         price,
-        vehicle_family,
         featured_image_id,
         medias:featured_image_id(id, key, alt)
       `,
       )
+      .eq("status", "active")
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -60,7 +62,6 @@ export async function GET() {
       name: p.name,
       slug: p.slug,
       badge: p.badge,
-      vehicleFamily: p.vehicle_family ?? null,
       rating: p.rating,
       price: p.price,
       imageKey: p.medias?.key ?? null,

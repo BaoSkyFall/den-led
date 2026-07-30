@@ -4,12 +4,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { ChevronDown, Menu, Phone, X } from "lucide-react";
-import { NAV_VEHICLES } from "./nav-data";
+import type { NavModel } from "@/features/vehicle-taxonomy";
 
-export default function StoreHeader() {
+type Props = { models: NavModel[] };
+
+export default function StoreHeader({ models }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
   const [desktopHover, setDesktopHover] = useState<string | null>(null);
+
+  // Empty tree (fetch error / empty DB) => plain link, never a broken dropdown.
+  const hasMenu = models.length > 0;
 
   return (
     <>
@@ -34,54 +39,67 @@ export default function StoreHeader() {
               Trang Chủ
             </Link>
 
-            <div
-              className="relative"
-              onMouseEnter={() => setDesktopHover("vehicles")}
-              onMouseLeave={() => setDesktopHover(null)}
-            >
-              <Link
-                href="/shop"
-                className="flex items-center gap-1.5 text-[10px] font-bold tracking-[0.2em] uppercase text-white/50 hover:text-white transition-colors px-3 py-2"
+            {hasMenu ? (
+              <div
+                className="relative"
+                onMouseEnter={() => setDesktopHover("vehicles")}
+                onMouseLeave={() => setDesktopHover(null)}
               >
-                Danh Sách Xe
-                <ChevronDown
-                  size={10}
-                  strokeWidth={2.5}
-                  className={`transition-transform duration-200 ${desktopHover === "vehicles" ? "rotate-180" : ""}`}
-                />
-              </Link>
+                <Link
+                  href="/shop"
+                  className="flex items-center gap-1.5 text-[10px] font-bold tracking-[0.2em] uppercase text-white/50 hover:text-white transition-colors px-3 py-2"
+                >
+                  Danh Sách Xe
+                  <ChevronDown
+                    size={10}
+                    strokeWidth={2.5}
+                    className={`transition-transform duration-200 ${desktopHover === "vehicles" ? "rotate-180" : ""}`}
+                  />
+                </Link>
 
-              {desktopHover === "vehicles" && (
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-0 pt-2 z-50 min-w-[520px]">
-                  <div className="bg-[#0a0a0a] border border-white/10 p-6">
-                    <p className="text-[9px] font-bold tracking-[0.3em] uppercase text-amber-500 mb-4">
-                      Chọn dòng xe để xem gói độ đèn
-                    </p>
-                    <div className="grid grid-cols-4 gap-x-6 gap-y-4">
-                      {NAV_VEHICLES.map((v) => (
-                        <div key={v.label}>
-                          <Link
-                            href={v.href}
-                            className="block text-xs font-black uppercase tracking-wide text-white hover:text-amber-500 transition-colors mb-2"
-                          >
-                            {v.label}
-                          </Link>
-                          {v.children.map((c) => (
-                            <Link
-                              key={c.href}
-                              href={c.href}
-                              className="block text-[10px] text-white/40 hover:text-white transition-colors py-0.5"
-                            >
-                              {c.label}
-                            </Link>
-                          ))}
-                        </div>
-                      ))}
+                {desktopHover === "vehicles" && (
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-0 pt-2 z-50 min-w-[520px]">
+                    <div className="bg-[#0a0a0a] border border-white/10 p-6">
+                      <p className="text-[9px] font-bold tracking-[0.3em] uppercase text-amber-500 mb-4">
+                        Chọn dòng xe để xem gói độ đèn
+                      </p>
+                      <div className="grid grid-cols-4 gap-x-6 gap-y-4">
+                        {models.map((m) => (
+                          <div key={m.id}>
+                            <p className="text-xs font-black uppercase tracking-wide text-white mb-2">
+                              {m.label}
+                            </p>
+                            {m.generations.map((g) => (
+                              <div key={g.id}>
+                                <p className="text-[9px] uppercase tracking-wide text-white/30 mt-2">
+                                  {g.label}
+                                </p>
+                                {g.products.map((p) => (
+                                  <Link
+                                    key={p.id}
+                                    href={`/shop/${p.slug}`}
+                                    className="block text-[10px] text-white/40 hover:text-white transition-colors py-0.5"
+                                  >
+                                    {p.name}
+                                  </Link>
+                                ))}
+                              </div>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            ) : (
+              <Link
+                href="/shop"
+                className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/50 hover:text-white transition-colors px-3 py-2"
+              >
+                Danh Sách Xe
+              </Link>
+            )}
 
             <a
               href="/#contact"
@@ -134,43 +152,49 @@ export default function StoreHeader() {
               Trang Chủ
             </Link>
 
-            {NAV_VEHICLES.map((v) => (
-              <div key={v.label} className="border-b border-white/5">
-                <div className="flex items-center justify-between">
-                  <Link
-                    href={v.href}
-                    onClick={() => setMobileOpen(false)}
-                    className="text-xl font-black uppercase tracking-tighter text-white hover:text-amber-500 transition-colors py-4 flex-1"
+            {models.map((m) => (
+              <div key={m.id} className="border-b border-white/5">
+                {m.generations.length > 0 ? (
+                  <button
+                    className="w-full flex items-center justify-between text-left"
+                    onClick={() =>
+                      setMobileExpanded(mobileExpanded === m.id ? null : m.id)
+                    }
+                    aria-expanded={mobileExpanded === m.id}
                   >
-                    {v.label}
-                  </Link>
-                  {v.children.length > 0 && (
-                    <button
-                      className="p-4 text-white/40"
-                      onClick={() =>
-                        setMobileExpanded(
-                          mobileExpanded === v.label ? null : v.label,
-                        )
-                      }
-                    >
+                    <span className="text-xl font-black uppercase tracking-tighter text-white py-4 flex-1">
+                      {m.label}
+                    </span>
+                    <span className="p-4 text-white/40">
                       <ChevronDown
                         size={14}
-                        className={`transition-transform ${mobileExpanded === v.label ? "rotate-180" : ""}`}
+                        className={`transition-transform ${mobileExpanded === m.id ? "rotate-180" : ""}`}
                       />
-                    </button>
-                  )}
-                </div>
-                {mobileExpanded === v.label && v.children.length > 0 && (
-                  <div className="pb-3 pl-4 flex flex-col gap-2">
-                    {v.children.map((c) => (
-                      <Link
-                        key={c.href}
-                        href={c.href}
-                        onClick={() => setMobileOpen(false)}
-                        className="text-sm text-white/50 hover:text-amber-500 transition-colors"
-                      >
-                        {c.label}
-                      </Link>
+                    </span>
+                  </button>
+                ) : (
+                  <p className="text-xl font-black uppercase tracking-tighter text-white py-4">
+                    {m.label}
+                  </p>
+                )}
+                {mobileExpanded === m.id && m.generations.length > 0 && (
+                  <div className="pb-3 pl-4 flex flex-col gap-3">
+                    {m.generations.map((g) => (
+                      <div key={g.id} className="flex flex-col gap-2">
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-white/30">
+                          {g.label}
+                        </p>
+                        {g.products.map((p) => (
+                          <Link
+                            key={p.id}
+                            href={`/shop/${p.slug}`}
+                            onClick={() => setMobileOpen(false)}
+                            className="text-sm text-white/50 hover:text-amber-500 transition-colors pl-3"
+                          >
+                            {p.name}
+                          </Link>
+                        ))}
+                      </div>
                     ))}
                   </div>
                 )}

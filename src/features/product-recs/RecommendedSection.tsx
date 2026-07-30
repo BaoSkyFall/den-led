@@ -5,7 +5,6 @@ import ProductRecCarousel from "./ProductRecCarousel";
 import type { MiniProduct } from "./types";
 
 type Props = {
-  family: string | null;
   excludeSlug: string;
   limit?: number;
   title?: string;
@@ -13,7 +12,6 @@ type Props = {
 };
 
 export default function RecommendedSection({
-  family,
   excludeSlug,
   limit = 6,
   title = "Sản Phẩm Đề Xuất",
@@ -23,14 +21,13 @@ export default function RecommendedSection({
 
   useEffect(() => {
     const params = new URLSearchParams();
-    if (family) params.set("family", family);
     if (excludeSlug) params.set("exclude", excludeSlug);
     params.set("limit", String(limit));
     fetch(`/api/products/recommended?${params.toString()}`)
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => setItems(Array.isArray(data) ? data : []))
       .catch(() => setItems([]));
-  }, [family, excludeSlug, limit]);
+  }, [excludeSlug, limit]);
 
   if (items === null) {
     return (

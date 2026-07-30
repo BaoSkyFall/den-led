@@ -44,7 +44,6 @@ type ProductDetail = {
   badge: string | null;
   price: string;
   imageKey: string | null;
-  vehicleFamily: string | null;
   variantGroups: VariantGroup[];
   gallery: GalleryItem[];
   sections: ProductSection[];
@@ -499,7 +498,6 @@ export default function ProductDetailPage({ params }: Props) {
         slug: data.slug,
         name: data.name,
         imageKey: data.imageKey,
-        vehicleFamily: data.vehicleFamily,
         minVariantPrice: minPrice !== null ? String(minPrice) : null,
         badge: data.badge,
       });
@@ -630,12 +628,8 @@ export default function ProductDetailPage({ params }: Props) {
         </div>
       )}
 
-      {/* Recommendation — same vehicle family first, top up with newest others */}
-      <RecommendedSection
-        family={product.vehicleFamily}
-        excludeSlug={product.slug}
-        limit={6}
-      />
+      {/* Recommendation — same brand first, top up with newest others */}
+      <RecommendedSection excludeSlug={product.slug} limit={6} />
 
       {/* Recently viewed — from browser localStorage */}
       <RecentlyViewedSection excludeSlug={product.slug} limit={6} />

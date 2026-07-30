@@ -149,6 +149,97 @@ export const comments = pgTable(
   },
 );
 
+// --- Vehicle taxonomy: Brand -> Model -> Generation ---
+
+export const brands = pgTable("brands", {
+  id: text("id")
+    .notNull()
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  label: varchar("label", { length: 255 }).notNull(),
+  slug: varchar("slug", { length: 255 }).notNull().unique(),
+  displayOrder: integer("display_order").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+    .defaultNow()
+    .notNull(),
+});
+export type SelectBrand = InferSelectModel<typeof brands>;
+export type InsertBrand = InferInsertModel<typeof brands>;
+
+export const models = pgTable(
+  "models",
+  {
+    id: text("id")
+      .notNull()
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    brandId: text("brand_id")
+      .notNull()
+      .references(() => brands.id, { onDelete: "cascade" }),
+    label: varchar("label", { length: 255 }).notNull(),
+    slug: varchar("slug", { length: 255 }).notNull(),
+    displayOrder: integer("display_order").notNull().default(0),
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    brand: foreignKey({
+      columns: [table.brandId],
+      foreignColumns: [brands.id],
+      name: "models_to_brand",
+    })
+      .onDelete("cascade")
+      .onUpdate("cascade"),
+  }),
+);
+export type SelectModel = InferSelectModel<typeof models>;
+export type InsertModel = InferInsertModel<typeof models>;
+
+export const generations = pgTable(
+  "generations",
+  {
+    id: text("id")
+      .notNull()
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    modelId: text("model_id")
+      .notNull()
+      .references(() => models.id, { onDelete: "cascade" }),
+    label: varchar("label", { length: 255 }).notNull(),
+    slug: varchar("slug", { length: 255 }).notNull(),
+    displayOrder: integer("display_order").notNull().default(0),
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    model: foreignKey({
+      columns: [table.modelId],
+      foreignColumns: [models.id],
+      name: "generations_to_model",
+    })
+      .onDelete("cascade")
+      .onUpdate("cascade"),
+  }),
+);
+export type SelectGeneration = InferSelectModel<typeof generations>;
+export type InsertGeneration = InferInsertModel<typeof generations>;
+
+export const brandsRelations = relations(brands, ({ many }) => ({
+  models: many(models),
+}));
+export const modelsRelations = relations(models, ({ one, many }) => ({
+  brand: one(brands, { fields: [models.brandId], references: [brands.id] }),
+  generations: many(generations),
+}));
+export const generationsRelations = relations(generations, ({ one, many }) => ({
+  model: one(models, { fields: [generations.modelId], references: [models.id] }),
+  products: many(products),
+}));
+
 export const products = pgTable(
   "products",
   {
@@ -174,7 +265,12 @@ export const products = pgTable(
       .notNull(),
 
     stock: integer("stock").default(8),
-    vehicleFamily: text("vehicle_family"),
+    generationId: text("generation_id").references(() => generations.id, {
+      onDelete: "set null",
+    }),
+    status: text("status", { enum: ["active", "inactive"] })
+      .notNull()
+      .default("active"),
     collectionId: text("collection_id").references(() => collections.id, {
       onDelete: "set null",
     }),
@@ -194,6 +290,11 @@ export const products = pgTable(
         foreignColumns: [collections.id],
         name: "collection",
       }),
+      generation: foreignKey({
+        columns: [table.generationId],
+        foreignColumns: [generations.id],
+        name: "products_to_generation",
+      }),
     };
   },
 );
@@ -202,6 +303,10 @@ export const productsRelations = relations(products, ({ one }) => ({
   featuredImage: one(productMedias, {
     fields: [products.featuredImageId],
     references: [productMedias.id],
+  }),
+  generation: one(generations, {
+    fields: [products.generationId],
+    references: [generations.id],
   }),
 }));
 

@@ -5,13 +5,15 @@ import { createClient } from "@supabase/supabase-js";
 import { env } from "@/env.mjs";
 import { NextResponse } from "next/server";
 
-// GET /api/products/recommended?family=<family>&exclude=<slug>&limit=4
-// Returns products from the same vehicle_family first, then tops up with the
-// newest products from other families until `limit` is reached.
+// GET /api/products/recommended?exclude=<slug>&limit=<n>
+// `limit` defaults to 4 and is clamped to 1..12.
+// Same-brand products first (any model of the current product's brand), newest
+// first, then tops up with the newest other active products until `limit` is
+// reached. The brand is derived server-side from the `exclude` slug.
+// The legacy `family` param is accepted and ignored.
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
-    const family = url.searchParams.get("family");
     const excludeSlug = url.searchParams.get("exclude");
     const limit = Math.max(
       1,
@@ -24,6 +26,19 @@ export async function GET(req: Request) {
       { auth: { persistSession: false } },
     );
 
+    // 1) Resolve the current product's brand: products -> generations -> models.
+    //    NULL generation_id (unassigned product) => brandId stays null.
+    let brandId: string | null = null;
+    if (excludeSlug) {
+      const { data: current, error: curErr } = await supabase
+        .from("products")
+        .select("id, generations(id, models(id, brand_id))")
+        .eq("slug", excludeSlug)
+        .maybeSingle();
+      if (curErr) console.error("[recommended] brand lookup error:", curErr);
+      brandId = (current as any)?.generations?.models?.brand_id ?? null;
+    }
+
     const baseSelect = `
       id,
       name,
@@ -31,29 +46,38 @@ export async function GET(req: Request) {
       badge,
       rating,
       price,
-      vehicle_family,
       featured_image_id,
       medias:featured_image_id(id, key, alt)
     `;
 
-    // 1) Same-family, newest first
-    const primary = family
-      ? await supabase
-          .from("products")
-          .select(baseSelect)
-          .eq("vehicle_family", family)
-          .neq("slug", excludeSlug ?? "")
-          .order("created_at", { ascending: false })
-          .limit(limit)
-      : { data: [] as any[], error: null };
-
-    if (primary.error) {
-      console.error("[recommended] primary error:", primary.error);
+    // 2) Same-brand, visible only, newest first.
+    //    !inner is load-bearing: without it PostgREST prunes the embed but
+    //    keeps the product row, so none of the nested filters would exclude
+    //    any product from the result set.
+    let primaryRows: any[] = [];
+    if (brandId) {
+      const { data, error } = await supabase
+        .from("products")
+        .select(
+          `${baseSelect},
+           generations!inner(id, is_active, models!inner(id, is_active, brand_id))`,
+        )
+        .eq("generations.models.brand_id", brandId)
+        .eq("generations.is_active", true)
+        .eq("generations.models.is_active", true)
+        .eq("status", "active")
+        .neq("slug", excludeSlug ?? "")
+        .order("created_at", { ascending: false })
+        .limit(limit);
+      if (error) console.error("[recommended] primary error:", error);
+      primaryRows = data ?? [];
     }
 
-    const primaryRows = primary.data ?? [];
-
-    // 2) Top-up with newest of OTHER families if we don't have enough
+    // 3) Top-up with the newest OTHER active products. Products not yet
+    //    assigned to a generation must still be recommendable, but a product
+    //    hidden by toggling its generation (or its model) off must NOT sneak
+    //    back in here after the primary query excluded it — so the fill is
+    //    restricted to "no generation at all" OR "a fully visible generation".
     const missing = limit - primaryRows.length;
     let fillRows: any[] = [];
     if (missing > 0) {
@@ -62,11 +86,30 @@ export async function GET(req: Request) {
         ...primaryRows.map((r: any) => r.slug),
       ].filter(Boolean) as string[];
 
+      const { data: genRows, error: genErr } = await supabase
+        .from("generations")
+        .select("id, is_active, models!inner(is_active)")
+        .eq("is_active", true)
+        .eq("models.is_active", true);
+      if (genErr) console.error("[recommended] visibility error:", genErr);
+      const visibleGenerationIds = (genRows ?? []).map((g: any) => g.id);
+
       let query = supabase
         .from("products")
         .select(baseSelect)
+        .eq("status", "active")
         .order("created_at", { ascending: false })
         .limit(missing);
+
+      query =
+        visibleGenerationIds.length > 0
+          ? query.or(
+              `generation_id.is.null,generation_id.in.(${visibleGenerationIds
+                .map((id: string) => `"${id}"`)
+                .join(",")})`,
+            )
+          : query.is("generation_id", null);
+
       if (excludeSlugs.length > 0) {
         query = query.not(
           "slug",
@@ -79,7 +122,7 @@ export async function GET(req: Request) {
       fillRows = fill.data ?? [];
     }
 
-    // 3) Min variant price map (single query)
+    // 4) Min variant price map (single query)
     const allIds = [...primaryRows, ...fillRows].map((r: any) => r.id);
     const minByProduct = new Map<string, number>();
     if (allIds.length > 0) {
@@ -103,7 +146,6 @@ export async function GET(req: Request) {
       badge: p.badge,
       rating: p.rating,
       price: p.price,
-      vehicleFamily: p.vehicle_family ?? null,
       imageKey: p.medias?.key ?? null,
       minVariantPrice: minByProduct.has(p.id)
         ? String(minByProduct.get(p.id))

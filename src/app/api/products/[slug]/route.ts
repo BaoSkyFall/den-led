@@ -26,12 +26,14 @@ export async function GET(
         slug,
         badge,
         price,
-        vehicle_family,
         featured_image_id,
         medias:featured_image_id(id, key, alt)
       `,
       )
       .eq("slug", params.slug)
+      // An inactive product is invisible storefront-wide, detail page included:
+      // it falls through to the 404 branch below exactly like a missing slug.
+      .eq("status", "active")
       .maybeSingle();
 
     if (productErr) {
@@ -163,7 +165,6 @@ export async function GET(
       badge: p.badge,
       price: p.price,
       imageKey: p.medias?.key ?? null,
-      vehicleFamily: p.vehicle_family ?? null,
       variantGroups: groupsWithOptions,
       gallery,
       sections,
