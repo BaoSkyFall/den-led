@@ -29,7 +29,8 @@ export async function GET() {
         rating,
         price,
         featured_image_id,
-        medias:featured_image_id(id, key, alt)
+        medias:featured_image_id(id, key, alt),
+        generations:generation_id(id, models:model_id(slug))
       `,
       )
       .eq("status", "active")
@@ -65,6 +66,9 @@ export async function GET() {
       rating: p.rating,
       price: p.price,
       imageKey: p.medias?.key ?? null,
+      // Model slug (product -> generation -> model) so the /shop chips can
+      // filter on real taxonomy instead of guessing from the product name.
+      modelSlug: p.generations?.models?.slug ?? null,
       minVariantPrice: minByProduct.has(p.id)
         ? String(minByProduct.get(p.id))
         : null,

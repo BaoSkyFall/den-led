@@ -1681,6 +1681,7 @@ type products implements Node {
   collection_id: String
   featured_image_id: String!
   images: JSON!
+  status: String!
   medias: medias!
   collections: collections
   cartsCollection(

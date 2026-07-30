@@ -2,7 +2,7 @@
 
 import { useToast } from "@/components/ui/use-toast";
 import { MultiImageDialog } from "@/features/medias";
-import { keytoUrl } from "@/lib/utils";
+import { cn, keytoUrl } from "@/lib/utils";
 import { ArrowLeft, ArrowRight, Plus, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState, useTransition } from "react";
@@ -17,10 +17,26 @@ type GalleryItem = {
 
 type Props = { productId: string };
 
+/**
+ * Source tile index carried on the drag, or null if this drag did not come from
+ * a tile. Dropping a file or arbitrary text also fires `drop` here, and those
+ * carry no usable index — `Number("")` is 0, so a naive parse would silently
+ * reorder the gallery when an admin drags an image in from the desktop.
+ */
+function parseSourceIndex(dataTransfer: DataTransfer): number | null {
+  const raw = dataTransfer.getData("text/plain");
+  if (raw === "") return null;
+  const parsed = Number(raw);
+  return Number.isInteger(parsed) ? parsed : null;
+}
+
 export default function GalleryManager({ productId }: Props) {
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSaving, startTransition] = useTransition();
+  // Index being dragged, and the tile it is currently hovering over.
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -34,6 +50,7 @@ export default function GalleryManager({ productId }: Props) {
   }, [productId]);
 
   function persist(next: GalleryItem[]) {
+    const previous = items;
     setItems(next);
     startTransition(async () => {
       const res = await fetch(`/api/product-gallery/${productId}`, {
@@ -42,6 +59,9 @@ export default function GalleryManager({ productId }: Props) {
         body: JSON.stringify({ mediaIds: next.map((i) => i.mediaId) }),
       });
       if (!res.ok) {
+        // Roll back, otherwise the grid keeps showing an order the DB never
+        // accepted and it silently disagrees until a reload.
+        setItems(previous);
         toast({ title: "Lỗi", description: "Không lưu được thứ tự ảnh." });
       }
     });
@@ -102,6 +122,44 @@ export default function GalleryManager({ productId }: Props) {
     persist(next);
   }
 
+  function resetDrag() {
+    setDragIndex(null);
+    setOverIndex(null);
+  }
+
+  function handleDragStart(index: number) {
+    return (e: React.DragEvent<HTMLDivElement>) => {
+      setDragIndex(index);
+      e.dataTransfer.effectAllowed = "move";
+      // Firefox refuses to start a drag unless some data is attached. It also
+      // doubles as the fallback source index if React state is lost mid-drag.
+      e.dataTransfer.setData("text/plain", String(index));
+    };
+  }
+
+  function handleDragOver(index: number) {
+    return (e: React.DragEvent<HTMLDivElement>) => {
+      // Without preventDefault the element is not a valid drop target and the
+      // drop event never fires at all.
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      if (index !== overIndex) setOverIndex(index);
+    };
+  }
+
+  function handleDrop(index: number) {
+    return (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      const from = dragIndex ?? parseSourceIndex(e.dataTransfer);
+      resetDrag();
+      // Range-check `from` too: `move` only validates `to`, and a foreign drag
+      // carrying "999" would splice out `undefined` and corrupt the list.
+      if (from === null || from < 0 || from >= items.length) return;
+      if (from === index) return;
+      move(from, index);
+    };
+  }
+
   const excludeIds = items.map((i) => i.mediaId);
 
   if (loading) {
@@ -118,7 +176,8 @@ export default function GalleryManager({ productId }: Props) {
             {items.length} ảnh trong gallery
           </p>
           <p className="text-xs text-muted-foreground">
-            Kéo mũi tên để đổi thứ tự. Ảnh đầu tiên hiển thị lớn nhất.
+            Kéo thả ảnh để đổi thứ tự (hoặc dùng mũi tên khi hover). Ảnh đầu
+            tiên hiển thị lớn nhất.
           </p>
         </div>
         <MultiImageDialog
@@ -160,7 +219,23 @@ export default function GalleryManager({ productId }: Props) {
           {items.map((item, i) => (
             <div
               key={item.mediaId}
-              className="relative group border border-slate-200 rounded-md overflow-hidden bg-slate-50"
+              draggable={!isSaving}
+              onDragStart={handleDragStart(i)}
+              onDragOver={handleDragOver(i)}
+              onDrop={handleDrop(i)}
+              onDragEnd={resetDrag}
+              // For drags originating outside the browser, `dragend` fires on
+              // the foreign source, not on us, so the ring would stay stuck.
+              onDragLeave={() => setOverIndex((cur) => (cur === i ? null : cur))}
+              className={cn(
+                "relative group border rounded-md overflow-hidden bg-slate-50 transition-opacity",
+                !isSaving && "cursor-grab active:cursor-grabbing",
+                dragIndex === i
+                  ? "opacity-40 border-slate-200"
+                  : overIndex === i
+                    ? "border-amber-500 ring-2 ring-amber-500"
+                    : "border-slate-200",
+              )}
             >
               <div className="relative aspect-square">
                 <Image
@@ -168,6 +243,10 @@ export default function GalleryManager({ productId }: Props) {
                   alt={item.alt || `Ảnh ${i + 1}`}
                   fill
                   sizes="200px"
+                  // <img> is natively draggable; without this the browser drags
+                  // the image itself instead of the tile and the reorder never
+                  // starts.
+                  draggable={false}
                   className="object-cover"
                 />
                 <span className="absolute top-1.5 left-1.5 bg-amber-500 text-black text-[10px] font-bold px-1.5 py-0.5 rounded">

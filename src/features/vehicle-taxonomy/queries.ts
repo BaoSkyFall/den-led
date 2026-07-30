@@ -68,24 +68,35 @@ export const fetchNavTree = async (): Promise<NavModel[]> => {
     return [];
   }
 
-  return (data ?? []).map((m: any) => ({
-    id: m.id,
-    label: m.label,
-    slug: m.slug,
-    generations: [...(m.generations ?? [])]
-      .sort(
-        (a: any, b: any) =>
-          a.display_order - b.display_order || a.label.localeCompare(b.label),
-      )
-      .map((g: any) => ({
-        id: g.id,
-        label: g.label,
-        slug: g.slug,
-        products: [...(g.products ?? [])]
-          .sort((a: any, b: any) => a.name.localeCompare(b.name))
-          .map((p: any) => ({ id: p.id, name: p.name, slug: p.slug })),
-      })),
-  }));
+  return (
+    (data ?? [])
+      .map((m: any) => ({
+        id: m.id,
+        label: m.label,
+        slug: m.slug,
+        generations: [...(m.generations ?? [])]
+          .sort(
+            (a: any, b: any) =>
+              a.display_order - b.display_order ||
+              a.label.localeCompare(b.label),
+          )
+          .map((g: any) => ({
+            id: g.id,
+            label: g.label,
+            slug: g.slug,
+            products: [...(g.products ?? [])]
+              .sort((a: any, b: any) => a.name.localeCompare(b.name))
+              .map((p: any) => ({ id: p.id, name: p.name, slug: p.slug })),
+          })),
+      }))
+      // A model with no surviving generation has nothing to expand into, so it
+      // is dropped instead of rendering an unopenable menu entry / filter chip.
+      // Note this does NOT drop a model whose generations exist but currently
+      // hold no active product — such a model still renders and its chip yields
+      // an empty result. That is deliberate: hiding it would remove the landing
+      // surface for a model that is only temporarily out of stock.
+      .filter((m) => m.generations.length > 0)
+  );
 };
 
 /** Public menu tree, cached and invalidated by the `nav-taxonomy` tag. */

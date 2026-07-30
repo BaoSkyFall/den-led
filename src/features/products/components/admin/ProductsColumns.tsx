@@ -2,16 +2,10 @@
 
 import Link from "next/link";
 import { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal } from "lucide-react";
-import { Button, buttonVariants } from "@/components/ui/button";
-import DeleteDialog from "@/components/ui/deleteDialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { gql, DocumentType } from "@/gql";
+
+import ProductRowActions from "./ProductRowActions";
+import ProductStatusSwitch from "./ProductStatusSwitch";
 
 export const ProductColumnFragment = gql(/* GraphQL */ `
   fragment ProductColumnFragment on products {
@@ -23,6 +17,7 @@ export const ProductColumnFragment = gql(/* GraphQL */ `
     price
     badge
     featured
+    status
     featuredImage: medias {
       id
       key
@@ -99,50 +94,31 @@ const ProductsColumns: ColumnDef<{
     },
   },
   {
+    accessorKey: "status",
+    header: () => <div className="">Trạng Thái</div>,
+    cell: ({ row }) => {
+      const product = row.original.node;
+
+      return (
+        <ProductStatusSwitch
+          productId={product.id}
+          productName={product.name}
+          status={product.status}
+        />
+      );
+    },
+  },
+  {
     id: "actions",
     header: () => <div className="text-center">Thao Tác</div>,
     cell: ({ row }) => {
       const product = row.original.node;
 
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Mở menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="start"
-            className="flex flex-col items-start"
-          >
-            <DropdownMenuLabel>Thao Tác</DropdownMenuLabel>
-
-            <Link
-              href={`/admin/products/${product.id}`}
-              className={buttonVariants({ variant: "ghost" })}
-            >
-              Chỉnh Sửa
-            </Link>
-            {/* <DeleteCategoryDialog categoryId={category.id} /> */}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <ProductRowActions productId={product.id} productName={product.name} />
       );
     },
   },
 ];
-
-const DeleteCategoryDialog = ({ categoryId }: { categoryId: string }) => {
-  const onClickHandler = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    // await deleteCategoryAction(categoryId)
-  };
-  return (
-    <DeleteDialog
-      onClickHandler={onClickHandler}
-      title="Delete Proejct"
-      actionLabel="Delete"
-    />
-  );
-};
 
 export default ProductsColumns;

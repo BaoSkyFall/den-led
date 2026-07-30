@@ -1437,6 +1437,7 @@ export type Products = Node & {
   product_mediasCollection?: Maybe<Product_MediasConnection>;
   rating: Scalars["BigFloat"];
   slug: Scalars["String"];
+  status: Scalars["String"];
   stock?: Maybe<Scalars["Int"]>;
   tags: Scalars["JSON"];
   totalComments: Scalars["Int"];
@@ -1883,6 +1884,7 @@ export type AdminProductsPageQueryQuery = {
         badge?: string | null;
         price: any;
         featured?: boolean | null;
+        status: string;
         featuredImage: {
           __typename?: "medias";
           id: string;
@@ -2524,6 +2526,7 @@ export type ProductColumnFragmentFragment = {
   badge?: string | null;
   price: any;
   featured?: boolean | null;
+  status: string;
   featuredImage: {
     __typename?: "medias";
     id: string;
@@ -3265,6 +3268,7 @@ export const ProductColumnFragmentFragmentDoc = {
           { kind: "Field", name: { kind: "Name", value: "price" } },
           { kind: "Field", name: { kind: "Name", value: "badge" } },
           { kind: "Field", name: { kind: "Name", value: "featured" } },
+          { kind: "Field", name: { kind: "Name", value: "status" } },
           {
             kind: "Field",
             alias: { kind: "Name", value: "featuredImage" },
@@ -3738,6 +3742,7 @@ export const AdminProductsPageQueryDocument = {
           { kind: "Field", name: { kind: "Name", value: "price" } },
           { kind: "Field", name: { kind: "Name", value: "badge" } },
           { kind: "Field", name: { kind: "Name", value: "featured" } },
+          { kind: "Field", name: { kind: "Name", value: "status" } },
           {
             kind: "Field",
             alias: { kind: "Name", value: "featuredImage" },
