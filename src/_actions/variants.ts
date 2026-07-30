@@ -43,6 +43,19 @@ export async function deleteVariantGroup(id: string) {
   await db.delete(variantGroups).where(eq(variantGroups.id, id));
 }
 
+// Persist a new group order: displayOrder = position in `orderedIds`.
+export async function reorderVariantGroups(orderedIds: string[]) {
+  await assertAdmin();
+  await Promise.all(
+    orderedIds.map((id, index) =>
+      db
+        .update(variantGroups)
+        .set({ displayOrder: index, updatedAt: new Date() })
+        .where(eq(variantGroups.id, id)),
+    ),
+  );
+}
+
 export async function getVariantGroupsByProduct(productId: string) {
   return db
     .select()

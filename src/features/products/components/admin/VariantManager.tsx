@@ -8,6 +8,7 @@ import {
   createVariantOption,
   deleteVariantGroup,
   deleteVariantOption,
+  reorderVariantGroups,
   updateVariantGroup,
   updateVariantOption,
 } from "@/_actions/variants";
@@ -30,6 +31,8 @@ export default function VariantManager({ productId }: Props) {
   const [loading, setLoading] = useState(true);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [isPending, startTransition] = useTransition();
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -136,6 +139,60 @@ export default function VariantManager({ productId }: Props) {
     });
   }
 
+  // ── Drag-and-drop reorder of variant groups ──
+  function moveGroup(from: number, to: number) {
+    if (from === to) return;
+    let nextOrder: GroupWithOptions[] = [];
+    setGroups((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      nextOrder = next;
+      return next;
+    });
+    startTransition(async () => {
+      try {
+        await reorderVariantGroups(nextOrder.map((g) => g.id));
+      } catch {
+        toast({ title: "Lỗi", description: "Không lưu được thứ tự nhóm." });
+      }
+    });
+  }
+
+  function resetDrag() {
+    setDragIndex(null);
+    setOverIndex(null);
+  }
+
+  function handleGroupDragStart(index: number) {
+    return (e: React.DragEvent) => {
+      setDragIndex(index);
+      e.dataTransfer.effectAllowed = "move";
+      // Firefox needs data attached to start a drag; also a fallback source idx.
+      e.dataTransfer.setData("text/plain", String(index));
+    };
+  }
+
+  function handleGroupDragOver(index: number) {
+    return (e: React.DragEvent) => {
+      if (dragIndex === null) return; // ignore non-group drags
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      if (index !== overIndex) setOverIndex(index);
+    };
+  }
+
+  function handleGroupDrop(index: number) {
+    return (e: React.DragEvent) => {
+      if (dragIndex === null) return;
+      e.preventDefault();
+      const from = dragIndex;
+      resetDrag();
+      if (from < 0 || from >= groups.length || from === index) return;
+      moveGroup(from, index);
+    };
+  }
+
   if (loading) {
     return (
       <div className="py-4 text-sm text-muted-foreground">
@@ -166,14 +223,30 @@ export default function VariantManager({ productId }: Props) {
         </p>
       )}
 
-      {groups.map((group) => (
-        <div key={group.id} className="border rounded-lg overflow-hidden">
+      {groups.map((group, index) => (
+        <div
+          key={group.id}
+          onDragOver={handleGroupDragOver(index)}
+          onDrop={handleGroupDrop(index)}
+          className={`border rounded-lg overflow-hidden transition-colors ${
+            dragIndex === index ? "opacity-50" : ""
+          } ${
+            overIndex === index && dragIndex !== index
+              ? "border-amber-500 ring-1 ring-amber-500/40"
+              : ""
+          }`}
+        >
           {/* Group header */}
           <div className="flex items-center gap-2 p-3 bg-muted/40">
-            <GripVertical
-              size={14}
-              className="text-muted-foreground shrink-0"
-            />
+            <span
+              draggable
+              onDragStart={handleGroupDragStart(index)}
+              onDragEnd={resetDrag}
+              title="Kéo để đổi thứ tự"
+              className="shrink-0 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
+            >
+              <GripVertical size={14} />
+            </span>
             <Input
               className="h-7 text-sm font-medium flex-1"
               defaultValue={group.name}
