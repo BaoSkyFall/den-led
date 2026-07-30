@@ -69,22 +69,38 @@ export default function StoreHeader({ models }: Props) {
                             <p className="text-xs font-black uppercase tracking-wide text-white mb-2">
                               {m.label}
                             </p>
-                            {m.generations.map((g) => (
-                              <div key={g.id}>
-                                <p className="text-[9px] uppercase tracking-wide text-white/30 mt-2">
+                            {m.generations.map((g) =>
+                              // A generation usually holds exactly one product
+                              // whose name repeats the generation label ("SH
+                              // 2026" / "SH 2026"), which rendered as a
+                              // duplicate pair. Collapse that to one link and
+                              // only show the label as a heading when there is
+                              // more than one product to list under it.
+                              g.products.length === 1 ? (
+                                <Link
+                                  key={g.id}
+                                  href={`/shop/${g.products[0].slug}`}
+                                  className="block text-[10px] text-white/40 hover:text-white transition-colors py-0.5"
+                                >
                                   {g.label}
-                                </p>
-                                {g.products.map((p) => (
-                                  <Link
-                                    key={p.id}
-                                    href={`/shop/${p.slug}`}
-                                    className="block text-[10px] text-white/40 hover:text-white transition-colors py-0.5"
-                                  >
-                                    {p.name}
-                                  </Link>
-                                ))}
-                              </div>
-                            ))}
+                                </Link>
+                              ) : (
+                                <div key={g.id}>
+                                  <p className="text-[9px] uppercase tracking-wide text-white/30 mt-2">
+                                    {g.label}
+                                  </p>
+                                  {g.products.map((p) => (
+                                    <Link
+                                      key={p.id}
+                                      href={`/shop/${p.slug}`}
+                                      className="block text-[10px] text-white/40 hover:text-white transition-colors py-0.5"
+                                    >
+                                      {p.name}
+                                    </Link>
+                                  ))}
+                                </div>
+                              ),
+                            )}
                           </div>
                         ))}
                       </div>
@@ -179,23 +195,38 @@ export default function StoreHeader({ models }: Props) {
                 )}
                 {mobileExpanded === m.id && m.generations.length > 0 && (
                   <div className="pb-3 pl-4 flex flex-col gap-3">
-                    {m.generations.map((g) => (
-                      <div key={g.id} className="flex flex-col gap-2">
-                        <p className="text-[10px] uppercase tracking-[0.2em] text-white/30">
+                    {m.generations.map((g) =>
+                      // Same collapse as the desktop dropdown: one product per
+                      // generation is the norm and its name repeats the
+                      // generation label, so show a single link instead of a
+                      // heading followed by an identical entry.
+                      g.products.length === 1 ? (
+                        <Link
+                          key={g.id}
+                          href={`/shop/${g.products[0].slug}`}
+                          onClick={() => setMobileOpen(false)}
+                          className="text-sm text-white/50 hover:text-amber-500 transition-colors pl-3"
+                        >
                           {g.label}
-                        </p>
-                        {g.products.map((p) => (
-                          <Link
-                            key={p.id}
-                            href={`/shop/${p.slug}`}
-                            onClick={() => setMobileOpen(false)}
-                            className="text-sm text-white/50 hover:text-amber-500 transition-colors pl-3"
-                          >
-                            {p.name}
-                          </Link>
-                        ))}
-                      </div>
-                    ))}
+                        </Link>
+                      ) : (
+                        <div key={g.id} className="flex flex-col gap-2">
+                          <p className="text-[10px] uppercase tracking-[0.2em] text-white/30">
+                            {g.label}
+                          </p>
+                          {g.products.map((p) => (
+                            <Link
+                              key={p.id}
+                              href={`/shop/${p.slug}`}
+                              onClick={() => setMobileOpen(false)}
+                              className="text-sm text-white/50 hover:text-amber-500 transition-colors pl-3"
+                            >
+                              {p.name}
+                            </Link>
+                          ))}
+                        </div>
+                      ),
+                    )}
                   </div>
                 )}
               </div>

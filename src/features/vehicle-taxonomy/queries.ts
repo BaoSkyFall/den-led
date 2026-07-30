@@ -14,7 +14,12 @@ import {
 } from "@/lib/supabase/schema";
 
 import { NAV_TAXONOMY_TAG } from "./types";
-import type { BrandTreeBrand, MenuConfigModel, NavModel } from "./types";
+import type {
+  BrandTreeBrand,
+  MenuConfigModel,
+  NavModel,
+  VehicleFormOption,
+} from "./types";
 
 type ModelWithGenerations = SelectModel & { generations: SelectGeneration[] };
 
@@ -35,6 +40,10 @@ const byOrderThenLabel = <T extends { displayOrder: number; label: string }>(
  *   models.is_active = true            -> inactive model + whole subtree gone
  *   generations.is_active = true       -> inactive generation + its products gone
  *   products.status = 'active'         -> inactive product gone on its own
+ *
+ * Empty branches are then pruned bottom-up, so the tree only ever contains
+ * entries that lead to a product. Deactivating the last product of a model
+ * therefore removes that model from the menu and from the filter chips.
  *
  * Brand is not selected at all — it can never leak into the public menu.
  */
@@ -87,14 +96,14 @@ export const fetchNavTree = async (): Promise<NavModel[]> => {
             products: [...(g.products ?? [])]
               .sort((a: any, b: any) => a.name.localeCompare(b.name))
               .map((p: any) => ({ id: p.id, name: p.name, slug: p.slug })),
-          })),
+          }))
+          // Pruned bottom-up: a generation with no active product renders as a
+          // label with nothing under it, so it goes first...
+          .filter((g: any) => g.products.length > 0),
       }))
-      // A model with no surviving generation has nothing to expand into, so it
-      // is dropped instead of rendering an unopenable menu entry / filter chip.
-      // Note this does NOT drop a model whose generations exist but currently
-      // hold no active product — such a model still renders and its chip yields
-      // an empty result. That is deliberate: hiding it would remove the landing
-      // surface for a model that is only temporarily out of stock.
+      // ...and then a model left with no generation has nothing to expand into,
+      // so it goes too. Net effect: every entry that survives leads somewhere,
+      // on the header menu and on the /shop and home filter chips alike.
       .filter((m) => m.generations.length > 0)
   );
 };
@@ -106,6 +115,52 @@ export const getNavTree = unstable_cache(fetchNavTree, [NAV_TAXONOMY_TAG], {
   // which fire no revalidation tag.
   revalidate: 300,
 });
+
+/**
+ * Uncached fetcher behind {@link getVehicleFormOptions}.
+ *
+ * Every active generation of every active model, whether or not it currently
+ * has a product. See {@link VehicleFormOption} for why this is not the nav tree.
+ */
+export const fetchVehicleFormOptions = async (): Promise<
+  VehicleFormOption[]
+> => {
+  const supabase = createClient(
+    env.NEXT_PUBLIC_SUPABASE_URL,
+    env.NEXT_PUBLIC_SUPABASE_ANON_KEY, // public read; RLS is OFF by design
+    { auth: { persistSession: false } },
+  );
+
+  const { data, error } = await supabase
+    .from("models")
+    .select(`display_order, label, generations ( label, slug, display_order )`)
+    .eq("is_active", true)
+    .eq("generations.is_active", true)
+    .order("display_order", { ascending: true })
+    .order("label", { ascending: true });
+
+  if (error) {
+    // The contact form must still render; it just loses its preset options.
+    console.error("[getVehicleFormOptions]", error);
+    return [];
+  }
+
+  return (data ?? []).flatMap((m: any) =>
+    [...(m.generations ?? [])]
+      .sort(
+        (a: any, b: any) =>
+          a.display_order - b.display_order || a.label.localeCompare(b.label),
+      )
+      .map((g: any) => ({ value: g.slug, label: g.label })),
+  );
+};
+
+/** Contact-form vehicle options, cached under the same tag as the nav tree. */
+export const getVehicleFormOptions = unstable_cache(
+  fetchVehicleFormOptions,
+  [`${NAV_TAXONOMY_TAG}-form-options`],
+  { tags: [NAV_TAXONOMY_TAG], revalidate: 300 },
+);
 
 // ─── Admin: menu configuration ───────────────────────────────────────────────
 

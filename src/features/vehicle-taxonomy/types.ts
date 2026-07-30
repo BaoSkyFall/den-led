@@ -28,6 +28,15 @@ export type NavModel = {
   generations: NavGeneration[];
 };
 
+/**
+ * One option for the "Dòng xe cần độ đèn" select in the footer contact form.
+ *
+ * Deliberately NOT derived from the nav tree: the nav tree only keeps entries
+ * that lead to a purchasable product, but a customer asking for a quote may
+ * well ride a model we do not stock yet, and dropping it would lose the lead.
+ */
+export type VehicleFormOption = { value: string; label: string };
+
 export type MenuConfigGeneration = {
   id: string;
   label: string;

@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { Facebook } from "lucide-react";
+import type { VehicleFormOption } from "@/features/vehicle-taxonomy";
 
 type IconProps = { size?: number; strokeWidth?: number; className?: string };
 
@@ -37,7 +38,9 @@ function Shopee({ size = 14, className }: IconProps) {
   );
 }
 
-export default function StoreFooter() {
+type Props = { vehicleOptions: VehicleFormOption[] };
+
+export default function StoreFooter({ vehicleOptions }: Props) {
   return (
     <footer id="contact" className="bg-[#050505]">
       <div className="max-w-[1400px] mx-auto px-6 py-24">
@@ -109,18 +112,11 @@ export default function StoreFooter() {
               </div>
               <select className="bg-[#111] border border-white/10 text-white/60 text-sm px-4 py-3 outline-none focus:border-amber-500 transition-colors appearance-none">
                 <option value="">Dòng xe cần độ đèn</option>
-                <option value="sh-2026">SH 2026</option>
-                <option value="sh-2020">SH 2020</option>
-                <option value="air-blade-2026">Air Blade 2026</option>
-                <option value="air-blade-2013">Air Blade 2013</option>
-                <option value="vario-2026">Vario 2026</option>
-                <option value="vario-2020">Vario 2020</option>
-                <option value="vario-160">Vario 160</option>
-                <option value="lead-2025">Lead 2025</option>
-                <option value="lead-2018">Lead 2018</option>
-                <option value="winner">Winner</option>
-                <option value="vision">Vision</option>
-                <option value="future">Future</option>
+                {vehicleOptions.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
               </select>
               <select className="bg-[#111] border border-white/10 text-white/60 text-sm px-4 py-3 outline-none focus:border-amber-500 transition-colors appearance-none">
                 <option value="">Dịch vụ quan tâm</option>
