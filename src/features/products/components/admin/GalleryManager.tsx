@@ -226,7 +226,9 @@ export default function GalleryManager({ productId }: Props) {
               onDragEnd={resetDrag}
               // For drags originating outside the browser, `dragend` fires on
               // the foreign source, not on us, so the ring would stay stuck.
-              onDragLeave={() => setOverIndex((cur) => (cur === i ? null : cur))}
+              onDragLeave={() =>
+                setOverIndex((cur) => (cur === i ? null : cur))
+              }
               className={cn(
                 "relative group border rounded-md overflow-hidden bg-slate-50 transition-opacity",
                 !isSaving && "cursor-grab active:cursor-grabbing",
