@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import {
   ChevronLeft,
   Phone,
@@ -260,6 +260,26 @@ function BiCauLoader() {
 
 function ImageGallery({ images }: { images: string[] }) {
   const [active, setActive] = useState(0);
+  const stripRef = useRef<HTMLDivElement>(null);
+
+  // The thumbnails live on one scrolling row, so the arrows on the main image
+  // can move the selection off-screen. Pull the new one back into view.
+  //
+  // Scrolls the strip itself rather than calling `scrollIntoView`, which walks
+  // every scrollable ancestor including the document and would jerk the whole
+  // page vertically when the gallery mounts below the fold.
+  useEffect(() => {
+    const strip = stripRef.current;
+    const thumb = strip?.children[active] as HTMLElement | undefined;
+    if (!strip || !thumb) return;
+
+    const stripBox = strip.getBoundingClientRect();
+    const thumbBox = thumb.getBoundingClientRect();
+    const offset =
+      thumbBox.left - stripBox.left - (stripBox.width - thumbBox.width) / 2;
+
+    strip.scrollTo({ left: strip.scrollLeft + offset, behavior: "smooth" });
+  }, [active]);
 
   if (images.length === 0) {
     return (
@@ -307,14 +327,18 @@ function ImageGallery({ images }: { images: string[] }) {
         )}
       </div>
 
-      {/* Thumbnail grid — 4-up like admin gallery */}
+      {/* Thumbnail strip — always a single row that scrolls sideways, so a
+          product with many photos never pushes the page content down. */}
       {images.length > 1 && (
-        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
+        <div
+          ref={stripRef}
+          className="flex gap-2 overflow-x-auto snap-x snap-mandatory pb-1 [scrollbar-width:thin]"
+        >
           {images.map((img, i) => (
             <button
               key={i}
               onClick={() => setActive(i)}
-              className={`relative aspect-square overflow-hidden border-2 transition-colors ${
+              className={`relative shrink-0 snap-start w-16 sm:w-20 aspect-square overflow-hidden border-2 transition-colors ${
                 active === i
                   ? "border-amber-500"
                   : "border-white/10 hover:border-white/40"
@@ -461,92 +485,94 @@ function VariantSelector({ groups }: { groups: VariantGroup[] }) {
                 {/* Dense row list */}
                 <div className="divide-y divide-white/[0.06]">
                   {group.options.map((opt) => {
-              const q = qtys[opt.id] ?? 0;
-              const selected = q > 0;
-              const isQuantity = opt.selectionMode === "quantity";
-              const rowClass = `group flex items-center gap-3 px-2 py-2 min-h-[44px] transition-colors ${
-                selected ? "bg-amber-500/10" : "hover:bg-white/[0.03]"
-              }`;
+                    const q = qtys[opt.id] ?? 0;
+                    const selected = q > 0;
+                    const isQuantity = opt.selectionMode === "quantity";
+                    const rowClass = `group flex items-center gap-3 px-2 py-2 min-h-[44px] transition-colors ${
+                      selected ? "bg-amber-500/10" : "hover:bg-white/[0.03]"
+                    }`;
 
-              const body = (
-                <>
-                  {/* Left control column — checkbox (select) or a spacer of the
+                    const body = (
+                      <>
+                        {/* Left control column — checkbox (select) or a spacer of the
                       same width (quantity) so every option name lines up. */}
-                  {isQuantity ? (
-                    <span className="w-4 shrink-0" aria-hidden />
-                  ) : (
-                    <span
-                      className={`w-4 h-4 shrink-0 border flex items-center justify-center ${
-                        selected
-                          ? "border-amber-500 bg-amber-500"
-                          : "border-white/30"
-                      }`}
-                    >
-                      {selected && (
-                        <Check
-                          size={10}
-                          strokeWidth={3}
-                          className="text-black"
-                        />
-                      )}
-                    </span>
-                  )}
+                        {isQuantity ? (
+                          <span className="w-4 shrink-0" aria-hidden />
+                        ) : (
+                          <span
+                            className={`w-4 h-4 shrink-0 border flex items-center justify-center ${
+                              selected
+                                ? "border-amber-500 bg-amber-500"
+                                : "border-white/30"
+                            }`}
+                          >
+                            {selected && (
+                              <Check
+                                size={10}
+                                strokeWidth={3}
+                                className="text-black"
+                              />
+                            )}
+                          </span>
+                        )}
 
-                  {/* Name + features */}
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium text-white truncate">
-                      {opt.name}
-                    </p>
-                    {opt.features.length > 0 && (
-                      <p
-                        className={`text-[10px] text-white/40 leading-snug mt-0.5 truncate ${
-                          selected ? "block" : "hidden md:group-hover:block"
-                        }`}
-                      >
-                        {opt.features.slice(0, 3).join(" · ")}
-                      </p>
-                    )}
-                  </div>
+                        {/* Name + features */}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-medium text-white truncate">
+                            {opt.name}
+                          </p>
+                          {opt.features.length > 0 && (
+                            <p
+                              className={`text-[10px] text-white/40 leading-snug mt-0.5 truncate ${
+                                selected
+                                  ? "block"
+                                  : "hidden md:group-hover:block"
+                              }`}
+                            >
+                              {opt.features.slice(0, 3).join(" · ")}
+                            </p>
+                          )}
+                        </div>
 
-                  {/* Right: stepper (quantity mode) sits next to the price */}
-                  <div className="flex items-center gap-3 shrink-0">
-                    {isQuantity && (
-                      <div
-                        className="flex items-center gap-1"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <button
-                          type="button"
-                          aria-label="Giảm"
-                          onClick={() => setQty(opt.id, q - 1)}
-                          disabled={q === 0}
-                          className="w-6 h-6 flex items-center justify-center border border-white/20 text-white disabled:opacity-30 hover:border-amber-500 hover:text-amber-500 transition-colors"
-                        >
-                          −
-                        </button>
-                        <span className="w-6 text-center text-xs font-bold text-white tabular-nums">
-                          {q}
-                        </span>
-                        <button
-                          type="button"
-                          aria-label="Tăng"
-                          onClick={() => setQty(opt.id, q + 1)}
-                          disabled={q >= QTY_MAX}
-                          className="w-6 h-6 flex items-center justify-center border border-white/20 text-white disabled:opacity-30 hover:border-amber-500 hover:text-amber-500 transition-colors"
-                        >
-                          +
-                        </button>
-                      </div>
-                    )}
-                    <p className="text-xs font-black text-amber-500 whitespace-nowrap">
-                      {formatVND(Number(opt.price))}
-                    </p>
-                  </div>
-                </>
-              );
+                        {/* Right: stepper (quantity mode) sits next to the price */}
+                        <div className="flex items-center gap-3 shrink-0">
+                          {isQuantity && (
+                            <div
+                              className="flex items-center gap-1"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <button
+                                type="button"
+                                aria-label="Giảm"
+                                onClick={() => setQty(opt.id, q - 1)}
+                                disabled={q === 0}
+                                className="w-6 h-6 flex items-center justify-center border border-white/20 text-white disabled:opacity-30 hover:border-amber-500 hover:text-amber-500 transition-colors"
+                              >
+                                −
+                              </button>
+                              <span className="w-6 text-center text-xs font-bold text-white tabular-nums">
+                                {q}
+                              </span>
+                              <button
+                                type="button"
+                                aria-label="Tăng"
+                                onClick={() => setQty(opt.id, q + 1)}
+                                disabled={q >= QTY_MAX}
+                                className="w-6 h-6 flex items-center justify-center border border-white/20 text-white disabled:opacity-30 hover:border-amber-500 hover:text-amber-500 transition-colors"
+                              >
+                                +
+                              </button>
+                            </div>
+                          )}
+                          <p className="text-xs font-black text-amber-500 whitespace-nowrap">
+                            {formatVND(Number(opt.price))}
+                          </p>
+                        </div>
+                      </>
+                    );
 
-              // quantity-mode rows contain nested buttons → must be a <div>;
-              // select-mode rows are a single toggle → <button> for a11y.
+                    // quantity-mode rows contain nested buttons → must be a <div>;
+                    // select-mode rows are a single toggle → <button> for a11y.
                     return isQuantity ? (
                       <div key={opt.id} className={rowClass}>
                         {body}
@@ -620,7 +646,11 @@ export default function ProductDetailPage({ params }: Props) {
 
   useEffect(() => {
     async function fetchProduct() {
-      const res = await fetch(`/api/products/${params.slug}`);
+      // `no-store`: an admin edit must show up on the next visit, not after
+      // the browser disk cache happens to expire.
+      const res = await fetch(`/api/products/${params.slug}`, {
+        cache: "no-store",
+      });
       if (!res.ok) {
         setProduct(null);
         return;

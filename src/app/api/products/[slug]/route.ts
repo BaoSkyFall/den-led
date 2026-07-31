@@ -1,9 +1,11 @@
 export const dynamic = "force-dynamic";
+// `dynamic` alone does not opt the handler's fetches out of the Next Data
+// Cache — see `lib/supabase/rest.ts`. This covers any fetch added here later.
+export const fetchCache = "force-no-store";
 export const runtime = "nodejs";
 
-import { createClient } from "@supabase/supabase-js";
-import { env } from "@/env.mjs";
-import { NextResponse } from "next/server";
+import { liveJson, PUBLIC_ERROR } from "@/lib/liveJson";
+import { createLiveRestClient } from "@/lib/supabase/rest";
 
 // HTTPS-based reads via Supabase JS SDK — no direct Postgres connection.
 export async function GET(
@@ -11,11 +13,7 @@ export async function GET(
   { params }: { params: { slug: string } },
 ) {
   try {
-    const supabase = createClient(
-      env.NEXT_PUBLIC_SUPABASE_URL,
-      env.DATABASE_SERVICE_ROLE,
-      { auth: { persistSession: false } },
-    );
+    const supabase = createLiveRestClient();
 
     const { data: product, error: productErr } = await supabase
       .from("products")
@@ -38,11 +36,11 @@ export async function GET(
 
     if (productErr) {
       console.error("[/api/products/[slug]] Product error:", productErr);
-      return NextResponse.json({ error: productErr.message }, { status: 500 });
+      return liveJson({ error: PUBLIC_ERROR }, { status: 500 });
     }
 
     if (!product) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
+      return liveJson({ error: "Not found" }, { status: 404 });
     }
 
     // Variant groups + options
@@ -78,8 +76,7 @@ export async function GET(
           features: o.features ?? [],
           displayOrder: o.display_order,
           selectionMode: (o.selection_mode ?? "select") as
-            | "select"
-            | "quantity",
+            "select" | "quantity",
         })),
     }));
 
@@ -163,7 +160,7 @@ export async function GET(
     }));
 
     const p = product as any;
-    return NextResponse.json({
+    return liveJson({
       id: p.id,
       name: p.name,
       slug: p.slug,
@@ -176,9 +173,6 @@ export async function GET(
     });
   } catch (err) {
     console.error("[/api/products/[slug]] Unexpected error:", err);
-    return NextResponse.json(
-      { error: (err as Error).message || "Internal error" },
-      { status: 500 },
-    );
+    return liveJson({ error: PUBLIC_ERROR }, { status: 500 });
   }
 }

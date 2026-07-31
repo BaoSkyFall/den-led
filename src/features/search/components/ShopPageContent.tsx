@@ -129,7 +129,7 @@ function ShopPageContent({ models }: Props) {
   const [query, setQuery] = useState("");
 
   useEffect(() => {
-    fetch("/api/products/list")
+    fetch("/api/products/list", { cache: "no-store" })
       .then((r) => r.json())
       .then((data) => setProducts(data as Product[]))
       .catch(() => setProducts([]));

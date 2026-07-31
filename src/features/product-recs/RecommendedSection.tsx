@@ -23,7 +23,9 @@ export default function RecommendedSection({
     const params = new URLSearchParams();
     if (excludeSlug) params.set("exclude", excludeSlug);
     params.set("limit", String(limit));
-    fetch(`/api/products/recommended?${params.toString()}`)
+    fetch(`/api/products/recommended?${params.toString()}`, {
+      cache: "no-store",
+    })
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => setItems(Array.isArray(data) ? data : []))
       .catch(() => setItems([]));

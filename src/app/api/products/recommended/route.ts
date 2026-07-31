@@ -1,9 +1,11 @@
 export const dynamic = "force-dynamic";
+// `dynamic` alone does not opt the handler's fetches out of the Next Data
+// Cache — see `lib/supabase/rest.ts`. This covers any fetch added here later.
+export const fetchCache = "force-no-store";
 export const runtime = "nodejs";
 
-import { createClient } from "@supabase/supabase-js";
-import { env } from "@/env.mjs";
-import { NextResponse } from "next/server";
+import { liveJson, PUBLIC_ERROR } from "@/lib/liveJson";
+import { createLiveRestClient } from "@/lib/supabase/rest";
 
 // GET /api/products/recommended?exclude=<slug>&limit=<n>
 // `limit` defaults to 4 and is clamped to 1..12.
@@ -20,11 +22,7 @@ export async function GET(req: Request) {
       Math.min(12, Number(url.searchParams.get("limit") ?? "4") || 4),
     );
 
-    const supabase = createClient(
-      env.NEXT_PUBLIC_SUPABASE_URL,
-      env.DATABASE_SERVICE_ROLE,
-      { auth: { persistSession: false } },
-    );
+    const supabase = createLiveRestClient();
 
     // 1) Resolve the current product's brand: products -> generations -> models.
     //    NULL generation_id (unassigned product) => brandId stays null.
@@ -152,12 +150,9 @@ export async function GET(req: Request) {
         : null,
     });
 
-    return NextResponse.json([...primaryRows, ...fillRows].map(shape));
+    return liveJson([...primaryRows, ...fillRows].map(shape));
   } catch (err) {
     console.error("[/api/products/recommended] error:", err);
-    return NextResponse.json(
-      { error: (err as Error).message || "Internal error" },
-      { status: 500 },
-    );
+    return liveJson({ error: PUBLIC_ERROR }, { status: 500 });
   }
 }
