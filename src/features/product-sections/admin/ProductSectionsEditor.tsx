@@ -20,6 +20,7 @@ import {
   BLOCK_LABELS,
   BLOCK_TYPES,
   defaultBlockData,
+  tiktokIdFromUrl,
   type BlockType,
   type FaqBlockData,
   type FeatureGridBlockData,
@@ -32,6 +33,7 @@ import {
   type QuoteBlockData,
   type SectionBlock,
   type SpecTableBlockData,
+  type TikTokBlockData,
   type YouTubeBlockData,
 } from "../types";
 
@@ -415,7 +417,7 @@ function SectionEditor(props: {
 // Always-visible chip picker — the previous absolute-positioned dropdown got
 // clipped by the section card's overflow-hidden and by the dialog's scroll
 // container, hiding half of the options. Chips are laid out inline so admin
-// always sees all 11 available block types.
+// always sees every available block type.
 function AddBlockMenu({ onPick }: { onPick: (t: BlockType) => void }) {
   return (
     <div className="border-t border-dashed border-slate-200 pt-3 mt-3">
@@ -595,6 +597,53 @@ function BlockBody(props: {
           placeholder="Dán URL YouTube (https://youtu.be/... hoặc https://youtube.com/watch?v=...)"
           className="w-full border border-slate-200 rounded px-3 py-2 text-sm"
         />
+        <input
+          value={d.caption ?? ""}
+          onChange={(e) => onChange({ ...d, caption: e.target.value })}
+          placeholder="Chú thích (optional)"
+          className="w-full border border-slate-200 rounded px-3 py-2 text-sm"
+        />
+      </div>
+    );
+  }
+
+  if (block.type === "tiktok") {
+    const d = block.data as TikTokBlockData;
+    // `?? ""`: the `data` json column defaults to `{}` and the GET passes it
+    // through verbatim, so a row seeded or imported outside the editor can
+    // arrive with no `url` key at all. Calling .trim() on that would throw
+    // during render and take the whole editor down, not just this block.
+    const raw = d.url ?? "";
+    // Flag a paste we cannot resolve rather than let the admin save a block
+    // that silently renders nothing on the storefront.
+    const resolvedId = tiktokIdFromUrl(raw);
+    const unresolved = raw.trim().length > 0 && !resolvedId;
+    return (
+      <div className="space-y-2">
+        {/* A textarea, not an input: the Embed button on TikTok copies a whole
+            multi-line <blockquote> snippet, and that is what most admins will
+            paste. Both that and a plain URL are accepted. */}
+        <textarea
+          value={raw}
+          onChange={(e) => onChange({ ...d, url: e.target.value })}
+          rows={3}
+          placeholder="Dán link TikTok (https://www.tiktok.com/@user/video/...) hoặc dán nguyên mã nhúng từ nút Embed"
+          className="w-full border border-slate-200 rounded px-3 py-2 text-sm font-mono resize-y"
+        />
+        {resolvedId && (
+          <p className="text-xs text-emerald-700">
+            Đã nhận video ID: <span className="font-mono">{resolvedId}</span>
+          </p>
+        )}
+        {unresolved && (
+          <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1.5">
+            Không đọc được ID video. Cách chắc ăn nhất: bấm nút Embed trên
+            TikTok rồi dán nguyên đoạn mã vào đây. Nếu dán link thì phải là link
+            đầy đủ dạng tiktok.com/@user/video/... — link rút gọn
+            (vm.tiktok.com/... hoặc tiktok.com/t/...) không chứa ID nên không
+            dùng được.
+          </p>
+        )}
         <input
           value={d.caption ?? ""}
           onChange={(e) => onChange({ ...d, caption: e.target.value })}

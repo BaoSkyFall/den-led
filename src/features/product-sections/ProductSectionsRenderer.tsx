@@ -16,9 +16,10 @@ import type {
   QuoteBlockData,
   SectionBlock,
   SpecTableBlockData,
+  TikTokBlockData,
   YouTubeBlockData,
 } from "./types";
-import { youtubeIdFromUrl } from "./types";
+import { tiktokIdFromUrl, youtubeIdFromUrl } from "./types";
 
 type MediaLookup = (mediaId: string) => { key: string; alt: string } | null;
 
@@ -110,6 +111,8 @@ function BlockView({
       );
     case "youtube":
       return <YouTubeView data={block.data as YouTubeBlockData} />;
+    case "tiktok":
+      return <TikTokView data={block.data as TikTokBlockData} />;
     case "list":
       return <ListView data={block.data as ListBlockData} />;
     case "quote":
@@ -193,6 +196,32 @@ function YouTubeView({ data }: { data: YouTubeBlockData }) {
           src={`https://www.youtube.com/embed/${videoId}`}
           title={data.caption ?? "YouTube video"}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          className="absolute inset-0 w-full h-full"
+        />
+      </div>
+      {data.caption && (
+        <figcaption className="text-xs text-white/40 mt-2 text-center italic">
+          {data.caption}
+        </figcaption>
+      )}
+    </figure>
+  );
+}
+
+function TikTokView({ data }: { data: TikTokBlockData }) {
+  const videoId = tiktokIdFromUrl(data.url);
+  if (!videoId) return null;
+  return (
+    <figure>
+      {/* TikTok is vertical and its embed adds a caption/CTA bar underneath, so
+          it gets a portrait box capped at TikTok's own minimum embed width
+          rather than the 16:9 frame the YouTube block uses. */}
+      <div className="relative w-full max-w-[325px] mx-auto aspect-[325/739] bg-[#0a0a0a] overflow-hidden">
+        <iframe
+          src={`https://www.tiktok.com/embed/v2/${videoId}`}
+          title={data.caption ?? "TikTok video"}
+          allow="encrypted-media; picture-in-picture; fullscreen"
           allowFullScreen
           className="absolute inset-0 w-full h-full"
         />

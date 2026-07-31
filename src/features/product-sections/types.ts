@@ -3,6 +3,7 @@ export const BLOCK_TYPES = [
   "paragraph",
   "image",
   "youtube",
+  "tiktok",
   "list",
   "quote",
   "divider",
@@ -19,6 +20,7 @@ export const BLOCK_LABELS: Record<BlockType, string> = {
   paragraph: "Đoạn Văn (Rich Text)",
   image: "Ảnh Đơn",
   youtube: "Video YouTube",
+  tiktok: "Video TikTok",
   list: "Danh Sách",
   quote: "Trích Dẫn",
   divider: "Đường Kẻ",
@@ -32,6 +34,8 @@ export type HeadingBlockData = { text: string; level: 2 | 3 };
 export type ParagraphBlockData = { html: string };
 export type ImageBlockData = { mediaId: string; caption?: string };
 export type YouTubeBlockData = { url: string; caption?: string };
+/** `url` accepts a share URL, a bare video id, or TikTok's full embed snippet. */
+export type TikTokBlockData = { url: string; caption?: string };
 export type ListBlockData = { items: string[]; style: "bullet" | "numbered" };
 export type QuoteBlockData = { text: string; cite?: string };
 export type DividerBlockData = Record<string, never>;
@@ -57,6 +61,7 @@ export type BlockData =
   | { type: "paragraph"; data: ParagraphBlockData }
   | { type: "image"; data: ImageBlockData }
   | { type: "youtube"; data: YouTubeBlockData }
+  | { type: "tiktok"; data: TikTokBlockData }
   | { type: "list"; data: ListBlockData }
   | { type: "quote"; data: QuoteBlockData }
   | { type: "divider"; data: DividerBlockData }
@@ -88,6 +93,8 @@ export function defaultBlockData(type: BlockType): BlockData {
       return { type, data: { mediaId: "", caption: "" } };
     case "youtube":
       return { type, data: { url: "", caption: "" } };
+    case "tiktok":
+      return { type, data: { url: "", caption: "" } };
     case "list":
       return { type, data: { items: [""], style: "bullet" } };
     case "quote":
@@ -106,6 +113,48 @@ export function defaultBlockData(type: BlockType): BlockData {
     case "faq":
       return { type, data: { items: [{ question: "", answer: "" }] } };
   }
+}
+
+/**
+ * Pull the numeric video id out of whatever TikTok hands the admin: a share
+ * URL, a bare id, or the whole `<blockquote class="tiktok-embed">…</blockquote>`
+ * snippet from TikTok's "Embed" button. The snippet is the common case — it is
+ * what the Embed button copies to the clipboard — so `data-video-id` is checked
+ * first and the raw paste is accepted verbatim rather than made the admin's
+ * problem to trim down to a URL.
+ *
+ * Short links (vm.tiktok.com/..., tiktok.com/t/...) deliberately return null:
+ * they carry no id and only resolve through an HTTP redirect, which the block
+ * renderer cannot follow. The editor tells the admin to paste the full link
+ * instead of silently rendering an empty embed.
+ */
+export function tiktokIdFromUrl(url: string): string | null {
+  if (!url) return null;
+  const trimmed = url.trim();
+  // `\d{15,25}` everywhere below, not `\d{6,}`: real ids are 19 digits, and a
+  // loose run also matched short numbers sitting in unrelated TikTok URLs,
+  // which showed the admin a green "id accepted" for something that is not a
+  // video. Repeated per pattern on purpose — regex literals are validated at
+  // parse time, which a built-from-string RegExp is not.
+  const patterns = [
+    // The embed snippet: <blockquote ... data-video-id="7123456789012345678">
+    /data-video-id=["'](\d{15,25})["']/,
+    // https://www.tiktok.com/@user/video/7123456789012345678?is_from_webapp=1
+    // Also matches the `cite="…"` URL inside an embed snippet. `photo` covers
+    // slideshow posts, which share the same embed endpoint as videos.
+    /tiktok\.com\/@[^/"']+\/(?:video|photo)\/(\d{15,25})/,
+    // https://m.tiktok.com/v/7123456789012345678.html
+    /tiktok\.com\/v\/(\d{15,25})/,
+    // https://www.tiktok.com/embed/v2/7123456789012345678 — re-pasted embed URL
+    /tiktok\.com\/embed(?:\/v\d)?\/(\d{15,25})/,
+    // A bare id copied out of the share sheet.
+    /^(\d{15,25})$/,
+  ];
+  for (const p of patterns) {
+    const m = trimmed.match(p);
+    if (m) return m[1];
+  }
+  return null;
 }
 
 export function youtubeIdFromUrl(url: string): string | null {
