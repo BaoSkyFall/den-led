@@ -1,12 +1,19 @@
 import { NextResponse } from "next/server";
 
 /**
- * `Cache-Control` for storefront reads that must reflect the latest admin edit.
+ * `Cache-Control` for any read that must reflect the latest write — storefront
+ * and admin alike.
  *
  * Bypassing the Next Data Cache (see `lib/supabase/rest.ts`) only fixes the
  * server side. Without this header the browser disk cache — and any CDN or
  * reverse proxy in front of the container — can still replay a response from
- * before the edit.
+ * before the edit. Next sends no `Cache-Control` at all on a dynamic route
+ * handler, and "no header" means the browser is free to cache heuristically.
+ *
+ * On the admin side that is worse than a stale screen: the editors load the
+ * whole sections/gallery/variants tree, let the admin edit it, then PUT the
+ * whole tree back. A cached GET means edits get layered onto a stale snapshot
+ * and saved over newer data.
  */
 const NO_STORE_HEADERS = {
   "Cache-Control": "no-store, no-cache, must-revalidate",

@@ -40,7 +40,7 @@ export default function GalleryManager({ productId }: Props) {
   const { toast } = useToast();
 
   useEffect(() => {
-    fetch(`/api/product-gallery/${productId}`)
+    fetch(`/api/product-gallery/${productId}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((data) => {
         setItems(data ?? []);
@@ -80,7 +80,9 @@ export default function GalleryManager({ productId }: Props) {
     try {
       const responses = await Promise.all(
         newIds.map((id) =>
-          fetch(`/api/medias/${id}`).then((r) => (r.ok ? r.json() : null)),
+          fetch(`/api/medias/${id}`, { cache: "no-store" }).then((r) =>
+            r.ok ? r.json() : null,
+          ),
         ),
       );
       const fetched = responses.filter(Boolean) as Array<{

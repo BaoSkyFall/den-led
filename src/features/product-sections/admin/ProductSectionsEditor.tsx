@@ -54,7 +54,7 @@ export default function ProductSectionsEditor({ productId }: Props) {
   const { toast } = useToast();
 
   useEffect(() => {
-    fetch(`/api/product-sections/${productId}`)
+    fetch(`/api/product-sections/${productId}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((data: ProductSection[]) => {
         setSections(Array.isArray(data) ? data : []);
@@ -82,7 +82,9 @@ export default function ProductSectionsEditor({ productId }: Props) {
     if (missing.length === 0) return;
     const responses = await Promise.all(
       missing.map((id) =>
-        fetch(`/api/medias/${id}`).then((r) => (r.ok ? r.json() : null)),
+        fetch(`/api/medias/${id}`, { cache: "no-store" }).then((r) =>
+          r.ok ? r.json() : null,
+        ),
       ),
     );
     const patch: Record<string, MediaEntry> = {};
@@ -108,9 +110,9 @@ export default function ProductSectionsEditor({ productId }: Props) {
       const data = await res.json();
       toast({ title: `Đã lưu ${data.count ?? 0} section` });
       // Refresh IDs from server so subsequent saves match DB rows.
-      const refreshed = await fetch(`/api/product-sections/${productId}`).then(
-        (r) => r.json(),
-      );
+      const refreshed = await fetch(`/api/product-sections/${productId}`, {
+        cache: "no-store",
+      }).then((r) => r.json());
       if (Array.isArray(refreshed)) setSections(refreshed);
     });
   }

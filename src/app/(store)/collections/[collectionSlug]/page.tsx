@@ -1,3 +1,11 @@
+// This page reads products over urql (a GraphQL POST through the patched global
+// fetch). Without these two, Next stores that response in its Data Cache and the
+// page serves a snapshot from whenever it was first rendered — the same defect
+// that froze /shop/<slug>. `dynamic` alone is not enough: only `fetchCache`
+// reaches the fetches themselves.
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+
 import SectionHeading from "@/components/layouts/SectionHeading";
 import { Shell } from "@/components/layouts/Shell";
 import { Skeleton } from "@/components/ui/skeleton";

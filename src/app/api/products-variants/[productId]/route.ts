@@ -1,10 +1,11 @@
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+import { liveJson } from "@/lib/liveJson";
+
 import db from "@/lib/supabase/db";
 import { variantGroups, variantOptions } from "@/lib/supabase/schema";
 import { eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 export async function GET(
   _req: Request,
@@ -27,5 +28,5 @@ export async function GET(
     }),
   );
 
-  return NextResponse.json(groupsWithOptions);
+  return liveJson(groupsWithOptions);
 }

@@ -1,10 +1,11 @@
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+import { liveJson } from "@/lib/liveJson";
+
 import db from "@/lib/supabase/db";
 import { medias, productMedias } from "@/lib/supabase/schema";
-import { and, asc, eq, inArray } from "drizzle-orm";
-import { NextResponse } from "next/server";
+import { asc, eq } from "drizzle-orm";
 
 // GET /api/products/[productId]/gallery — list gallery images sorted by priority
 export async function GET(
@@ -24,7 +25,7 @@ export async function GET(
     .where(eq(productMedias.productId, params.productId))
     .orderBy(asc(productMedias.priority));
 
-  return NextResponse.json(rows);
+  return liveJson(rows);
 }
 
 // PUT /api/products/[productId]/gallery — replace entire gallery with new order
@@ -36,10 +37,7 @@ export async function PUT(
   const { mediaIds } = (await req.json()) as { mediaIds: string[] };
 
   if (!Array.isArray(mediaIds)) {
-    return NextResponse.json(
-      { message: "mediaIds must be an array" },
-      { status: 400 },
-    );
+    return liveJson({ message: "mediaIds must be an array" }, { status: 400 });
   }
 
   // Delete existing entries, then insert new ones in given order
@@ -57,5 +55,5 @@ export async function PUT(
     );
   }
 
-  return NextResponse.json({ ok: true, count: mediaIds.length });
+  return liveJson({ ok: true, count: mediaIds.length });
 }

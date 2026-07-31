@@ -1,10 +1,11 @@
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+import { liveJson } from "@/lib/liveJson";
+
 import db from "@/lib/supabase/db";
 import { productSections, sectionBlocks } from "@/lib/supabase/schema";
 import { asc, eq, inArray } from "drizzle-orm";
-import { NextResponse } from "next/server";
 import type {
   ProductSection,
   SectionBlock,
@@ -22,7 +23,7 @@ export async function GET(
     .orderBy(asc(productSections.order));
 
   if (sections.length === 0) {
-    return NextResponse.json([]);
+    return liveJson([]);
   }
 
   const sectionIds = sections.map((s) => s.id);
@@ -52,7 +53,7 @@ export async function GET(
     blocks: byId.get(s.id) ?? [],
   }));
 
-  return NextResponse.json(result);
+  return liveJson(result);
 }
 
 // PUT /api/product-sections/[productId] — replace-all sections tree
@@ -69,7 +70,7 @@ export async function PUT(
     .where(eq(productSections.productId, params.productId));
 
   if (incoming.length === 0) {
-    return NextResponse.json({ ok: true, count: 0 });
+    return liveJson({ ok: true, count: 0 });
   }
 
   const now = new Date().toISOString();
@@ -105,5 +106,5 @@ export async function PUT(
     await db.insert(sectionBlocks).values(blockRows);
   }
 
-  return NextResponse.json({ ok: true, count: inserted.length });
+  return liveJson({ ok: true, count: inserted.length });
 }

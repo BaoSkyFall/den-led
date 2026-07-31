@@ -1,7 +1,9 @@
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-import { NextRequest, NextResponse } from "next/server";
+import { liveJson } from "@/lib/liveJson";
+
+import { NextRequest } from "next/server";
 import { eq } from "drizzle-orm";
 import db from "@/lib/supabase/db";
 import { medias } from "@/lib/supabase/schema";
@@ -14,8 +16,7 @@ export async function GET(
     where: eq(medias.id, params.id),
   });
 
-  if (!media)
-    return NextResponse.json({ message: "Media not found." }, { status: 404 });
+  if (!media) return liveJson({ message: "Media not found." }, { status: 404 });
 
-  return NextResponse.json(media);
+  return liveJson(media);
 }

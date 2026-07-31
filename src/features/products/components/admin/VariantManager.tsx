@@ -36,7 +36,7 @@ export default function VariantManager({ productId }: Props) {
   const { toast } = useToast();
 
   useEffect(() => {
-    fetch(`/api/products-variants/${productId}`)
+    fetch(`/api/products-variants/${productId}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((data) => {
         setGroups(data ?? []);
