@@ -261,9 +261,31 @@ function BiCauLoader() {
 function ImageGallery({ images }: { images: string[] }) {
   const [active, setActive] = useState(0);
   const stripRef = useRef<HTMLDivElement>(null);
+  const [atStart, setAtStart] = useState(true);
+  const [atEnd, setAtEnd] = useState(true);
 
-  // The thumbnails live on one scrolling row, so the arrows on the main image
-  // can move the selection off-screen. Pull the new one back into view.
+  // The strip hides its scrollbar, so these arrows are the only thing telling
+  // the customer more photos exist — they have to track the real scroll offset
+  // rather than just image count. Both true also means "nothing overflows",
+  // which correctly hides them.
+  const syncEdges = () => {
+    const strip = stripRef.current;
+    if (!strip) return;
+    const max = strip.scrollWidth - strip.clientWidth;
+    setAtStart(strip.scrollLeft <= 1);
+    setAtEnd(strip.scrollLeft >= max - 1);
+  };
+
+  useEffect(() => {
+    syncEdges();
+    window.addEventListener("resize", syncEdges);
+    return () => window.removeEventListener("resize", syncEdges);
+    // Re-measured when the photo count changes; `syncEdges` reads refs only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [images.length]);
+
+  // The arrows on the main image can move the selection out of the strip's
+  // view. Pull the new one back to the middle.
   //
   // Scrolls the strip itself rather than calling `scrollIntoView`, which walks
   // every scrollable ancestor including the document and would jerk the whole
@@ -280,6 +302,17 @@ function ImageGallery({ images }: { images: string[] }) {
 
     strip.scrollTo({ left: strip.scrollLeft + offset, behavior: "smooth" });
   }, [active]);
+
+  // Nearly a full strip, so consecutive pages keep one thumbnail of overlap as
+  // a visual anchor.
+  const page = (direction: -1 | 1) => {
+    const strip = stripRef.current;
+    if (!strip) return;
+    strip.scrollBy({
+      left: direction * strip.clientWidth * 0.8,
+      behavior: "smooth",
+    });
+  };
 
   if (images.length === 0) {
     return (
@@ -327,33 +360,61 @@ function ImageGallery({ images }: { images: string[] }) {
         )}
       </div>
 
-      {/* Thumbnail strip — always a single row that scrolls sideways, so a
-          product with many photos never pushes the page content down. */}
+      {/* Thumbnail slider — always a single row, so a product with many photos
+          never pushes the page content down. Scrolls via the arrows below
+          rather than a scrollbar: globals.css re-declares ::-webkit-scrollbar
+          at 2px after the global `display: none`, so it has to be hidden here
+          explicitly on both engines. */}
       {images.length > 1 && (
-        <div
-          ref={stripRef}
-          className="flex gap-2 overflow-x-auto snap-x snap-mandatory pb-1 [scrollbar-width:thin]"
-        >
-          {images.map((img, i) => (
+        <div className="relative">
+          <div
+            ref={stripRef}
+            onScroll={syncEdges}
+            className="flex gap-2 overflow-x-auto snap-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {images.map((img, i) => (
+              <button
+                key={i}
+                onClick={() => setActive(i)}
+                className={`relative shrink-0 snap-start w-16 sm:w-20 aspect-square overflow-hidden border-2 transition-colors ${
+                  active === i
+                    ? "border-amber-500"
+                    : "border-white/10 hover:border-white/40"
+                }`}
+                aria-label={`Ảnh ${i + 1}`}
+              >
+                <Image
+                  src={img}
+                  alt=""
+                  fill
+                  className="object-cover"
+                  sizes="120px"
+                />
+              </button>
+            ))}
+          </div>
+
+          {!atStart && (
             <button
-              key={i}
-              onClick={() => setActive(i)}
-              className={`relative shrink-0 snap-start w-16 sm:w-20 aspect-square overflow-hidden border-2 transition-colors ${
-                active === i
-                  ? "border-amber-500"
-                  : "border-white/10 hover:border-white/40"
-              }`}
-              aria-label={`Ảnh ${i + 1}`}
+              type="button"
+              onClick={() => page(-1)}
+              aria-label="Xem các ảnh trước đó"
+              className="absolute left-0 top-0 h-full pr-6 flex items-center bg-gradient-to-r from-[#111111] via-[#111111]/85 to-transparent text-white hover:text-amber-500 transition-colors"
             >
-              <Image
-                src={img}
-                alt=""
-                fill
-                className="object-cover"
-                sizes="120px"
-              />
+              <ChevronLeft size={18} />
             </button>
-          ))}
+          )}
+
+          {!atEnd && (
+            <button
+              type="button"
+              onClick={() => page(1)}
+              aria-label="Xem các ảnh tiếp theo"
+              className="absolute right-0 top-0 h-full pl-6 flex items-center bg-gradient-to-l from-[#111111] via-[#111111]/85 to-transparent text-white hover:text-amber-500 transition-colors"
+            >
+              <ChevronRight size={18} />
+            </button>
+          )}
         </div>
       )}
     </div>
