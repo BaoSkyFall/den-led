@@ -11,7 +11,11 @@ import { stripMediaRefs } from "../products";
 describe("stripMediaRefs", () => {
   it("drops the media pointer from an image block but keeps the rest", () => {
     expect(
-      stripMediaRefs({ mediaId: "med_1", caption: "Sau khi độ", align: "center" }),
+      stripMediaRefs({
+        mediaId: "med_1",
+        caption: "Sau khi độ",
+        align: "center",
+      }),
     ).toEqual({ caption: "Sau khi độ", align: "center" });
   });
 
