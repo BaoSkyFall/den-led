@@ -14,8 +14,8 @@ export async function GET() {
     const supabase = createLiveRestClient();
 
     // Fetch products + featured image.
-    // `status = 'active'` is storefront-wide: this route feeds both the home
-    // page specials grid and /shop, so an inactive product disappears from both.
+    // `status = 'active'` is storefront-wide, so an inactive product disappears
+    // from every surface reading this route.
     const { data: products, error } = await supabase
       .from("products")
       .select(
@@ -28,7 +28,10 @@ export async function GET() {
         price,
         featured_image_id,
         medias:featured_image_id(id, key, alt),
-        generations:generation_id(id, models:model_id(slug))
+        generations:generation_id(
+          id,
+          models:model_id(slug, brands:brand_id(label, slug, is_accessory))
+        )
       `,
       )
       .eq("status", "active")
@@ -61,9 +64,15 @@ export async function GET() {
       rating: p.rating,
       price: p.price,
       imageKey: p.medias?.key ?? null,
-      // Model slug (product -> generation -> model) so the /shop chips can
-      // filter on real taxonomy instead of guessing from the product name.
+      // Model slug (product -> generation -> model) so callers can key off real
+      // taxonomy instead of guessing from the product name.
       modelSlug: p.generations?.models?.slug ?? null,
+      // Brand, one level further up. `isAccessory` is what lets the home page
+      // show vehicles only: accessory ranges are ordinary brand rows, so
+      // without the flag there is nothing to tell a headlight from a bike.
+      brandLabel: p.generations?.models?.brands?.label ?? null,
+      brandSlug: p.generations?.models?.brands?.slug ?? null,
+      isAccessory: Boolean(p.generations?.models?.brands?.is_accessory),
       minVariantPrice: minByProduct.has(p.id)
         ? String(minByProduct.get(p.id))
         : null,

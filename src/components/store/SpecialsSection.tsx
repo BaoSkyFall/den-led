@@ -14,6 +14,8 @@ type Product = {
   price: string;
   imageKey: string | null;
   modelSlug: string | null;
+  brandLabel: string | null;
+  isAccessory: boolean;
   minVariantPrice: string | null;
 };
 
@@ -65,8 +67,11 @@ function ProductCardSkeleton() {
  * flag instead would have cut the section down to whatever happened to be
  * ticked, so a fixed window of the newest arrivals is the predictable choice.
  * Everything else is one click away on /shop, which paginates.
+ *
+ * Six fills the three-column grid exactly twice, so the block never ends on a
+ * half-empty row.
  */
-const HOME_PRODUCT_LIMIT = 8;
+const HOME_PRODUCT_LIMIT = 6;
 
 function SpecialsSection() {
   const [products, setProducts] = useState<Product[] | null>(null);
@@ -78,9 +83,15 @@ function SpecialsSection() {
       .catch(() => setProducts([]));
   }, []);
 
-  // The endpoint already returns newest-first, so this is a window, not a sort.
+  // Vehicles only. The heading says "Xe Nổi Bật", but accessory ranges are
+  // ordinary brands in the same table, so headlights and mounting brackets were
+  // landing in a block that promises bikes. They keep their place on /shop.
+  // The endpoint already returns newest-first, so the slice is a window, not a
+  // sort.
   const filtered =
-    products === null ? null : products.slice(0, HOME_PRODUCT_LIMIT);
+    products === null
+      ? null
+      : products.filter((p) => !p.isAccessory).slice(0, HOME_PRODUCT_LIMIT);
 
   return (
     <section id="specials" className="bg-[#111111] py-24">
@@ -138,8 +149,10 @@ function SpecialsSection() {
                   </div>
                   <div className="p-5 flex items-center justify-between">
                     <div className="min-w-0 flex-1">
+                      {/* Was the literal string "Honda" on every card, which
+                          mislabelled every Vinfast bike in the grid. */}
                       <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/40 mb-1">
-                        Honda
+                        {product.brandLabel ?? "Xe"}
                       </p>
                       <h3 className="text-lg font-black uppercase tracking-tighter text-white truncate">
                         {product.name}
