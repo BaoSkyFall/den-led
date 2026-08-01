@@ -107,7 +107,6 @@ function ProductForm({ product, brands }: ProductsFormProps) {
   const router = useRouter();
   const { toast } = useToast();
 
-
   // All sections start collapsed — an absent key means closed.
   const [openMap, setOpenMap] = useState<Record<string, boolean>>({});
   const toggleSection = (key: string) =>
@@ -118,7 +117,16 @@ function ProductForm({ product, brands }: ProductsFormProps) {
 
   const form = useForm<InsertProducts>({
     resolver: zodResolver(createInsertSchema(products)),
-    defaultValues: { ...product, status: product?.status ?? "active" },
+    defaultValues: {
+      ...product,
+      status: product?.status ?? "active",
+      // Seeded explicitly so Controller has a value to hold. Left undefined it
+      // falls back to "" to keep the input controlled, and an empty string is a
+      // key Postgres goes looking for — the save then dies on the foreign key
+      // instead of storing "no vehicle class".
+      generationId: product?.generationId ?? null,
+      featuredImageId: product?.featuredImageId ?? null,
+    },
   });
 
   const { register, control, handleSubmit } = form;

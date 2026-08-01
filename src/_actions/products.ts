@@ -21,10 +21,32 @@ type SearchProductsActionProps = {
   sort?: string;
 };
 
+/**
+ * Nullable foreign keys on `products`. An empty string is not a missing value
+ * to Postgres — it is a key to look up, so the constraint fires and the save
+ * dies with `Key (generation_id)=() is not present in table "generations"`.
+ *
+ * React Hook Form's Controller keeps its input controlled by falling back to
+ * `""` when a field has no default, so a product saved without picking a
+ * vehicle class arrives here with an empty string rather than null. The form
+ * seeds these as null now, but this stays as the guard: server actions are
+ * reachable directly, and the failure mode is a 500 rather than a clear error.
+ */
+const NULLABLE_FKS = ["generationId", "featuredImageId"] as const;
+
+export const blankFksToNull = (product: InsertProducts): InsertProducts => {
+  const next = { ...product };
+  for (const key of NULLABLE_FKS) {
+    if (next[key] === "") next[key] = null;
+  }
+  return next;
+};
+
 export const createProductAction = async (product: InsertProducts) => {
   await assertAdmin();
-  createInsertSchema(products).parse(product);
-  const data = await db.insert(products).values(product).returning();
+  const values = blankFksToNull(product);
+  createInsertSchema(products).parse(values);
+  const data = await db.insert(products).values(values).returning();
   // name / slug / status / generation_id all feed the storefront menu.
   revalidateTag(NAV_TAXONOMY_TAG);
   return data;
@@ -35,10 +57,11 @@ export const updateProductAction = async (
   product: InsertProducts,
 ) => {
   await assertAdmin();
-  createInsertSchema(products).parse(product);
+  const values = blankFksToNull(product);
+  createInsertSchema(products).parse(values);
   const insertedProduct = await db
     .update(products)
-    .set(product)
+    .set(values)
     .where(eq(products.id, productId))
     .returning();
 
