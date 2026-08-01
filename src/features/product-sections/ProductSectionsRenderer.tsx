@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { keytoUrl } from "@/lib/utils";
 import type {
@@ -209,22 +209,67 @@ function YouTubeView({ data }: { data: YouTubeBlockData }) {
   );
 }
 
+const TIKTOK_EMBED_SRC = "https://www.tiktok.com/embed.js";
+
+/**
+ * TikTok's script turns every `.tiktok-embed` blockquote on the page into an
+ * iframe, but only for the ones present when it runs. These blocks mount after
+ * the client fetch resolves, so it has to be re-run afterwards — re-adding the
+ * tag is the only re-scan trigger the script exposes.
+ *
+ * Queued on a microtask so a section with several TikTok blocks re-injects once
+ * rather than once per block.
+ */
+let tiktokRescanQueued = false;
+function rescanTikTokEmbeds() {
+  if (tiktokRescanQueued) return;
+  tiktokRescanQueued = true;
+  queueMicrotask(() => {
+    tiktokRescanQueued = false;
+    document
+      .querySelectorAll(`script[src="${TIKTOK_EMBED_SRC}"]`)
+      .forEach((el) => el.remove());
+    const script = document.createElement("script");
+    script.src = TIKTOK_EMBED_SRC;
+    script.async = true;
+    document.body.appendChild(script);
+  });
+}
+
 function TikTokView({ data }: { data: TikTokBlockData }) {
   const videoId = tiktokIdFromUrl(data.url);
+
+  useEffect(() => {
+    if (videoId) rescanTikTokEmbeds();
+  }, [videoId]);
+
   if (!videoId) return null;
+
+  // The canonical video URL when the admin pasted one, so the blockquote
+  // degrades to a working link if the script is blocked or fails to load.
+  const cite = (data.url ?? "").match(
+    /https?:\/\/(?:www\.)?tiktok\.com\/@[^/"'\s]+\/(?:video|photo)\/\d{15,25}/,
+  )?.[0];
+
   return (
     <figure>
-      {/* TikTok is vertical and its embed adds a caption/CTA bar underneath, so
-          it gets a portrait box capped at TikTok's own minimum embed width
-          rather than the 16:9 frame the YouTube block uses. */}
-      <div className="relative w-full max-w-[325px] mx-auto aspect-[325/739] bg-[#0a0a0a] overflow-hidden">
-        <iframe
-          src={`https://www.tiktok.com/embed/v2/${videoId}`}
-          title={data.caption ?? "TikTok video"}
-          allow="encrypted-media; picture-in-picture; fullscreen"
-          allowFullScreen
-          className="absolute inset-0 w-full h-full"
-        />
+      {/* TikTok serves 503 on /embed/v2/<id> for a direct iframe; the supported
+          embed is this blockquote plus their script, which replaces it. */}
+      <div className="flex justify-center overflow-x-auto">
+        <blockquote
+          className="tiktok-embed"
+          cite={cite}
+          data-video-id={videoId}
+          style={{ maxWidth: 605, minWidth: 325 }}
+        >
+          <section>
+            {cite && (
+              <a target="_blank" rel="noopener noreferrer" href={cite}>
+                Xem trên TikTok
+              </a>
+            )}
+          </section>
+        </blockquote>
       </div>
       {data.caption && (
         <figcaption className="text-xs text-white/40 mt-2 text-center italic">
