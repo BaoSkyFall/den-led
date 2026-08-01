@@ -26,9 +26,6 @@ export const getCurrentUserSession = async () => {
   return userResponse.data.session;
 };
 
-export const isAdmin = (currentUser: User | null) =>
-  currentUser?.app_metadata.isAdmin;
-
 export const getUser = async ({ userId }: { userId: string }) => {
   const cookieStore = cookies();
   const adminAuthClient = createClient({ cookieStore, isAdmin: true }).auth

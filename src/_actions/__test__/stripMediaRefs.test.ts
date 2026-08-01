@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { stripMediaRefs } from "../products";
+import { stripMediaRefs } from "../productValues";
 
 /**
  * Duplicating a product carries no images across. Blocks keep their text and

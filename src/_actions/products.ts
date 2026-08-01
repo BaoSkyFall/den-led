@@ -15,31 +15,14 @@ import { asc, eq, inArray, like } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { revalidatePath, revalidateTag } from "next/cache";
 
+// Pure helpers deliberately kept out of this module: see productValues.ts —
+// every export of a "use server" file becomes an async server action.
+import { blankFksToNull, stripMediaRefs } from "./productValues";
+
 type SearchProductsActionProps = {
   query: string;
   limit?: number;
   sort?: string;
-};
-
-/**
- * Nullable foreign keys on `products`. An empty string is not a missing value
- * to Postgres — it is a key to look up, so the constraint fires and the save
- * dies with `Key (generation_id)=() is not present in table "generations"`.
- *
- * React Hook Form's Controller keeps its input controlled by falling back to
- * `""` when a field has no default, so a product saved without picking a
- * vehicle class arrives here with an empty string rather than null. The form
- * seeds these as null now, but this stays as the guard: server actions are
- * reachable directly, and the failure mode is a 500 rather than a clear error.
- */
-const NULLABLE_FKS = ["generationId", "featuredImageId"] as const;
-
-export const blankFksToNull = (product: InsertProducts): InsertProducts => {
-  const next = { ...product };
-  for (const key of NULLABLE_FKS) {
-    if (next[key] === "") next[key] = null;
-  }
-  return next;
 };
 
 export const createProductAction = async (product: InsertProducts) => {
@@ -247,22 +230,6 @@ export const duplicateProductAction = async (productId: string) => {
       values.slug = copySlug(slugBase, attempt);
     }
   }
-};
-
-/**
- * Keys inside a block's `data` that point at a media row.
- *
- * A copy carries no images at all, so these are dropped rather than pointed at
- * the source product's media. The block keeps its text, layout and captions —
- * only the picture is missing, which is what an admin then fills in.
- */
-const MEDIA_KEYS = ["mediaId", "leftMediaId", "rightMediaId"] as const;
-
-export const stripMediaRefs = (data: unknown): Record<string, unknown> => {
-  if (!data || typeof data !== "object" || Array.isArray(data)) return {};
-  const next = { ...(data as Record<string, unknown>) };
-  for (const key of MEDIA_KEYS) delete next[key];
-  return next;
 };
 
 const copyProductTree = async (sourceId: string, values: InsertProducts) => {

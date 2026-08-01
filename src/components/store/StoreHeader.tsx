@@ -25,13 +25,15 @@ export default function StoreHeader({ brands }: Props) {
       <header className="fixed top-0 w-full z-50 h-24 backdrop-blur-md bg-[#111111]/90 border-b border-white/5">
         <div className="max-w-[1400px] mx-auto px-6 h-full flex items-center justify-between">
           <Link href="/" className="flex items-center gap-4 shrink-0">
+            {/* 56px -> 70px, a quarter larger. The bar is 96px tall, so this
+                still clears the border with room either side. */}
             <Image
               src="/logo.png"
               alt="Sân Chơi Đèn Led"
-              width={64}
-              height={56}
+              width={80}
+              height={70}
               priority
-              className="h-14 w-auto object-contain"
+              className="h-[70px] w-auto object-contain"
             />
           </Link>
 

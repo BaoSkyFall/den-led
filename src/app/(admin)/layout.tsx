@@ -1,4 +1,5 @@
-import { getCurrentUser, isAdmin } from "@/features/users/actions";
+import { getCurrentUser } from "@/features/users/actions";
+import { isAdmin } from "@/features/users/isAdmin";
 import Navbar from "@/components/layouts/MainNavbar";
 import { redirect } from "next/navigation";
 import { ReactNode } from "react";

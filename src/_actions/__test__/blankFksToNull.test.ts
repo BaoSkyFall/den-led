@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { blankFksToNull } from "../products";
+import { blankFksToNull } from "../productValues";
 
 /**
  * Postgres treats '' as a key to look up, not as "no value", so a blank

@@ -28,9 +28,6 @@ function getS3Client(): S3Client {
   return _s3Client;
 }
 
-export const bufferToFile = (buffer: Buffer) =>
-  `data:image/webp;base64,${buffer.toString("base64")}`;
-
 export const uploadImage = async (params: PutObjectCommandInput) => {
   const putObject = new PutObjectCommand(params);
   const s3Response = await getS3Client().send(putObject);

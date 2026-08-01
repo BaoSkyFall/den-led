@@ -1,4 +1,5 @@
-import { getCurrentUser, isAdmin } from "./actions";
+import { getCurrentUser } from "./actions";
+import { isAdmin } from "./isAdmin";
 
 /**
  * Throws unless the caller is an authenticated admin.
