@@ -60,12 +60,33 @@ type ProductDetail = {
 
 // ─── Image Gallery ────────────────────────────────────────────────────────────
 
+/** How far the main image magnifies under the cursor. */
+const HOVER_ZOOM = 2;
+
 function ImageGallery({ images }: { images: string[] }) {
   const [active, setActive] = useState(0);
   const stripRef = useRef<HTMLDivElement>(null);
   const [lightboxAt, setLightboxAt] = useState<number | null>(null);
   const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(true);
+  /** Cursor position over the main image, as percentages. Null = not hovering. */
+  const [zoom, setZoom] = useState<{ x: number; y: number } | null>(null);
+  const [canHover, setCanHover] = useState(false);
+
+  // A phone can still emit a stray mousemove after a tap, which would leave the
+  // photo stuck at 2x with no way to clear it. Ask the device instead of
+  // trusting the event, and resolve it after mount so the server and the first
+  // client render agree.
+  useEffect(() => {
+    const query = window.matchMedia("(hover: hover) and (pointer: fine)");
+    setCanHover(query.matches);
+    const onChange = (e: MediaQueryListEvent) => {
+      setCanHover(e.matches);
+      if (!e.matches) setZoom(null);
+    };
+    query.addEventListener("change", onChange);
+    return () => query.removeEventListener("change", onChange);
+  }, []);
 
   // The strip hides its scrollbar, so these arrows are the only thing telling
   // the customer more photos exist — they have to track the real scroll offset
@@ -93,6 +114,10 @@ function ImageGallery({ images }: { images: string[] }) {
   // Scrolls the strip itself rather than calling `scrollIntoView`, which walks
   // every scrollable ancestor including the document and would jerk the whole
   // page vertically when the gallery mounts below the fold.
+  // Switching photo while hovering would carry the old magnification origin
+  // onto the new image, which lands zoomed into an unrelated corner.
+  useEffect(() => setZoom(null), [active]);
+
   useEffect(() => {
     const strip = stripRef.current;
     const thumb = strip?.children[active] as HTMLElement | undefined;
@@ -140,6 +165,18 @@ function ImageGallery({ images }: { images: string[] }) {
           onClick={() => setLightboxAt(active)}
           aria-label="Phóng to ảnh"
           className="absolute inset-0 z-10 cursor-zoom-in"
+          // Magnify under the cursor. The lightbox still owns zooming on
+          // touch, where there is no hover to speak of — this only saves a
+          // mouse user the open/close round trip for a quick look.
+          onMouseMove={(e) => {
+            if (!canHover) return;
+            const box = e.currentTarget.getBoundingClientRect();
+            setZoom({
+              x: ((e.clientX - box.left) / box.width) * 100,
+              y: ((e.clientY - box.top) / box.height) * 100,
+            });
+          }}
+          onMouseLeave={() => setZoom(null)}
         />
         <Image
           src={images[active]}
@@ -148,6 +185,13 @@ function ImageGallery({ images }: { images: string[] }) {
           className="object-cover object-center"
           priority
           sizes="(max-width: 1024px) 100vw, 50vw"
+          style={{
+            transform: zoom ? `scale(${HOVER_ZOOM})` : "scale(1)",
+            transformOrigin: zoom ? `${zoom.x}% ${zoom.y}%` : "center",
+            // Only the settle back to 1x is animated. Easing the origin as well
+            // would make the image lag the cursor across the frame.
+            transition: zoom ? "none" : "transform 200ms ease-out",
+          }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#111111]/30 to-transparent pointer-events-none" />
         {images.length > 1 && (

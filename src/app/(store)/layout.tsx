@@ -1,7 +1,8 @@
-import { ReactNode } from "react";
+import { ReactNode, Suspense } from "react";
 import StoreHeader from "@/components/store/StoreHeader";
 import StoreFooter from "@/components/store/StoreFooter";
 import SocialRail from "@/components/store/SocialRail";
+import PageProgress from "@/components/store/PageProgress";
 import { getNavTree, getVehicleFormOptions } from "@/features/vehicle-taxonomy";
 
 type Props = { children: ReactNode };
@@ -19,6 +20,12 @@ export default async function StoreLayout({ children }: Props) {
 
   return (
     <div className="bg-[#111111] text-gray-300 antialiased selection:bg-amber-500 selection:text-black min-h-screen flex flex-col">
+      {/* Suspense is required, not decorative: PageProgress reads
+          useSearchParams, and without a boundary that opts every route in this
+          group out of static rendering. */}
+      <Suspense fallback={null}>
+        <PageProgress />
+      </Suspense>
       <StoreHeader brands={navBrands} />
       <div className="flex-1">{children}</div>
       <StoreFooter vehicleOptions={vehicleOptions} />
