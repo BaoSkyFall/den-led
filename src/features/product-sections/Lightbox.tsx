@@ -171,7 +171,10 @@ export default function Lightbox({ images, openAt, onClose }: Props) {
       }}
     >
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm" />
+        {/* Dimmed rather than opaque, and no blur: the page stays visible
+            behind the panel so the viewer reads as an overlay on the product
+            rather than a separate screen. */}
+        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/60" />
         <DialogPrimitive.Content
           className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 outline-none"
           // The image handles the gestures; without this Radix takes the first
@@ -189,7 +192,12 @@ export default function Lightbox({ images, openAt, onClose }: Props) {
           </DialogPrimitive.Title>
 
           <div
-            className="relative flex flex-col w-full max-w-4xl max-h-[88vh] bg-[#111111] border border-white/10 shadow-2xl overflow-hidden"
+            // An explicit height, not just a max: the stage's only child is a
+            // `fill` image, which is absolutely positioned and contributes no
+            // height of its own. With max-height alone the flex column had
+            // nothing to distribute, `flex-1` resolved to zero, and the panel
+            // collapsed to the thumbnail strip with the photo invisible.
+            className="relative flex flex-col w-full max-w-4xl h-[85vh] bg-[#111111] border border-white/10 shadow-2xl overflow-hidden"
             // Clicks inside the panel must not reach the overlay and close it.
             onClick={(e) => e.stopPropagation()}
           >
