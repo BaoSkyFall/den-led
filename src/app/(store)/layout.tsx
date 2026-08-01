@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import StoreHeader from "@/components/store/StoreHeader";
 import StoreFooter from "@/components/store/StoreFooter";
+import SocialRail from "@/components/store/SocialRail";
 import { getNavTree, getVehicleFormOptions } from "@/features/vehicle-taxonomy";
 
 type Props = { children: ReactNode };
@@ -21,6 +22,7 @@ export default async function StoreLayout({ children }: Props) {
       <StoreHeader brands={navBrands} />
       <div className="flex-1">{children}</div>
       <StoreFooter vehicleOptions={vehicleOptions} />
+      <SocialRail />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { ChevronDown, ChevronRight, Menu, Phone, X } from "lucide-react";
 import type { NavBrand } from "@/features/vehicle-taxonomy";
+import HeaderSearch from "./HeaderSearch";
 
 type Props = { brands: NavBrand[] };
 
@@ -122,6 +123,9 @@ export default function StoreHeader({ brands }: Props) {
           </nav>
 
           <div className="flex items-center gap-4">
+            <div className="hidden lg:block">
+              <HeaderSearch />
+            </div>
             <a
               href="tel:+84949955644"
               className="hidden lg:flex items-center gap-2 bg-amber-500 text-black text-xs font-bold tracking-[0.2em] uppercase px-5 py-3 hover:bg-amber-400 transition-colors"
@@ -153,6 +157,13 @@ export default function StoreHeader({ brands }: Props) {
             <button className="text-white" onClick={() => setMobileOpen(false)}>
               <X size={24} strokeWidth={1.5} />
             </button>
+          </div>
+
+          <div className="px-8 pt-6">
+            <HeaderSearch
+              variant="mobile"
+              onNavigate={() => setMobileOpen(false)}
+            />
           </div>
 
           {/* Same brand columns as desktop, stacked as accordions. Type is left
