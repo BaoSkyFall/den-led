@@ -34,20 +34,4 @@ if (process.env.NODE_ENV !== "production") {
 
 const db = drizzle(client, { schema });
 
-/**
- * The underlying postgres.js client.
- *
- * Needed for jsonb writes. drizzle serialises a json/jsonb value with
- * JSON.stringify and hands postgres.js the resulting string; postgres.js then
- * serialises it a second time because the column type is jsonb, so the row
- * ends up holding a JSON *string* rather than a JSON *object*. Measured: every
- * drizzle path (json(), jsonb(), text(), and an explicit ::jsonb cast) stores
- * `jsonb_typeof = 'string'`, while `client.json(value)` stores 'object'.
- *
- * drizzle then parses that string back on read, so the damage is invisible to
- * drizzle-based code and only shows up in consumers that read the column as
- * real jsonb — PostgREST, and therefore the whole storefront.
- */
-export const sqlClient = client;
-
 export default db;

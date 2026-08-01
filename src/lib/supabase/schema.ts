@@ -1,6 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import { InferInsertModel, InferSelectModel, relations } from "drizzle-orm";
 import { DEFAULT_SELECTION_MODE } from "@/features/products/selectionMode";
+import { jsonColumn, jsonbColumn } from "./jsonColumn";
 import {
   boolean,
   decimal,
@@ -258,8 +259,8 @@ export const products = pgTable(
     rating: decimal("rating", { precision: 2, scale: 1 })
       .notNull()
       .default("4"),
-    tags: json("tags").$type<string[]>().default([]).notNull(),
-    images: json("images").$type<string[]>().default([]).notNull(),
+    tags: jsonColumn<string[]>("tags").default([]).notNull(),
+    images: jsonColumn<string[]>("images").default([]).notNull(),
     price: decimal("price", { precision: 12, scale: 0 }).notNull().default("0"),
     totalComments: integer("totalComments").default(0).notNull(),
     createdAt: timestamp("created_at", {
@@ -560,7 +561,7 @@ export const sectionBlocks = pgTable("section_blocks", {
     .references(() => productSections.id, { onDelete: "cascade" }),
   type: text("type").notNull(),
   order: integer("order").notNull().default(0),
-  data: json("data").notNull().default({}),
+  data: jsonbColumn<Record<string, unknown>>("data").notNull().default({}),
   createdAt: timestamp("createdAt", { withTimezone: true, mode: "string" })
     .defaultNow()
     .notNull(),

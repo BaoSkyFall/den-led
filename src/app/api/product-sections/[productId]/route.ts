@@ -3,12 +3,15 @@ export const runtime = "nodejs";
 
 import { liveJson } from "@/lib/liveJson";
 
-import { createId } from "@paralleldrive/cuid2";
-import db, { sqlClient } from "@/lib/supabase/db";
+import { cookies } from "next/headers";
+import createSupabaseServerClient from "@/lib/supabase/server";
+import db from "@/lib/supabase/db";
 import { productSections, sectionBlocks } from "@/lib/supabase/schema";
 import { asc, eq, inArray } from "drizzle-orm";
 import { parseBlockData } from "@/features/product-sections/blockData";
+import { BLOCK_TYPES } from "@/features/product-sections/types";
 import type {
+  BlockType,
   ProductSection,
   SectionBlock,
 } from "@/features/product-sections/types";
@@ -52,11 +55,34 @@ async function readSections(productId: string): Promise<ProductSection[]> {
   }));
 }
 
+const isPlainObject = (v: unknown): v is Record<string, unknown> =>
+  typeof v === "object" && v !== null && !Array.isArray(v);
+
+/**
+ * The session check is done here rather than through `assertAdmin()`, which is
+ * exported from a `"use server"` module: imported into a route handler it does
+ * not reject an anonymous caller — measured, an unauthenticated PUT sailed
+ * straight past it. This is the same shape `api/medias/sign` already uses.
+ */
+const requireAdmin = async (): Promise<Response | null> => {
+  const supabase = createSupabaseServerClient({ cookieStore: cookies() });
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user?.app_metadata?.isAdmin) {
+    return liveJson({ error: "Chỉ admin mới được thao tác." }, { status: 403 });
+  }
+  return null;
+};
+
 // GET /api/product-sections/[productId] — list sections + blocks in order (admin)
 export async function GET(
   _req: Request,
   { params }: { params: { productId: string } },
 ) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   return liveJson(await readSections(params.productId));
 }
 
@@ -66,70 +92,91 @@ export async function PUT(
   req: Request,
   { params }: { params: { productId: string } },
 ) {
+  // drizzle connects as the table owner and bypasses RLS, and this handler
+  // begins by deleting the product's whole content tree — so without this an
+  // anonymous PUT would wipe a product's blog in one request.
+  const denied = await requireAdmin();
+  if (denied) return denied;
+
   const body = (await req.json()) as { sections: ProductSection[] };
   const incoming = Array.isArray(body?.sections) ? body.sections : [];
 
-  await db
-    .delete(productSections)
-    .where(eq(productSections.productId, params.productId));
-
-  if (incoming.length === 0) {
-    return liveJson({ ok: true, count: 0, sections: [] });
+  // Validated before anything is deleted. A block whose `data` is not an object
+  // would be stored as a jsonb string — the exact corruption this endpoint was
+  // fixed to stop producing.
+  for (const section of incoming) {
+    for (const block of section.blocks ?? []) {
+      if (!BLOCK_TYPES.includes(block.type as BlockType)) {
+        return liveJson(
+          { error: `Loại block không hợp lệ: ${block.type}` },
+          { status: 400 },
+        );
+      }
+      if (block.data !== undefined && !isPlainObject(block.data)) {
+        return liveJson(
+          { error: `Dữ liệu block ${block.type} phải là object.` },
+          { status: 400 },
+        );
+      }
+    }
   }
 
   const now = new Date().toISOString();
-  const sectionRows = incoming.map((s, i) => ({
-    id: s.id && !s.id.startsWith("tmp-") ? s.id : undefined,
-    productId: params.productId,
-    title: s.title ?? "",
-    description: s.description ?? null,
-    order: i,
-    updatedAt: now,
-  }));
 
-  const inserted = await db
-    .insert(productSections)
-    .values(sectionRows)
-    .returning({ id: productSections.id });
+  // One transaction. The delete is unconditional, so a failure part-way through
+  // without it would leave the product with no sections at all and nothing to
+  // restore them from.
+  const count = await db.transaction(async (tx) => {
+    await tx
+      .delete(productSections)
+      .where(eq(productSections.productId, params.productId));
 
-  const blockRows = incoming.flatMap((s, i) =>
-    (s.blocks ?? []).map((b, j) => ({
-      id: createId(),
-      sectionId: inserted[i].id,
-      type: b.type,
-      order: j,
-      data: b.data ?? {},
-    })),
-  );
+    if (incoming.length === 0) return 0;
 
-  // Written with the raw postgres.js client, not drizzle: drizzle stringifies a
-  // jsonb value and postgres.js stringifies it again, so every block saved
-  // through drizzle landed as a JSON string. drizzle parses that back on read,
-  // which hid it from the admin — but PostgREST hands the string straight to
-  // the storefront, where `data.url` is undefined and the block renders as
-  // nothing. See the note on sqlClient in lib/supabase/db.ts.
+    const inserted = await tx
+      .insert(productSections)
+      .values(
+        incoming.map((s, i) => ({
+          id: s.id && !s.id.startsWith("tmp-") ? s.id : undefined,
+          productId: params.productId,
+          title: s.title ?? "",
+          description: s.description ?? null,
+          order: i,
+          updatedAt: now,
+        })),
+      )
+      // Returned with `order` rather than trusting RETURNING to echo VALUES
+      // order, so a block can never attach to the wrong section.
+      .returning({ id: productSections.id, order: productSections.order });
+
+    const sectionIdByOrder = new Map(inserted.map((r) => [r.order, r.id]));
+
+    const blockRows = incoming.flatMap((s, i) =>
+      (s.blocks ?? []).map((b, j) => ({
+        sectionId: sectionIdByOrder.get(i)!,
+        type: b.type,
+        order: j,
+        data: (b.data ?? {}) as Record<string, unknown>,
+      })),
+    );
+
+    if (blockRows.length > 0) {
+      await tx.insert(sectionBlocks).values(blockRows);
+    }
+
+    return inserted.length;
+  });
+
+  // Read after commit, on the pool — inside the transaction it would return
+  // uncommitted rows.
   //
-  // One multi-row insert, not a loop: a product's whole tree is rewritten on
-  // every save, so per-row round-trips would scale with the block count.
-  if (blockRows.length > 0) {
-    await sqlClient`
-      insert into section_blocks ${sqlClient(
-        blockRows,
-        "id",
-        "sectionId",
-        "type",
-        "order",
-        "data",
-      )}`;
-  }
-
   // The saved tree comes back with the response. The editor needs the real row
   // ids for its next save, and re-reading them through a second request left a
   // window where a cached GET could hand back the pre-save snapshot — which the
   // editor would then write over the top of the edit that had just landed.
   return liveJson({
     ok: true,
-    count: inserted.length,
+    count,
     sections: await readSections(params.productId),
   });
 }

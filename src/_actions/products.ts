@@ -292,14 +292,27 @@ const copyProductTree = async (sourceId: string, values: InsertProducts) => {
         .orderBy(asc(variantOptions.displayOrder));
       if (options.length > 0) {
         await tx.insert(variantOptions).values(
-          options.map(({ name, price, images, features, displayOrder }) => ({
-            groupId: newGroup.id,
-            name,
-            price,
-            images,
-            features,
-            displayOrder,
-          })),
+          options.map(
+            ({
+              name,
+              price,
+              images,
+              features,
+              displayOrder,
+              // Carried over explicitly: omitting it fell back to the column
+              // default, so every quantity-mode option on a copy silently
+              // reverted to a checkbox.
+              selectionMode,
+            }) => ({
+              groupId: newGroup.id,
+              name,
+              price,
+              images,
+              features,
+              displayOrder,
+              selectionMode,
+            }),
+          ),
         );
       }
     }
