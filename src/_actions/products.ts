@@ -5,7 +5,6 @@ import { NAV_TAXONOMY_TAG } from "@/features/vehicle-taxonomy/types";
 import db from "@/lib/supabase/db";
 import {
   InsertProducts,
-  productMedias,
   products,
   productSections,
   sectionBlocks,
@@ -19,7 +18,6 @@ import { revalidatePath, revalidateTag } from "next/cache";
 type SearchProductsActionProps = {
   query: string;
   limit?: number;
-  collections?: string;
   sort?: string;
 };
 
@@ -157,11 +155,16 @@ export const deleteProductAction = async (
 };
 
 /**
- * Deep-copies a product: the row itself plus its gallery, description sections
- * and variant groups/options. Customer-owned rows (comments, carts, wishlist,
- * order lines) are deliberately not copied.
+ * Deep-copies a product: the row itself, its description sections and blocks,
+ * and its variant groups/options.
  *
- * The copy is created `inactive` and not featured so duplicating never
+ * Nothing image-shaped comes across — no gallery, no featured image, no media
+ * inside description blocks, no variant option images. Two products sharing the
+ * same photos is almost never what duplicating is for, and an empty gallery is
+ * a far more obvious prompt than a wrong one.
+ *
+ * Customer-owned rows (comments, carts, wishlist, order lines) are also not
+ * copied. The copy is created `inactive` and not featured so duplicating never
  * publishes a half-edited product to the storefront.
  */
 export const duplicateProductAction = async (productId: string) => {
@@ -205,6 +208,11 @@ export const duplicateProductAction = async (productId: string) => {
     status: "inactive",
     featured: false,
     totalComments: 0,
+    // A copy carries no images at all — gallery, featured image, the pictures
+    // inside description blocks, and variant option images are all left empty
+    // so the admin picks fresh ones instead of two products silently sharing
+    // the same photos.
+    featuredImageId: null,
   };
 
   for (let tries = 0; ; tries++) {
@@ -218,23 +226,27 @@ export const duplicateProductAction = async (productId: string) => {
   }
 };
 
+/**
+ * Keys inside a block's `data` that point at a media row.
+ *
+ * A copy carries no images at all, so these are dropped rather than pointed at
+ * the source product's media. The block keeps its text, layout and captions —
+ * only the picture is missing, which is what an admin then fills in.
+ */
+const MEDIA_KEYS = ["mediaId", "leftMediaId", "rightMediaId"] as const;
+
+export const stripMediaRefs = (data: unknown): Record<string, unknown> => {
+  if (!data || typeof data !== "object" || Array.isArray(data)) return {};
+  const next = { ...(data as Record<string, unknown>) };
+  for (const key of MEDIA_KEYS) delete next[key];
+  return next;
+};
+
 const copyProductTree = async (sourceId: string, values: InsertProducts) => {
   const copy = await db.transaction(async (tx) => {
     const [inserted] = await tx.insert(products).values(values).returning();
 
-    const gallery = await tx
-      .select()
-      .from(productMedias)
-      .where(eq(productMedias.productId, sourceId));
-    if (gallery.length > 0) {
-      await tx.insert(productMedias).values(
-        gallery.map(({ mediaId, priority }) => ({
-          productId: inserted.id,
-          mediaId,
-          priority,
-        })),
-      );
-    }
+    // The gallery is deliberately not copied — see duplicateProductAction.
 
     const sections = await tx
       .select()
@@ -263,7 +275,7 @@ const copyProductTree = async (sourceId: string, values: InsertProducts) => {
             sectionId: newSection.id,
             type,
             order,
-            data,
+            data: stripMediaRefs(data),
           })),
         );
       }
@@ -296,7 +308,6 @@ const copyProductTree = async (sourceId: string, values: InsertProducts) => {
             ({
               name,
               price,
-              images,
               features,
               displayOrder,
               // Carried over explicitly: omitting it fell back to the column
@@ -307,7 +318,8 @@ const copyProductTree = async (sourceId: string, values: InsertProducts) => {
               groupId: newGroup.id,
               name,
               price,
-              images,
+              // No images on a copy, same as the gallery and the blocks.
+              images: [],
               features,
               displayOrder,
               selectionMode,

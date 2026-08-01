@@ -21,14 +21,14 @@ const seedShopOrders = async () => {
   try {
     await db.delete(schema.orders);
 
-    const insertedCollections = await db
+    const insertedOrders = await db
       .insert(schema.orders)
       .values(orders)
       .onConflictDoNothing()
       .returning();
-    if (insertedCollections != null) console.log(`orders are added to the DB.`);
+    if (insertedOrders != null) console.log(`orders are added to the DB.`);
   } catch (err) {
-    console.log("Error happen while inserting collections", err);
+    console.log("Error happen while inserting orders", err);
   }
 };
 

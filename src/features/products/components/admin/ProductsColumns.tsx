@@ -23,11 +23,6 @@ export const ProductColumnFragment = gql(/* GraphQL */ `
       key
       alt
     }
-    collections {
-      id
-      label
-      slug
-    }
   }
 `);
 
@@ -57,19 +52,6 @@ const ProductsColumns: ColumnDef<{
       const product = row.original.node;
 
       return <div className="font-medium">{product.slug}</div>;
-    },
-  },
-  {
-    accessorKey: "Collection",
-    header: () => <div className="">Danh Mục</div>,
-    cell: ({ row }) => {
-      const product = row.original.node;
-
-      return (
-        <div className="font-medium">
-          {product.collections ? product.collections.label : "-"}
-        </div>
-      );
     },
   },
   {

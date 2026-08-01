@@ -12,7 +12,6 @@ const products: InsertProducts[] = [
     rating: "4",
     tags: [],
     featuredImageId: "1",
-    collectionId: "1",
     stock: 20,
   },
   {
@@ -22,7 +21,6 @@ const products: InsertProducts[] = [
     rating: "3.5",
     featured: true,
     featuredImageId: "2",
-    collectionId: "2",
     badge: "featured",
     stock: 32,
   },
@@ -33,7 +31,6 @@ const products: InsertProducts[] = [
     featured: true,
     rating: "5",
     featuredImageId: "3",
-    collectionId: "1",
     stock: 30,
   },
   {
@@ -43,7 +40,6 @@ const products: InsertProducts[] = [
     featured: true,
     rating: "2",
     featuredImageId: "4",
-    collectionId: "2",
     badge: "best_sale",
     stock: 1,
   },
@@ -54,7 +50,6 @@ const products: InsertProducts[] = [
     featured: true,
     rating: "5",
     featuredImageId: "1",
-    collectionId: "1",
     badge: "best_sale",
     stock: 0,
   },
@@ -69,7 +64,7 @@ const seedProducts = async () => {
       .onConflictDoNothing()
       .returning();
   } catch (err) {
-    console.log("Error happen while inserting collections", err);
+    console.log("Error happen while inserting products", err);
   }
 };
 

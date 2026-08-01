@@ -11,6 +11,7 @@ import {
   ChevronRight,
   ChevronDown,
 } from "lucide-react";
+import Lightbox from "@/features/product-sections/Lightbox";
 import ProductSectionsRenderer from "@/features/product-sections/ProductSectionsRenderer";
 import type { ProductSection } from "@/features/product-sections/types";
 import RecommendedSection from "@/features/product-recs/RecommendedSection";
@@ -261,6 +262,7 @@ function BiCauLoader() {
 function ImageGallery({ images }: { images: string[] }) {
   const [active, setActive] = useState(0);
   const stripRef = useRef<HTMLDivElement>(null);
+  const [lightboxAt, setLightboxAt] = useState<number | null>(null);
   const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(true);
 
@@ -324,8 +326,20 @@ function ImageGallery({ images }: { images: string[] }) {
 
   return (
     <div className="flex flex-col gap-4">
+      <Lightbox
+        images={images.map((src, i) => ({ src, alt: `Ảnh ${i + 1}` }))}
+        openAt={lightboxAt}
+        onClose={() => setLightboxAt(null)}
+      />
+
       {/* Main image */}
       <div className="relative aspect-[4/3] bg-[#0a0a0a] overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setLightboxAt(active)}
+          aria-label="Phóng to ảnh"
+          className="absolute inset-0 z-10 cursor-zoom-in"
+        />
         <Image
           src={images[active]}
           alt="Product"
@@ -341,19 +355,19 @@ function ImageGallery({ images }: { images: string[] }) {
               onClick={() =>
                 setActive((p) => (p - 1 + images.length) % images.length)
               }
-              className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/60 text-white p-2 hover:bg-amber-500 hover:text-black transition-colors"
+              className="absolute left-3 top-1/2 -translate-y-1/2 z-20 bg-black/60 text-white p-2 hover:bg-amber-500 hover:text-black transition-colors"
               aria-label="Ảnh trước"
             >
               <ChevronLeft size={16} />
             </button>
             <button
               onClick={() => setActive((p) => (p + 1) % images.length)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/60 text-white p-2 hover:bg-amber-500 hover:text-black transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 z-20 bg-black/60 text-white p-2 hover:bg-amber-500 hover:text-black transition-colors"
               aria-label="Ảnh tiếp"
             >
               <ChevronRight size={16} />
             </button>
-            <span className="absolute bottom-3 right-3 bg-black/60 text-white text-[10px] font-bold tracking-widest px-2 py-1">
+            <span className="absolute bottom-3 right-3 z-20 bg-black/60 text-white text-[10px] font-bold tracking-widest px-2 py-1">
               {active + 1} / {images.length}
             </span>
           </>

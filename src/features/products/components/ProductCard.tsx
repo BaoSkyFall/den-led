@@ -39,11 +39,6 @@ export const ProductCardFragment = gql(/* GraphQL */ `
       key
       alt
     }
-    collections {
-      id
-      label
-      slug
-    }
   }
 `);
 

@@ -1,9 +1,18 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { ChevronDown } from "lucide-react";
 import { keytoUrl } from "@/lib/utils";
+import Lightbox from "./Lightbox";
 import type {
   FeatureGridBlockData,
   FaqBlockData,
@@ -43,22 +52,99 @@ function resolveMedia(mediaId: string, mediaLookup?: MediaLookup): string {
   return keytoUrl(mediaId);
 }
 
+/**
+ * Lets any block open the viewer without threading a callback through every
+ * view. One Lightbox is mounted for the whole article, so paging inside it
+ * walks every picture in the description rather than just the one clicked.
+ */
+const LightboxContext = createContext<((src: string) => void) | null>(null);
+
+function ZoomableImage({
+  src,
+  children,
+}: {
+  src: string;
+  children: ReactNode;
+}) {
+  const open = useContext(LightboxContext);
+  if (!open) return <>{children}</>;
+  return (
+    <button
+      type="button"
+      onClick={() => open(src)}
+      aria-label="Phóng to ảnh"
+      className="block w-full cursor-zoom-in"
+    >
+      {children}
+    </button>
+  );
+}
+
+/** Every picture in the description, in reading order. */
+function collectImages(
+  sections: ProductSection[],
+  mediaLookup?: MediaLookup,
+): string[] {
+  const out: string[] = [];
+  for (const section of sections) {
+    for (const block of section.blocks ?? []) {
+      if (block.type === "image") {
+        const src = resolveMedia(
+          (block.data as ImageBlockData).mediaId,
+          mediaLookup,
+        );
+        if (src) out.push(src);
+      }
+      if (block.type === "image_comparison") {
+        const d = block.data as ImageComparisonBlockData;
+        for (const id of [d.leftMediaId, d.rightMediaId]) {
+          const src = resolveMedia(id, mediaLookup);
+          if (src) out.push(src);
+        }
+      }
+    }
+  }
+  return out;
+}
+
 export default function ProductSectionsRenderer({
   sections,
   mediaLookup,
 }: Props) {
+  const [lightboxAt, setLightboxAt] = useState<number | null>(null);
+
+  const images = useMemo(
+    () => collectImages(sections ?? [], mediaLookup),
+    [sections, mediaLookup],
+  );
+
+  const openLightbox = useCallback(
+    (src: string) => {
+      const at = images.indexOf(src);
+      if (at >= 0) setLightboxAt(at);
+    },
+    [images],
+  );
+
   if (!sections || sections.length === 0) return null;
 
   return (
-    <div className="space-y-11 lg:space-y-16">
-      {sections.map((section) => (
-        <SectionView
-          key={section.id}
-          section={section}
-          mediaLookup={mediaLookup}
-        />
-      ))}
-    </div>
+    <LightboxContext.Provider value={openLightbox}>
+      <div className="space-y-11 lg:space-y-16">
+        {sections.map((section) => (
+          <SectionView
+            key={section.id}
+            section={section}
+            mediaLookup={mediaLookup}
+          />
+        ))}
+      </div>
+      <Lightbox
+        images={images.map((src) => ({ src }))}
+        openAt={lightboxAt}
+        onClose={() => setLightboxAt(null)}
+      />
+    </LightboxContext.Provider>
   );
 }
 
@@ -168,15 +254,17 @@ function ImageView({
   if (!src) return null;
   return (
     <figure>
-      <div className="relative aspect-[16/9] bg-[#0a0a0a] overflow-hidden">
-        <Image
-          src={src}
-          alt={data.caption ?? ""}
-          fill
-          sizes="(max-width: 768px) 100vw, 800px"
-          className="object-cover"
-        />
-      </div>
+      <ZoomableImage src={src}>
+        <div className="relative aspect-[16/9] bg-[#0a0a0a] overflow-hidden">
+          <Image
+            src={src}
+            alt={data.caption ?? ""}
+            fill
+            sizes="(max-width: 768px) 100vw, 800px"
+            className="object-cover"
+          />
+        </div>
+      </ZoomableImage>
       {data.caption && (
         <figcaption className="text-xs text-white/40 mt-2 text-center italic">
           {data.caption}
@@ -254,13 +342,21 @@ function TikTokView({ data }: { data: TikTokBlockData }) {
   return (
     <figure>
       {/* TikTok serves 503 on /embed/v2/<id> for a direct iframe; the supported
-          embed is this blockquote plus their script, which replaces it. */}
-      <div className="flex justify-center overflow-x-auto">
+          embed is this blockquote plus their script, which replaces it.
+
+          The script leaves a white card behind — that is TikTok's own UI inside
+          a cross-origin iframe and no stylesheet here can reach it. What is
+          removable is everything the page itself contributes: the blockquote
+          ships with a default margin and a light border, and the replacement
+          iframe inherits neither, so both are zeroed and the whole thing is
+          pinned to TikTok's narrowest allowed width so the pale card takes up as
+          little of the dark page as possible. */}
+      <div className="flex justify-center overflow-x-auto [&_.tiktok-embed]:!m-0 [&_.tiktok-embed]:!min-w-0 [&_.tiktok-embed]:!max-w-full [&_.tiktok-embed]:!border-0 [&_.tiktok-embed]:!bg-transparent [&_iframe]:!block [&_iframe]:!m-0">
         <blockquote
-          className="tiktok-embed"
+          className="tiktok-embed w-full max-w-[325px]"
           cite={cite}
           data-video-id={videoId}
-          style={{ maxWidth: 605, minWidth: 325 }}
+          style={{ margin: 0, minWidth: 0, maxWidth: 325 }}
         >
           <section>
             {cite && (
@@ -388,15 +484,17 @@ function ImageComparisonView({
         { src: right, label: data.rightLabel },
       ].map((c, i) => (
         <figure key={i}>
-          <div className="relative aspect-[4/3] bg-[#0a0a0a] overflow-hidden">
-            <Image
-              src={c.src}
-              alt={c.label ?? ""}
-              fill
-              sizes="(max-width: 768px) 50vw, 400px"
-              className="object-cover"
-            />
-          </div>
+          <ZoomableImage src={c.src}>
+            <div className="relative aspect-[4/3] bg-[#0a0a0a] overflow-hidden">
+              <Image
+                src={c.src}
+                alt={c.label ?? ""}
+                fill
+                sizes="(max-width: 768px) 50vw, 400px"
+                className="object-cover"
+              />
+            </div>
+          </ZoomableImage>
           {c.label && (
             <figcaption className="text-[11px] font-bold uppercase tracking-wider text-amber-500 mt-2 text-center">
               {c.label}

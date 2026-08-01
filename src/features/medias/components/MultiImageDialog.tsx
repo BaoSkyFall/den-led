@@ -14,8 +14,12 @@ import { cn, keytoUrl } from "@/lib/utils";
 import { useQuery } from "@urql/next";
 import { Check, Loader2, Upload } from "lucide-react";
 import Image from "next/image";
-import { ReactNode, useRef, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { uploadImagesViaSignedUrl } from "../uploadImages";
+
+// One screenful of the library per request. The grid accumulates pages, so this
+// is a fetch size, not a ceiling on how many images an admin can pick.
+const PAGE_SIZE = 48;
 
 const MediasQuery = gql(/* GraphQL */ `
   query MultiImageDialogMediasQuery($first: Int, $after: Cursor) {
@@ -59,11 +63,31 @@ export default function MultiImageDialog({
 
   const [{ data, fetching }, refetch] = useQuery({
     query: MediasQuery,
-    variables: { first: 24, after: cursor },
+    variables: { first: PAGE_SIZE, after: cursor },
     pause: !open,
   });
 
-  const items = data?.mediasCollection?.edges ?? [];
+  const page = data?.mediasCollection?.edges;
+
+  // "Tải thêm" moves the cursor, and urql hands back only that page — so the
+  // grid used to be *replaced* by the next 24 rather than grown. An admin could
+  // never see, let alone select, more than one page at a time. Pages accumulate
+  // here instead, keyed by media id so a refetch after an upload cannot double
+  // up a row that is already on screen.
+  const [loadedPages, setLoadedPages] = useState<
+    Map<string, NonNullable<typeof page>[number]>
+  >(new Map());
+
+  useEffect(() => {
+    if (!page) return;
+    setLoadedPages((prev) => {
+      const next = new Map(prev);
+      for (const edge of page) next.set(edge.node.id, edge);
+      return next;
+    });
+  }, [page]);
+
+  const items = Array.from(loadedPages.values());
   const excludeSet = new Set(excludeIds);
 
   function toggle(id: string) {
@@ -87,7 +111,13 @@ export default function MultiImageDialog({
 
   function handleOpenChange(next: boolean) {
     setOpen(next);
-    if (!next) setSelected(new Set());
+    if (!next) {
+      // Start clean on the next open: keeping accumulated pages would show a
+      // stale library, and keeping the cursor would resume mid-way through it.
+      setSelected(new Set());
+      setLoadedPages(new Map());
+      setCursor(undefined);
+    }
   }
 
   async function handleUpload(files: FileList | null) {

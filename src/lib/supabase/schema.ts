@@ -276,12 +276,12 @@ export const products = pgTable(
     status: text("status", { enum: ["active", "inactive"] })
       .notNull()
       .default("active"),
-    collectionId: text("collection_id").references(() => collections.id, {
-      onDelete: "set null",
+    // Nullable: duplicating a product carries no image over, so a copy exists
+    // without a featured image until an admin picks one. Every storefront card
+    // already falls back when imageKey is null.
+    featuredImageId: text("featured_image_id").references(() => medias.id, {
+      onDelete: "restrict",
     }),
-    featuredImageId: text("featured_image_id")
-      .notNull()
-      .references(() => medias.id, { onDelete: "restrict" }),
   },
   (table) => {
     return {
@@ -289,11 +289,6 @@ export const products = pgTable(
         columns: [table.featuredImageId],
         foreignColumns: [medias.id],
         name: "featured_image",
-      }),
-      collection: foreignKey({
-        columns: [table.collectionId],
-        foreignColumns: [collections.id],
-        name: "collection",
       }),
       generation: foreignKey({
         columns: [table.generationId],
@@ -482,36 +477,6 @@ export type BadgeType = "best_sale" | "featured" | "new_product";
 
 export type SelectProducts = InferSelectModel<typeof products>;
 export type InsertProducts = InferInsertModel<typeof products>;
-
-export const collections = pgTable(
-  "collections",
-  {
-    id: text("id")
-      .notNull()
-      .primaryKey()
-      .$defaultFn(() => createId()),
-    label: varchar("label", { length: 255 }).notNull(),
-    slug: varchar("slug", { length: 255 }).notNull(),
-    title: varchar("title", { length: 255 }).notNull(),
-    description: varchar("description").notNull(),
-    order: integer("order"),
-    featuredImageId: text("featured_image_id")
-      .notNull()
-      .references(() => medias.id, { onDelete: "restrict" }),
-  },
-  (table) => {
-    return {
-      featuredImage: foreignKey({
-        columns: [table.featuredImageId],
-        foreignColumns: [medias.id],
-        name: "featured_image",
-      }),
-    };
-  },
-);
-
-export type SelectCollection = InferSelectModel<typeof collections>;
-export type InsertCollection = InferInsertModel<typeof collections>;
 
 export const medias = pgTable("medias", {
   id: text("id")

@@ -135,17 +135,4 @@ const OrdersColumns: ColumnDef<{
   },
 ];
 
-const DeleteCollectionDialog = ({ collectionId }: { collectionId: string }) => {
-  const onClickHandler = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    // await deleteCategoryAction(categoryId)
-  };
-  return (
-    <DeleteDialog
-      onClickHandler={onClickHandler}
-      title="Delete Collection"
-      actionLabel="Delete"
-    />
-  );
-};
-
 export default OrdersColumns;

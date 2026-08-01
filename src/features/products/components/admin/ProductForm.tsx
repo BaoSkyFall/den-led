@@ -62,20 +62,6 @@ const SECTION_KEYS = [
   "gallery",
   "variants",
 ] as const;
-export const ProductFormQuery = gql(/* GraphQL */ `
-  query ProductFormQuery {
-    collectionsCollection(orderBy: [{ label: AscNullsLast }]) {
-      __typename
-      edges {
-        node {
-          id
-          label
-        }
-      }
-    }
-  }
-`);
-
 function Section({
   title,
   description,
@@ -121,7 +107,6 @@ function ProductForm({ product, brands }: ProductsFormProps) {
   const router = useRouter();
   const { toast } = useToast();
 
-  const [{ data }] = useQuery({ query: ProductFormQuery });
 
   // All sections start collapsed — an absent key means closed.
   const [openMap, setOpenMap] = useState<Record<string, boolean>>({});
@@ -239,50 +224,10 @@ function ProductForm({ product, brands }: ProductsFormProps) {
         {/* Categorization */}
         <Section
           title="Phân Loại"
-          description="Bộ sưu tập, phân loại xe, trạng thái và tags"
+          description="Phân loại xe, trạng thái và tags"
           open={!!openMap.category}
           onToggle={() => toggleSection("category")}
         >
-          <Suspense>
-            {data && data.collectionsCollection && (
-              <FormField
-                control={control}
-                name={"collectionId"}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Danh Mục</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value || undefined}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Chọn bộ sưu tập" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {data.collectionsCollection.edges.map(
-                          ({ node: collection }) => (
-                            <SelectItem
-                              value={collection.id}
-                              key={collection.id}
-                            >
-                              {collection.label}
-                            </SelectItem>
-                          ),
-                        )}
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      Nhóm sản phẩm vào một bộ sưu tập.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-          </Suspense>
-
           <BadgeSelectField name="badge" label={""} />
 
           <FormField

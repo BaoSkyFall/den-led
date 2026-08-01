@@ -1,5 +1,6 @@
 "use client";
 
+import DeleteDialog from "@/components/ui/deleteDialog";
 import { useToast } from "@/components/ui/use-toast";
 import { MultiImageDialog } from "@/features/medias";
 import { cn, keytoUrl } from "@/lib/utils";
@@ -37,6 +38,10 @@ export default function GalleryManager({ productId }: Props) {
   // Index being dragged, and the tile it is currently hovering over.
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
+  // Keyed by mediaId, not index: reordering and single deletes shift indices,
+  // and a selection that silently pointed at a different image afterwards would
+  // delete the wrong one.
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   useEffect(() => {
@@ -111,9 +116,34 @@ export default function GalleryManager({ productId }: Props) {
   }
 
   function removeAt(index: number) {
+    const removed = items[index];
     const next = items.filter((_, i) => i !== index);
     persist(next);
+    setSelected((prev) => {
+      if (!removed || !prev.has(removed.mediaId)) return prev;
+      const rest = new Set(prev);
+      rest.delete(removed.mediaId);
+      return rest;
+    });
     toast({ title: "Đã xoá ảnh" });
+  }
+
+  function toggleSelected(mediaId: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(mediaId) ? next.delete(mediaId) : next.add(mediaId);
+      return next;
+    });
+  }
+
+  function removeSelected() {
+    // One persist call, not one per image: `persist` replaces the whole gallery
+    // in a single PUT, so deleting N images costs the same round trip as one.
+    const next = items.filter((item) => !selected.has(item.mediaId));
+    const count = items.length - next.length;
+    persist(next);
+    setSelected(new Set());
+    toast({ title: `Đã xoá ${count} ảnh` });
   }
 
   function move(from: number, to: number) {
@@ -197,6 +227,46 @@ export default function GalleryManager({ productId }: Props) {
         />
       </div>
 
+      {selected.size > 0 && (
+        <div className="flex flex-wrap items-center gap-2 border border-amber-300 bg-amber-50 rounded-md px-3 py-2">
+          <p className="text-sm font-semibold text-amber-900 mr-auto">
+            Đã chọn {selected.size} ảnh
+          </p>
+          <button
+            type="button"
+            onClick={() => setSelected(new Set(items.map((i) => i.mediaId)))}
+            disabled={selected.size === items.length}
+            className="text-xs font-medium px-3 py-1.5 rounded border border-amber-400 text-amber-900 hover:bg-amber-100 disabled:opacity-40"
+          >
+            Chọn tất cả
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelected(new Set())}
+            className="text-xs font-medium px-3 py-1.5 rounded border border-amber-400 text-amber-900 hover:bg-amber-100"
+          >
+            Bỏ chọn
+          </button>
+          <DeleteDialog
+            onClickHandler={removeSelected}
+            title={`Xoá ${selected.size} ảnh khỏi gallery?`}
+            description={`${selected.size} ảnh sẽ được gỡ khỏi gallery của sản phẩm này. Ảnh vẫn còn trong thư viện ảnh chung, bạn có thể thêm lại bất cứ lúc nào.`}
+            cancelLabel="Huỷ"
+            actionLabel={`Xoá ${selected.size} ảnh`}
+            trigger={
+              <button
+                type="button"
+                disabled={isSaving}
+                className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded bg-red-500 hover:bg-red-600 text-white disabled:opacity-40"
+              >
+                <Trash2 size={13} />
+                Xoá đã chọn
+              </button>
+            }
+          />
+        </div>
+      )}
+
       {items.length === 0 ? (
         <div className="border border-dashed border-slate-300 rounded-lg py-10 text-center">
           <p className="text-sm text-muted-foreground mb-3">
@@ -256,6 +326,23 @@ export default function GalleryManager({ productId }: Props) {
                 <span className="absolute top-1.5 left-1.5 bg-amber-500 text-black text-[10px] font-bold px-1.5 py-0.5 rounded">
                   #{i + 1}
                 </span>
+
+                {/* Sits above the hover overlay so it stays clickable, and
+                    stops the click from starting a drag. */}
+                <label
+                  className="absolute top-1.5 right-1.5 z-10 w-6 h-6 flex items-center justify-center rounded bg-white/90 border border-slate-300 cursor-pointer"
+                  onClick={(e) => e.stopPropagation()}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  draggable={false}
+                >
+                  <input
+                    type="checkbox"
+                    className="w-3.5 h-3.5 accent-amber-500 cursor-pointer"
+                    checked={selected.has(item.mediaId)}
+                    onChange={() => toggleSelected(item.mediaId)}
+                    aria-label={`Chọn ảnh ${i + 1}`}
+                  />
+                </label>
               </div>
 
               <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1 p-2">

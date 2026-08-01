@@ -35,12 +35,6 @@ async function OrdersPage({ searchParams }: AdminOrdersPageProps) {
 
   return (
     <AdminShell heading="Đơn Hàng" description="Quản lý đơn hàng của khách.">
-      <section className="flex justify-end items-center pb-5 w-full">
-        <Link href="/admin/collections/new" className={cn(buttonVariants())}>
-          Tạo Đơn Hàng
-        </Link>
-      </section>
-
       <DataTable
         columns={OrdersColumns}
         data={data.ordersCollection.edges || []}
