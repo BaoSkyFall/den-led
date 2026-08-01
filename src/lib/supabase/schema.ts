@@ -161,6 +161,10 @@ export const brands = pgTable("brands", {
   label: varchar("label", { length: 255 }).notNull(),
   slug: varchar("slug", { length: 255 }).notNull().unique(),
   displayOrder: integer("display_order").notNull().default(0),
+  // Accessory ranges ("Đồ Đúc", "Phụ Kiện Bi Cầu") are brands in the same table
+  // as Honda and Vinfast. This is what lets the storefront menu collapse all of
+  // them into one "Phụ Kiện" column instead of giving each its own.
+  isAccessory: boolean("is_accessory").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
     .defaultNow()
     .notNull(),

@@ -1,7 +1,7 @@
 // Shared shapes for the vehicle taxonomy (Brand -> Model -> Generation).
 //
 // Three distinct views over the same tree:
-//  - Nav*        : the PUBLIC storefront menu. Brand is deliberately absent.
+//  - Nav*        : the PUBLIC storefront menu, now keyed by brand.
 //  - MenuConfig* : the admin "Cấu Hình Menu" view. Everything, unfiltered.
 //  - BrandTree*  : the full unfiltered tree used by the ProductForm picker.
 
@@ -26,6 +26,46 @@ export type NavModel = {
   label: string;
   slug: string;
   generations: NavGeneration[];
+};
+
+/**
+ * Longest a menu column may get before it turns into a "Xem thêm" link.
+ *
+ * Applies to every column, vehicle makes included. The accessory ranges looked
+ * like the reason the menu had outgrown its box, but counting the rows showed
+ * Honda alone would have rendered ten entries against the accessory column's
+ * five — capping only accessories would have moved the bulge, not removed it.
+ */
+export const NAV_COLUMN_LIMIT = 5;
+
+/**
+ * Synthetic slug for the merged accessory column.
+ *
+ * The column is several brands rendered as one, so it has no brand slug of its
+ * own to put in `/shop?brand=`. This stands in for "every brand flagged
+ * `is_accessory`" on both ends of that link. It cannot collide with a real
+ * brand: `brands.slug` is UNIQUE and no row uses this value.
+ */
+export const ACCESSORY_BRAND_SLUG = "phu-kien";
+
+export const ACCESSORY_BRAND_LABEL = "Phụ Kiện";
+
+/**
+ * One column of the storefront menu: a brand, or the merged accessory group.
+ *
+ * Products are flattened out of the Model -> Generation nesting deliberately —
+ * the menu trades the intermediate levels for a single click to the product,
+ * and `/shop` keeps the browsable hierarchy.
+ */
+export type NavBrand = {
+  id: string;
+  label: string;
+  slug: string;
+  isAccessory: boolean;
+  /** Capped at {@link NAV_COLUMN_LIMIT}. */
+  products: NavProduct[];
+  /** True when products were dropped by the cap, so a "Xem thêm" link is due. */
+  hasMore: boolean;
 };
 
 /**

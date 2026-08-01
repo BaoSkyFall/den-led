@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
 import { type InsertBrand, type SelectBrand } from "@/lib/supabase/schema";
 import { slugify } from "@/lib/utils";
@@ -49,6 +50,7 @@ function BrandForm({ brand }: BrandFormProps) {
       label: brand?.label ?? "",
       slug: brand?.slug ?? "",
       displayOrder: brand?.displayOrder ?? 0,
+      isAccessory: brand?.isAccessory ?? false,
     },
   });
 
@@ -186,6 +188,29 @@ function BrandForm({ brand }: BrandFormProps) {
                 <FormDescription>
                   Số nhỏ hiển thị trước. Dùng để sắp xếp danh sách hãng xe.
                 </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={control}
+            name="isAccessory"
+            render={({ field }) => (
+              <FormItem className="flex items-start gap-3 space-y-0">
+                <FormControl>
+                  <Switch
+                    checked={!!field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <div className="space-y-1">
+                  <FormLabel>Là Hãng Phụ Kiện</FormLabel>
+                  <FormDescription>
+                    Mọi hãng bật mục này được gom chung vào một cột “Phụ Kiện”
+                    duy nhất trên menu, thay vì mỗi hãng một cột riêng.
+                  </FormDescription>
+                </div>
                 <FormMessage />
               </FormItem>
             )}

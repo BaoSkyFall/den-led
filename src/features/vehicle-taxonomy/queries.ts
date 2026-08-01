@@ -13,11 +13,13 @@ import {
   type SelectModel,
 } from "@/lib/supabase/schema";
 
+import { buildNavColumns } from "./navColumns";
+import type { RawNavBrand } from "./navColumns";
 import { NAV_TAXONOMY_TAG } from "./types";
 import type {
   BrandTreeBrand,
   MenuConfigModel,
-  NavModel,
+  NavBrand,
   VehicleFormOption,
 } from "./types";
 
@@ -36,18 +38,22 @@ const byOrderThenLabel = <T extends { displayOrder: number; label: string }>(
  * Exported so it can be probed/tested outside the Next.js server runtime, where
  * `unstable_cache` is unavailable. Application code should call `getNavTree()`.
  *
+ * One column per brand, with the Model and Generation levels flattened away:
+ * the menu buys a single click to the product, and `/shop` keeps the browsable
+ * hierarchy. Every brand flagged `is_accessory` collapses into one extra column
+ * pinned last, so adding a third accessory range is a checkbox rather than a
+ * new column.
+ *
  * Cascade-hide is derived here, never stored:
  *   models.is_active = true            -> inactive model + whole subtree gone
  *   generations.is_active = true       -> inactive generation + its products gone
  *   products.status = 'active'         -> inactive product gone on its own
  *
- * Empty branches are then pruned bottom-up, so the tree only ever contains
- * entries that lead to a product. Deactivating the last product of a model
- * therefore removes that model from the menu and from the filter chips.
- *
- * Brand is not selected at all — it can never leak into the public menu.
+ * A brand left with no product is then dropped, same bottom-up pruning the
+ * model-shaped tree used to do — which is why Yamaha, Suzuki and Datbike never
+ * reach the menu while they have no models at all.
  */
-export const fetchNavTree = async (): Promise<NavModel[]> => {
+export const fetchNavTree = async (): Promise<NavBrand[]> => {
   const supabase = createClient(
     env.NEXT_PUBLIC_SUPABASE_URL,
     env.NEXT_PUBLIC_SUPABASE_ANON_KEY, // public read; RLS is OFF by design
@@ -55,21 +61,23 @@ export const fetchNavTree = async (): Promise<NavModel[]> => {
   );
 
   const { data, error } = await supabase
-    .from("models")
+    .from("brands")
     .select(
       `
-      id, label, slug, display_order,
-      generations (
-        id, label, slug, display_order,
-        products ( id, name, slug )
+      id, label, slug, is_accessory, display_order,
+      models (
+        is_active,
+        generations (
+          is_active,
+          products ( id, name, slug, featured, created_at )
+        )
       )
     `,
     )
-    .eq("is_active", true)
-    .eq("generations.is_active", true)
-    .eq("generations.products.status", "active")
-    .order("display_order", { ascending: true })
-    .order("label", { ascending: true });
+    .eq("models.is_active", true)
+    .eq("models.generations.is_active", true)
+    .eq("models.generations.products.status", "active")
+    .order("display_order", { ascending: true });
 
   if (error) {
     // The header must never take down the storefront - degrade to static links.
@@ -77,35 +85,7 @@ export const fetchNavTree = async (): Promise<NavModel[]> => {
     return [];
   }
 
-  return (
-    (data ?? [])
-      .map((m: any) => ({
-        id: m.id,
-        label: m.label,
-        slug: m.slug,
-        generations: [...(m.generations ?? [])]
-          .sort(
-            (a: any, b: any) =>
-              a.display_order - b.display_order ||
-              a.label.localeCompare(b.label),
-          )
-          .map((g: any) => ({
-            id: g.id,
-            label: g.label,
-            slug: g.slug,
-            products: [...(g.products ?? [])]
-              .sort((a: any, b: any) => a.name.localeCompare(b.name))
-              .map((p: any) => ({ id: p.id, name: p.name, slug: p.slug })),
-          }))
-          // Pruned bottom-up: a generation with no active product renders as a
-          // label with nothing under it, so it goes first...
-          .filter((g: any) => g.products.length > 0),
-      }))
-      // ...and then a model left with no generation has nothing to expand into,
-      // so it goes too. Net effect: every entry that survives leads somewhere,
-      // on the header menu and on the /shop and home filter chips alike.
-      .filter((m) => m.generations.length > 0)
-  );
+  return buildNavColumns((data ?? []) as RawNavBrand[]);
 };
 
 /** Public menu tree, cached and invalidated by the `nav-taxonomy` tag. */

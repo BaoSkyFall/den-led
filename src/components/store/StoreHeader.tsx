@@ -3,18 +3,21 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { ChevronDown, Menu, Phone, X } from "lucide-react";
-import type { NavModel } from "@/features/vehicle-taxonomy";
+import { ChevronDown, ChevronRight, Menu, Phone, X } from "lucide-react";
+import type { NavBrand } from "@/features/vehicle-taxonomy";
 
-type Props = { models: NavModel[] };
+type Props = { brands: NavBrand[] };
 
-export default function StoreHeader({ models }: Props) {
+/** Where a column's "Xem thêm" sends the customer. */
+const moreHref = (slug: string) => `/shop?brand=${encodeURIComponent(slug)}`;
+
+export default function StoreHeader({ brands }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
   const [desktopHover, setDesktopHover] = useState<string | null>(null);
 
   // Empty tree (fetch error / empty DB) => plain link, never a broken dropdown.
-  const hasMenu = models.length > 0;
+  const hasMenu = brands.length > 0;
 
   return (
     <>
@@ -31,6 +34,10 @@ export default function StoreHeader({ models }: Props) {
             />
           </Link>
 
+          {/* The horizontal bar keeps its 10px type: it is balanced against the
+              logo and the "Gọi Ngay" button, and these three items carry 0.2em
+              letter-spacing, so growing them eats real width. Only the dropdown
+              below — where a customer actually reads — was scaled up. */}
           <nav className="hidden lg:flex items-center gap-1">
             <Link
               href="/"
@@ -60,46 +67,35 @@ export default function StoreHeader({ models }: Props) {
                 {desktopHover === "vehicles" && (
                   <div className="absolute top-full left-1/2 -translate-x-1/2 mt-0 pt-2 z-50 min-w-[520px]">
                     <div className="bg-[#0a0a0a] border border-white/10 p-6">
-                      <p className="text-[9px] font-bold tracking-[0.3em] uppercase text-amber-500 mb-4">
-                        Chọn dòng xe để xem gói độ đèn
+                      <p className="text-[11px] font-bold tracking-[0.3em] uppercase text-amber-500 mb-4">
+                        Chọn hãng xe để xem gói độ đèn
                       </p>
-                      <div className="grid grid-cols-4 gap-x-6 gap-y-4">
-                        {models.map((m) => (
-                          <div key={m.id}>
-                            <p className="text-xs font-black uppercase tracking-wide text-white mb-2">
-                              {m.label}
+                      {/* One column per brand. Columns are capped at five rows
+                          each, so the grid can never grow past a screen no
+                          matter how much stock is added. */}
+                      <div className="grid grid-cols-3 gap-x-8 gap-y-4">
+                        {brands.map((b) => (
+                          <div key={b.id}>
+                            <p className="text-[15px] font-black uppercase tracking-wide text-white mb-2">
+                              {b.label}
                             </p>
-                            {m.generations.map((g) =>
-                              // A generation usually holds exactly one product
-                              // whose name repeats the generation label ("SH
-                              // 2026" / "SH 2026"), which rendered as a
-                              // duplicate pair. Collapse that to one link and
-                              // only show the label as a heading when there is
-                              // more than one product to list under it.
-                              g.products.length === 1 ? (
-                                <Link
-                                  key={g.id}
-                                  href={`/shop/${g.products[0].slug}`}
-                                  className="block text-[10px] text-white/40 hover:text-white transition-colors py-0.5"
-                                >
-                                  {g.label}
-                                </Link>
-                              ) : (
-                                <div key={g.id}>
-                                  <p className="text-[9px] uppercase tracking-wide text-white/30 mt-2">
-                                    {g.label}
-                                  </p>
-                                  {g.products.map((p) => (
-                                    <Link
-                                      key={p.id}
-                                      href={`/shop/${p.slug}`}
-                                      className="block text-[10px] text-white/40 hover:text-white transition-colors py-0.5"
-                                    >
-                                      {p.name}
-                                    </Link>
-                                  ))}
-                                </div>
-                              ),
+                            {b.products.map((p) => (
+                              <Link
+                                key={p.id}
+                                href={`/shop/${p.slug}`}
+                                className="block text-[13px] text-white/40 hover:text-white transition-colors py-0.5"
+                              >
+                                {p.name}
+                              </Link>
+                            ))}
+                            {b.hasMore && (
+                              <Link
+                                href={moreHref(b.slug)}
+                                className="mt-1 inline-flex items-center gap-1 text-[13px] font-bold text-amber-500 hover:text-amber-400 transition-colors py-0.5"
+                              >
+                                Xem thêm
+                                <ChevronRight size={12} strokeWidth={2.5} />
+                              </Link>
                             )}
                           </div>
                         ))}
@@ -159,6 +155,9 @@ export default function StoreHeader({ models }: Props) {
             </button>
           </div>
 
+          {/* Same brand columns as desktop, stacked as accordions. Type is left
+              alone here — it was already text-xl, which is not what looked
+              small. */}
           <nav className="flex flex-col px-8 py-6 gap-0">
             <Link
               href="/"
@@ -168,64 +167,46 @@ export default function StoreHeader({ models }: Props) {
               Trang Chủ
             </Link>
 
-            {models.map((m) => (
-              <div key={m.id} className="border-b border-white/5">
-                {m.generations.length > 0 ? (
-                  <button
-                    className="w-full flex items-center justify-between text-left"
-                    onClick={() =>
-                      setMobileExpanded(mobileExpanded === m.id ? null : m.id)
-                    }
-                    aria-expanded={mobileExpanded === m.id}
-                  >
-                    <span className="text-xl font-black uppercase tracking-tighter text-white py-4 flex-1">
-                      {m.label}
-                    </span>
-                    <span className="p-4 text-white/40">
-                      <ChevronDown
-                        size={14}
-                        className={`transition-transform ${mobileExpanded === m.id ? "rotate-180" : ""}`}
-                      />
-                    </span>
-                  </button>
-                ) : (
-                  <p className="text-xl font-black uppercase tracking-tighter text-white py-4">
-                    {m.label}
-                  </p>
-                )}
-                {mobileExpanded === m.id && m.generations.length > 0 && (
+            {brands.map((b) => (
+              <div key={b.id} className="border-b border-white/5">
+                <button
+                  className="w-full flex items-center justify-between text-left"
+                  onClick={() =>
+                    setMobileExpanded(mobileExpanded === b.id ? null : b.id)
+                  }
+                  aria-expanded={mobileExpanded === b.id}
+                >
+                  <span className="text-xl font-black uppercase tracking-tighter text-white py-4 flex-1">
+                    {b.label}
+                  </span>
+                  <span className="p-4 text-white/40">
+                    <ChevronDown
+                      size={14}
+                      className={`transition-transform ${mobileExpanded === b.id ? "rotate-180" : ""}`}
+                    />
+                  </span>
+                </button>
+                {mobileExpanded === b.id && (
                   <div className="pb-3 pl-4 flex flex-col gap-3">
-                    {m.generations.map((g) =>
-                      // Same collapse as the desktop dropdown: one product per
-                      // generation is the norm and its name repeats the
-                      // generation label, so show a single link instead of a
-                      // heading followed by an identical entry.
-                      g.products.length === 1 ? (
-                        <Link
-                          key={g.id}
-                          href={`/shop/${g.products[0].slug}`}
-                          onClick={() => setMobileOpen(false)}
-                          className="text-sm text-white/50 hover:text-amber-500 transition-colors pl-3"
-                        >
-                          {g.label}
-                        </Link>
-                      ) : (
-                        <div key={g.id} className="flex flex-col gap-2">
-                          <p className="text-[10px] uppercase tracking-[0.2em] text-white/30">
-                            {g.label}
-                          </p>
-                          {g.products.map((p) => (
-                            <Link
-                              key={p.id}
-                              href={`/shop/${p.slug}`}
-                              onClick={() => setMobileOpen(false)}
-                              className="text-sm text-white/50 hover:text-amber-500 transition-colors pl-3"
-                            >
-                              {p.name}
-                            </Link>
-                          ))}
-                        </div>
-                      ),
+                    {b.products.map((p) => (
+                      <Link
+                        key={p.id}
+                        href={`/shop/${p.slug}`}
+                        onClick={() => setMobileOpen(false)}
+                        className="text-sm text-white/50 hover:text-amber-500 transition-colors pl-3"
+                      >
+                        {p.name}
+                      </Link>
+                    ))}
+                    {b.hasMore && (
+                      <Link
+                        href={moreHref(b.slug)}
+                        onClick={() => setMobileOpen(false)}
+                        className="inline-flex items-center gap-1 text-sm font-bold text-amber-500 hover:text-amber-400 transition-colors pl-3"
+                      >
+                        Xem thêm
+                        <ChevronRight size={14} strokeWidth={2.5} />
+                      </Link>
                     )}
                   </div>
                 )}

@@ -5,8 +5,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-import type { NavModel } from "@/features/vehicle-taxonomy";
-
 type Product = {
   id: string;
   name: string;
@@ -18,8 +16,6 @@ type Product = {
   modelSlug: string | null;
   minVariantPrice: string | null;
 };
-
-const ALL_LABEL = "Tất Cả";
 
 const formatVND = (n: number) =>
   new Intl.NumberFormat("vi-VN", {
@@ -60,15 +56,20 @@ function ProductCardSkeleton() {
   );
 }
 
-type Props = { models: NavModel[] };
+/**
+ * How many products the home page shows.
+ *
+ * The section used to render every active product in the shop: the endpoint it
+ * reads applies no limit and — despite the "Nổi Bật" heading — never filtered
+ * on `featured` either, so the block grew with the catalogue. Filtering on the
+ * flag instead would have cut the section down to whatever happened to be
+ * ticked, so a fixed window of the newest arrivals is the predictable choice.
+ * Everything else is one click away on /shop, which paginates.
+ */
+const HOME_PRODUCT_LIMIT = 8;
 
-function SpecialsSection({ models }: Props) {
-  // `null` = "Tất Cả"; otherwise the selected model slug.
-  const [activeFilter, setActiveFilter] = useState<string | null>(null);
+function SpecialsSection() {
   const [products, setProducts] = useState<Product[] | null>(null);
-  const chips = [{ key: "all", slug: null, label: ALL_LABEL }].concat(
-    models.map((m) => ({ key: m.id, slug: m.slug, label: m.label })),
-  );
 
   useEffect(() => {
     fetch("/api/products/list", { cache: "no-store" })
@@ -77,12 +78,9 @@ function SpecialsSection({ models }: Props) {
       .catch(() => setProducts([]));
   }, []);
 
+  // The endpoint already returns newest-first, so this is a window, not a sort.
   const filtered =
-    products === null
-      ? null
-      : activeFilter === null
-        ? products
-        : products.filter((p) => p.modelSlug === activeFilter);
+    products === null ? null : products.slice(0, HOME_PRODUCT_LIMIT);
 
   return (
     <section id="specials" className="bg-[#111111] py-24">
@@ -97,25 +95,9 @@ function SpecialsSection({ models }: Props) {
             </h2>
           </div>
 
-          {/* Chip count is data-driven now (was 4 hardcoded), so this row has
-              no upper bound — wrap instead of pushing the page sideways. */}
-          <div className="flex items-center flex-wrap gap-y-2">
-            {chips.map((c, i) => (
-              <div key={c.key} className="flex items-center">
-                {i > 0 && <div className="w-px h-4 bg-white/10 mx-4" />}
-                <button
-                  onClick={() => setActiveFilter(c.slug)}
-                  className={`text-[10px] font-bold tracking-[0.2em] uppercase transition-colors duration-300 ${
-                    activeFilter === c.slug
-                      ? "text-amber-500"
-                      : "text-white/40 hover:text-white"
-                  }`}
-                >
-                  {c.label}
-                </button>
-              </div>
-            ))}
-          </div>
+          {/* No filter chips here any more. They were filtering a set the home
+              page now caps at eight, so most of them would have led to an empty
+              grid. Filtering lives on /shop, where the whole catalogue is. */}
         </div>
 
         {filtered === null ? (
@@ -126,9 +108,7 @@ function SpecialsSection({ models }: Props) {
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-16 border border-white/5">
-            <p className="text-sm text-white/40">
-              Chưa có sản phẩm phù hợp với bộ lọc này.
-            </p>
+            <p className="text-sm text-white/40">Chưa có sản phẩm nào.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

@@ -2,24 +2,22 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { ChevronRight, Search, SlidersHorizontal } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Search,
+  SlidersHorizontal,
+} from "lucide-react";
 
-import type { NavModel } from "@/features/vehicle-taxonomy";
-
-type Product = {
-  id: string;
-  name: string;
-  slug: string;
-  badge: string | null;
-  rating: string;
-  price: string;
-  imageKey: string | null;
-  modelSlug: string | null;
-  minVariantPrice: string | null;
-};
+import type { ShopPage, ShopProduct } from "@/features/search/queries";
+import type { NavBrand } from "@/features/vehicle-taxonomy";
 
 const ALL_LABEL = "Tất Cả";
+
+/** How long to wait after the last keystroke before putting `q` in the URL. */
+const SEARCH_DEBOUNCE_MS = 350;
 
 const formatVND = (n: number) =>
   new Intl.NumberFormat("vi-VN", {
@@ -43,7 +41,49 @@ function resolveImageSrc(key: string | null): string {
   return `${supabaseUrl}/storage/v1/object/public/products/${key}`;
 }
 
-function ProductCard({ product }: { product: Product }) {
+/**
+ * Build a /shop URL. Empty values are dropped rather than written as `=`, so
+ * the unfiltered first page is plain `/shop` and not `/shop?brand=&page=1`.
+ */
+export function shopHref({
+  brand,
+  q,
+  page,
+}: {
+  brand?: string | null;
+  q?: string;
+  page?: number;
+}): string {
+  const params = new URLSearchParams();
+  if (brand) params.set("brand", brand);
+  if (q) params.set("q", q);
+  if (page && page > 1) params.set("page", String(page));
+  const search = params.toString();
+  return search ? `/shop?${search}` : "/shop";
+}
+
+/**
+ * Page numbers to render: all of them while there are few, otherwise the ends
+ * plus a window around the current page, with `null` standing for an ellipsis.
+ */
+export function pageItems(
+  current: number,
+  pageCount: number,
+): (number | null)[] {
+  if (pageCount <= 7) {
+    return Array.from({ length: pageCount }, (_, i) => i + 1);
+  }
+  const out: (number | null)[] = [1];
+  const from = Math.max(2, current - 1);
+  const to = Math.min(pageCount - 1, current + 1);
+  if (from > 2) out.push(null);
+  for (let p = from; p <= to; p++) out.push(p);
+  if (to < pageCount - 1) out.push(null);
+  out.push(pageCount);
+  return out;
+}
+
+function ProductCard({ product }: { product: ShopProduct }) {
   const displayPrice = product.minVariantPrice
     ? `Từ ${formatVND(Number(product.minVariantPrice))}`
     : "Liên hệ";
@@ -107,46 +147,40 @@ function ProductCard({ product }: { product: Product }) {
   );
 }
 
-function ProductCardSkeleton() {
-  return (
-    <div className="bg-white/5 overflow-hidden">
-      <div className="aspect-[16/10] bg-white/5 animate-pulse" />
-      <div className="p-5 space-y-3">
-        <div className="h-5 bg-white/10 animate-pulse" />
-        <div className="h-3 bg-white/5 animate-pulse w-3/4" />
-        <div className="h-4 bg-white/10 animate-pulse w-1/2" />
-      </div>
-    </div>
-  );
-}
+type Props = {
+  brands: NavBrand[];
+  result: ShopPage;
+  activeBrand: string | null;
+  query: string;
+};
 
-type Props = { models: NavModel[] };
+function ShopPageContent({ brands, result, activeBrand, query }: Props) {
+  const router = useRouter();
+  const pathname = usePathname();
 
-function ShopPageContent({ models }: Props) {
-  const [products, setProducts] = useState<Product[] | null>(null);
-  // `null` = "Tất Cả"; otherwise the selected model slug.
-  const [filter, setFilter] = useState<string | null>(null);
-  const [query, setQuery] = useState("");
+  // The input is local so typing stays responsive; the URL catches up on a
+  // debounce. Re-seeded from the prop so Back/Forward and "Xoá Bộ Lọc" put the
+  // box back in step with the results being shown.
+  const [term, setTerm] = useState(query);
+  useEffect(() => setTerm(query), [query]);
 
+  // Skips the very first run, otherwise mounting on /shop?q=abc would
+  // immediately push the same URL again.
+  const typed = useRef(false);
   useEffect(() => {
-    fetch("/api/products/list", { cache: "no-store" })
-      .then((r) => r.json())
-      .then((data) => setProducts(data as Product[]))
-      .catch(() => setProducts([]));
-  }, []);
+    if (!typed.current) return;
+    const id = setTimeout(() => {
+      // Any change of search term restarts at page one — page 3 of the old
+      // result set means nothing for the new one.
+      router.replace(shopHref({ brand: activeBrand, q: term.trim() }), {
+        scroll: false,
+      });
+    }, SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(id);
+  }, [term, activeBrand, router, pathname]);
 
-  const filtered = useMemo(() => {
-    if (!products) return null;
-    let out = products;
-    if (filter) {
-      out = out.filter((p) => p.modelSlug === filter);
-    }
-    if (query.trim()) {
-      const q = query.trim().toLowerCase();
-      out = out.filter((p) => p.name.toLowerCase().includes(q));
-    }
-    return out;
-  }, [products, filter, query]);
+  const { products, total, page, pageCount } = result;
+  const hasFilter = activeBrand !== null || query !== "";
 
   return (
     <>
@@ -177,13 +211,14 @@ function ShopPageContent({ models }: Props) {
             Garage
           </h1>
           <p className="text-sm text-white/50 max-w-lg leading-relaxed">
-            Chọn dòng xe của bạn để xem các gói độ bi cầu, đèn LED cao cấp với
+            Chọn hãng xe của bạn để xem các gói độ bi cầu, đèn LED cao cấp với
             linh kiện chính hãng.
           </p>
         </div>
       </section>
 
-      {/* Filter bar */}
+      {/* Filter bar. Chips are links, not buttons: a filtered page has its own
+          URL now, so it can be shared, bookmarked and crawled. */}
       <section className="sticky top-24 z-40 bg-[#111111]/95 backdrop-blur-md border-b border-white/5">
         <div className="max-w-[1400px] mx-auto px-6 py-4">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -193,28 +228,30 @@ function ShopPageContent({ models }: Props) {
                 strokeWidth={1.5}
                 className="text-white/30 shrink-0 mr-2 hidden lg:block"
               />
-              <button
-                onClick={() => setFilter(null)}
+              <Link
+                href={shopHref({ q: query })}
+                scroll={false}
                 className={`text-[10px] font-bold tracking-[0.2em] uppercase px-3 py-2 whitespace-nowrap transition-colors ${
-                  filter === null
+                  activeBrand === null
                     ? "bg-amber-500 text-black"
                     : "text-white/40 hover:text-white"
                 }`}
               >
                 {ALL_LABEL}
-              </button>
-              {models.map((m) => (
-                <button
-                  key={m.id}
-                  onClick={() => setFilter(m.slug)}
+              </Link>
+              {brands.map((b) => (
+                <Link
+                  key={b.id}
+                  href={shopHref({ brand: b.slug, q: query })}
+                  scroll={false}
                   className={`text-[10px] font-bold tracking-[0.2em] uppercase px-3 py-2 whitespace-nowrap transition-colors ${
-                    filter === m.slug
+                    activeBrand === b.slug
                       ? "bg-amber-500 text-black"
                       : "text-white/40 hover:text-white"
                   }`}
                 >
-                  {m.label}
-                </button>
+                  {b.label}
+                </Link>
               ))}
             </div>
 
@@ -225,8 +262,11 @@ function ShopPageContent({ models }: Props) {
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30"
               />
               <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                value={term}
+                onChange={(e) => {
+                  typed.current = true;
+                  setTerm(e.target.value);
+                }}
                 placeholder="Tìm sản phẩm..."
                 className="w-full bg-white/5 border border-white/10 text-white text-xs px-9 py-2.5 outline-none placeholder:text-white/25 focus:border-amber-500 transition-colors"
               />
@@ -238,13 +278,7 @@ function ShopPageContent({ models }: Props) {
       {/* Product grid */}
       <section className="bg-[#111111] py-16 min-h-[600px]">
         <div className="max-w-[1400px] mx-auto px-6">
-          {filtered === null ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <ProductCardSkeleton key={i} />
-              ))}
-            </div>
-          ) : filtered.length === 0 ? (
+          {products.length === 0 ? (
             <div className="text-center py-24">
               <p className="text-[10px] font-bold tracking-[0.3em] uppercase text-amber-500 mb-4">
                 Không tìm thấy
@@ -253,45 +287,139 @@ function ShopPageContent({ models }: Props) {
                 Không có sản phẩm
               </h2>
               <p className="text-sm text-white/40 max-w-sm mx-auto mb-8">
-                Không tìm thấy sản phẩm phù hợp với bộ lọc. Thử chọn dòng xe
+                Không tìm thấy sản phẩm phù hợp với bộ lọc. Thử chọn hãng xe
                 khác hoặc xoá bộ lọc.
               </p>
-              <button
-                onClick={() => {
-                  setFilter(null);
-                  setQuery("");
-                }}
-                className="bg-amber-500 text-black text-xs font-bold tracking-[0.2em] uppercase px-6 py-3 hover:bg-amber-400 transition-colors"
+              <Link
+                href="/shop"
+                className="inline-block bg-amber-500 text-black text-xs font-bold tracking-[0.2em] uppercase px-6 py-3 hover:bg-amber-400 transition-colors"
               >
                 Xoá Bộ Lọc
-              </button>
+              </Link>
             </div>
           ) : (
             <>
               <div className="flex items-baseline justify-between mb-8">
                 <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/40">
-                  {filtered.length} sản phẩm
+                  {total} sản phẩm
+                  {pageCount > 1 && ` · Trang ${page}/${pageCount}`}
                 </p>
-                {filter !== null && (
-                  <button
-                    onClick={() => setFilter(null)}
+                {hasFilter && (
+                  <Link
+                    href="/shop"
+                    scroll={false}
                     className="text-[10px] font-bold tracking-[0.2em] uppercase text-amber-500 hover:text-amber-400 transition-colors"
                   >
                     Xoá lọc ×
-                  </button>
+                  </Link>
                 )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filtered.map((product) => (
+                {products.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </div>
+
+              {pageCount > 1 && (
+                <nav
+                  aria-label="Phân trang"
+                  className="flex items-center justify-center gap-1 mt-12"
+                >
+                  <PageLink
+                    href={shopHref({
+                      brand: activeBrand,
+                      q: query,
+                      page: page - 1,
+                    })}
+                    disabled={page === 1}
+                    label="Trang trước"
+                  >
+                    <ChevronLeft size={14} strokeWidth={2} />
+                  </PageLink>
+
+                  {pageItems(page, pageCount).map((p, i) =>
+                    p === null ? (
+                      <span
+                        key={`gap-${i}`}
+                        className="px-2 text-white/25 text-xs select-none"
+                      >
+                        …
+                      </span>
+                    ) : (
+                      <Link
+                        key={p}
+                        href={shopHref({
+                          brand: activeBrand,
+                          q: query,
+                          page: p,
+                        })}
+                        scroll={false}
+                        aria-current={p === page ? "page" : undefined}
+                        className={`min-w-9 h-9 flex items-center justify-center text-xs font-bold transition-colors ${
+                          p === page
+                            ? "bg-amber-500 text-black"
+                            : "text-white/50 hover:text-white hover:bg-white/5"
+                        }`}
+                      >
+                        {p}
+                      </Link>
+                    ),
+                  )}
+
+                  <PageLink
+                    href={shopHref({
+                      brand: activeBrand,
+                      q: query,
+                      page: page + 1,
+                    })}
+                    disabled={page === pageCount}
+                    label="Trang sau"
+                  >
+                    <ChevronRight size={14} strokeWidth={2} />
+                  </PageLink>
+                </nav>
+              )}
             </>
           )}
         </div>
       </section>
     </>
+  );
+}
+
+/** Prev/next arrow. Rendered as a dead span at the ends so there is no link
+    pointing at page 0 or past the last page. */
+function PageLink({
+  href,
+  disabled,
+  label,
+  children,
+}: {
+  href: string;
+  disabled: boolean;
+  label: string;
+  children: React.ReactNode;
+}) {
+  if (disabled) {
+    return (
+      <span
+        aria-hidden
+        className="w-9 h-9 flex items-center justify-center text-white/15"
+      >
+        {children}
+      </span>
+    );
+  }
+  return (
+    <Link
+      href={href}
+      scroll={false}
+      aria-label={label}
+      className="w-9 h-9 flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-colors"
+    >
+      {children}
+    </Link>
   );
 }
 

@@ -3,7 +3,6 @@ import Link from "next/link";
 import { ChevronRight, Zap, Award, Shield } from "lucide-react";
 
 import SpecialsSection from "@/components/store/SpecialsSection";
-import { getNavTree } from "@/features/vehicle-taxonomy";
 
 const FEATURES = [
   {
@@ -208,13 +207,12 @@ function FeatureCollage() {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function Home() {
-  // Same DB-driven tree as the header menu and the /shop chips.
-  const navModels = await getNavTree();
-
   return (
     <>
       <HeroSection />
-      <SpecialsSection models={navModels} />
+      {/* Reads /api/products/list itself and shows a fixed window of the
+          newest arrivals, so the page no longer needs the taxonomy tree. */}
+      <SpecialsSection />
       <FeatureCollage />
     </>
   );
