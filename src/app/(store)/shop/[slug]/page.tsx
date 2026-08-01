@@ -68,7 +68,7 @@ type ProductDetail = {
 // ─── Image Gallery ────────────────────────────────────────────────────────────
 
 /** How much bigger the photo is drawn inside the loupe. */
-const HOVER_ZOOM = 1.5;
+const HOVER_ZOOM = 1.25;
 /** Side of the square loupe panel, in pixels. */
 const LOUPE_SIZE = 260;
 /** Clearance between the cursor and the panel. */
