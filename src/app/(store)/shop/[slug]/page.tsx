@@ -60,8 +60,83 @@ type ProductDetail = {
 
 // ─── Image Gallery ────────────────────────────────────────────────────────────
 
-/** How far the main image magnifies under the cursor. */
-const HOVER_ZOOM = 2;
+/** How much bigger the photo is drawn inside the loupe. */
+const HOVER_ZOOM = 2.5;
+/** Side of the square loupe panel, in pixels. */
+const LOUPE_SIZE = 260;
+/** Clearance between the cursor and the panel. */
+const LOUPE_GAP = 24;
+
+/** Where the cursor is over the main image, and how big that image is. */
+type LoupeAt = {
+  /** Cursor offset inside the image box. */
+  x: number;
+  y: number;
+  /** The image box, needed to redraw it at scale inside the panel. */
+  width: number;
+  height: number;
+  /** Viewport coordinates, for placing the panel itself. */
+  clientX: number;
+  clientY: number;
+};
+
+/**
+ * A magnified window on the region under the cursor, floating beside it.
+ *
+ * Magnifying the photo in place moved the very detail being inspected out
+ * from under the pointer, so the enlargement lives in its own panel and the
+ * photo underneath is left alone.
+ *
+ * The crop is reproduced rather than approximated: the same picture is drawn
+ * at `HOVER_ZOOM` times the box it occupies on the page, still `object-cover`,
+ * then offset so the point under the cursor lands in the middle of the panel.
+ * Anything else — a background-position trick, say — would disagree with the
+ * page's own cropping and magnify a slightly different spot than the one being
+ * pointed at.
+ */
+function Loupe({ src, at }: { src: string; at: LoupeAt }) {
+  const half = LOUPE_SIZE / 2;
+
+  // Flip to the other side of the cursor rather than run off the screen, and
+  // keep the panel inside the viewport vertically.
+  const flip = at.clientX + LOUPE_GAP + LOUPE_SIZE > window.innerWidth;
+  const left = flip
+    ? at.clientX - LOUPE_GAP - LOUPE_SIZE
+    : at.clientX + LOUPE_GAP;
+  const top = Math.min(
+    Math.max(8, at.clientY - half),
+    window.innerHeight - LOUPE_SIZE - 8,
+  );
+
+  return (
+    <div
+      aria-hidden
+      className="fixed z-50 overflow-hidden border border-amber-500/60 bg-[#0a0a0a] shadow-2xl pointer-events-none"
+      style={{ left, top, width: LOUPE_SIZE, height: LOUPE_SIZE }}
+    >
+      {/* Plain <img>, and deliberately the original file rather than the
+          optimised one next/image serves the page: that copy is sized for
+          display and goes soft the moment it is enlarged, which defeats the
+          point of a loupe. The cost is one extra request on first hover. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt=""
+        draggable={false}
+        style={{
+          position: "absolute",
+          width: at.width * HOVER_ZOOM,
+          height: at.height * HOVER_ZOOM,
+          maxWidth: "none",
+          objectFit: "cover",
+          objectPosition: "center",
+          left: half - at.x * HOVER_ZOOM,
+          top: half - at.y * HOVER_ZOOM,
+        }}
+      />
+    </div>
+  );
+}
 
 function ImageGallery({ images }: { images: string[] }) {
   const [active, setActive] = useState(0);
@@ -69,8 +144,8 @@ function ImageGallery({ images }: { images: string[] }) {
   const [lightboxAt, setLightboxAt] = useState<number | null>(null);
   const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(true);
-  /** Cursor position over the main image, as percentages. Null = not hovering. */
-  const [zoom, setZoom] = useState<{ x: number; y: number } | null>(null);
+  /** Where the loupe is reading from. Null = not hovering, so no loupe. */
+  const [zoom, setZoom] = useState<LoupeAt | null>(null);
   const [canHover, setCanHover] = useState(false);
 
   // A phone can still emit a stray mousemove after a tap, which would leave the
@@ -114,9 +189,16 @@ function ImageGallery({ images }: { images: string[] }) {
   // Scrolls the strip itself rather than calling `scrollIntoView`, which walks
   // every scrollable ancestor including the document and would jerk the whole
   // page vertically when the gallery mounts below the fold.
-  // Switching photo while hovering would carry the old magnification origin
-  // onto the new image, which lands zoomed into an unrelated corner.
+  // Switching photo while hovering would leave the loupe reading the old one.
   useEffect(() => setZoom(null), [active]);
+
+  // Scrolling fires no mousemove, so the panel would hang at a stale spot
+  // while the photo slid out from under it. Close it instead.
+  useEffect(() => {
+    const close = () => setZoom(null);
+    window.addEventListener("scroll", close, { passive: true });
+    return () => window.removeEventListener("scroll", close);
+  }, []);
 
   useEffect(() => {
     const strip = stripRef.current;
@@ -158,6 +240,8 @@ function ImageGallery({ images }: { images: string[] }) {
         onClose={() => setLightboxAt(null)}
       />
 
+      {zoom && <Loupe src={images[active]} at={zoom} />}
+
       {/* Main image */}
       <div className="relative aspect-[4/3] bg-[#0a0a0a] overflow-hidden">
         <button
@@ -165,15 +249,19 @@ function ImageGallery({ images }: { images: string[] }) {
           onClick={() => setLightboxAt(active)}
           aria-label="Phóng to ảnh"
           className="absolute inset-0 z-10 cursor-zoom-in"
-          // Magnify under the cursor. The lightbox still owns zooming on
-          // touch, where there is no hover to speak of — this only saves a
-          // mouse user the open/close round trip for a quick look.
+          // Feeds the loupe. The photo itself never moves — magnifying it in
+          // place pushed the part being examined out from under the cursor,
+          // so the magnification goes in a panel beside the pointer instead.
           onMouseMove={(e) => {
             if (!canHover) return;
             const box = e.currentTarget.getBoundingClientRect();
             setZoom({
-              x: ((e.clientX - box.left) / box.width) * 100,
-              y: ((e.clientY - box.top) / box.height) * 100,
+              x: e.clientX - box.left,
+              y: e.clientY - box.top,
+              width: box.width,
+              height: box.height,
+              clientX: e.clientX,
+              clientY: e.clientY,
             });
           }}
           onMouseLeave={() => setZoom(null)}
@@ -185,13 +273,6 @@ function ImageGallery({ images }: { images: string[] }) {
           className="object-cover object-center"
           priority
           sizes="(max-width: 1024px) 100vw, 50vw"
-          style={{
-            transform: zoom ? `scale(${HOVER_ZOOM})` : "scale(1)",
-            transformOrigin: zoom ? `${zoom.x}% ${zoom.y}%` : "center",
-            // Only the settle back to 1x is animated. Easing the origin as well
-            // would make the image lag the cursor across the frame.
-            transition: zoom ? "none" : "transform 200ms ease-out",
-          }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#111111]/30 to-transparent pointer-events-none" />
         {images.length > 1 && (
