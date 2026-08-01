@@ -70,7 +70,7 @@ type ProductDetail = {
 /** How much bigger the photo is drawn inside the loupe. */
 const HOVER_ZOOM = 1.25;
 /** Side of the square loupe panel, in pixels. */
-const LOUPE_SIZE = 260;
+const LOUPE_SIZE = 160;
 /** Clearance between the cursor and the panel. */
 const LOUPE_GAP = 24;
 
