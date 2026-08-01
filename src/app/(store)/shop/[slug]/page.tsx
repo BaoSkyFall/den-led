@@ -3,7 +3,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { useState, useEffect, useMemo, useRef } from "react";
+import {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
 import BiCauLoader from "@/components/store/BiCauLoader";
 import {
   ChevronLeft,
@@ -67,19 +74,6 @@ const LOUPE_SIZE = 260;
 /** Clearance between the cursor and the panel. */
 const LOUPE_GAP = 24;
 
-/** Where the cursor is over the main image, and how big that image is. */
-type LoupeAt = {
-  /** Cursor offset inside the image box. */
-  x: number;
-  y: number;
-  /** The image box, needed to redraw it at scale inside the panel. */
-  width: number;
-  height: number;
-  /** Viewport coordinates, for placing the panel itself. */
-  clientX: number;
-  clientY: number;
-};
-
 /**
  * A magnified window on the region under the cursor, floating beside it.
  *
@@ -87,56 +81,74 @@ type LoupeAt = {
  * from under the pointer, so the enlargement lives in its own panel and the
  * photo underneath is left alone.
  *
+ * Two things keep this cheap, and both matter:
+ *
+ * The picture is whatever the page already downloaded. The gallery assigns it
+ * through the handle below, from the `currentSrc` of the photo on screen —
+ * the exact URL next/image chose out of its srcset. Pointing at the original
+ * file instead, as this first did, looks identical but makes the browser
+ * fetch the same photo a second time at full size.
+ *
+ * Nothing here is React state. The panel and the picture inside it are moved
+ * by writing to their style objects through refs, because the alternative is
+ * a state update per mousemove — around a hundred a second, each re-rendering
+ * the whole gallery, its thumbnail strip and the lightbox along with it.
+ *
  * The crop is reproduced rather than approximated: the same picture is drawn
  * at `HOVER_ZOOM` times the box it occupies on the page, still `object-cover`,
  * then offset so the point under the cursor lands in the middle of the panel.
- * Anything else — a background-position trick, say — would disagree with the
- * page's own cropping and magnify a slightly different spot than the one being
- * pointed at.
+ * A background-position trick would disagree with the page's own cropping and
+ * magnify a slightly different spot than the one being pointed at.
  */
-function Loupe({ src, at }: { src: string; at: LoupeAt }) {
-  const half = LOUPE_SIZE / 2;
+type LoupeHandle = {
+  panel: HTMLDivElement | null;
+  picture: HTMLImageElement | null;
+};
 
-  // Flip to the other side of the cursor rather than run off the screen, and
-  // keep the panel inside the viewport vertically.
-  const flip = at.clientX + LOUPE_GAP + LOUPE_SIZE > window.innerWidth;
-  const left = flip
-    ? at.clientX - LOUPE_GAP - LOUPE_SIZE
-    : at.clientX + LOUPE_GAP;
-  const top = Math.min(
-    Math.max(8, at.clientY - half),
-    window.innerHeight - LOUPE_SIZE - 8,
-  );
+const Loupe = forwardRef<LoupeHandle>(function Loupe(_props, ref) {
+  const panel = useRef<HTMLDivElement>(null);
+  const picture = useRef<HTMLImageElement>(null);
+
+  useImperativeHandle(ref, () => ({
+    get panel() {
+      return panel.current;
+    },
+    get picture() {
+      return picture.current;
+    },
+  }));
 
   return (
     <div
+      ref={panel}
       aria-hidden
       className="fixed z-50 overflow-hidden border border-amber-500/60 bg-[#0a0a0a] shadow-2xl pointer-events-none"
-      style={{ left, top, width: LOUPE_SIZE, height: LOUPE_SIZE }}
+      // Mounted once and hidden, rather than mounted on hover: a panel that
+      // only ever has its style written cannot cause a React render, and
+      // `display` is what the gallery toggles on enter and leave.
+      style={{
+        display: "none",
+        left: 0,
+        top: 0,
+        width: LOUPE_SIZE,
+        height: LOUPE_SIZE,
+      }}
     >
-      {/* Plain <img>, and deliberately the original file rather than the
-          optimised one next/image serves the page: that copy is sized for
-          display and goes soft the moment it is enlarged, which defeats the
-          point of a loupe. The cost is one extra request on first hover. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={src}
+        ref={picture}
         alt=""
         draggable={false}
         style={{
           position: "absolute",
-          width: at.width * HOVER_ZOOM,
-          height: at.height * HOVER_ZOOM,
           maxWidth: "none",
           objectFit: "cover",
           objectPosition: "center",
-          left: half - at.x * HOVER_ZOOM,
-          top: half - at.y * HOVER_ZOOM,
         }}
       />
     </div>
   );
-}
+});
 
 function ImageGallery({ images }: { images: string[] }) {
   const [active, setActive] = useState(0);
@@ -144,24 +156,91 @@ function ImageGallery({ images }: { images: string[] }) {
   const [lightboxAt, setLightboxAt] = useState<number | null>(null);
   const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(true);
-  /** Where the loupe is reading from. Null = not hovering, so no loupe. */
-  const [zoom, setZoom] = useState<LoupeAt | null>(null);
   const [canHover, setCanHover] = useState(false);
 
-  // A phone can still emit a stray mousemove after a tap, which would leave the
-  // photo stuck at 2x with no way to clear it. Ask the device instead of
-  // trusting the event, and resolve it after mount so the server and the first
-  // client render agree.
+  // The photo on the page, the loupe's two elements, and the box the photo
+  // occupies. All refs: the loupe is driven by writing styles directly, so
+  // moving the pointer must not touch React state.
+  const mainImgRef = useRef<HTMLImageElement>(null);
+  const loupeRef = useRef<LoupeHandle>(null);
+  const boxRef = useRef<DOMRect | null>(null);
+
+  /** Show or hide the panel without re-rendering anything around it. */
+  const setLoupeVisible = (visible: boolean) => {
+    const panel = loupeRef.current?.panel;
+    if (panel) panel.style.display = visible ? "block" : "none";
+  };
+
+  // A phone can still emit a stray mousemove after a tap, which would strand
+  // the panel on screen. Ask the device instead of trusting the event, and
+  // resolve it after mount so the server and the first client render agree.
   useEffect(() => {
     const query = window.matchMedia("(hover: hover) and (pointer: fine)");
     setCanHover(query.matches);
     const onChange = (e: MediaQueryListEvent) => {
       setCanHover(e.matches);
-      if (!e.matches) setZoom(null);
+      if (!e.matches) setLoupeVisible(false);
     };
     query.addEventListener("change", onChange);
     return () => query.removeEventListener("change", onChange);
   }, []);
+
+  /**
+   * Point the loupe at the photo the browser has already decoded.
+   *
+   * `currentSrc` is the URL actually chosen from next/image's srcset, so the
+   * loupe draws from the file already in memory instead of fetching the same
+   * photo a second time. It is empty until the photo loads, hence the fallback
+   * — hovering during load would otherwise blank the panel.
+   */
+  const syncLoupeSource = () => {
+    const picture = loupeRef.current?.picture;
+    const main = mainImgRef.current;
+    if (!picture || !main) return;
+    const chosen = main.currentSrc || main.src;
+    if (chosen && picture.src !== chosen) picture.src = chosen;
+  };
+
+  const openLoupe = (target: HTMLElement) => {
+    const picture = loupeRef.current?.picture;
+    if (!picture) return;
+    syncLoupeSource();
+
+    // Measured once per hover, not per move: reading layout mid-move, right
+    // before writing styles, forces a reflow on every frame.
+    const box = target.getBoundingClientRect();
+    boxRef.current = box;
+    picture.style.width = `${box.width * HOVER_ZOOM}px`;
+    picture.style.height = `${box.height * HOVER_ZOOM}px`;
+  };
+
+  const moveLoupe = (clientX: number, clientY: number) => {
+    const panel = loupeRef.current?.panel;
+    const picture = loupeRef.current?.picture;
+    const box = boxRef.current;
+    if (!panel || !picture || !box) return;
+
+    const half = LOUPE_SIZE / 2;
+
+    // Flip to the other side of the cursor rather than run off the screen,
+    // and keep the panel inside the viewport vertically.
+    const flip = clientX + LOUPE_GAP + LOUPE_SIZE > window.innerWidth;
+    panel.style.left = `${flip ? clientX - LOUPE_GAP - LOUPE_SIZE : clientX + LOUPE_GAP}px`;
+    panel.style.top = `${Math.min(
+      Math.max(8, clientY - half),
+      window.innerHeight - LOUPE_SIZE - 8,
+    )}px`;
+
+    // Put the point under the cursor in the middle of the panel.
+    picture.style.left = `${half - (clientX - box.left) * HOVER_ZOOM}px`;
+    picture.style.top = `${half - (clientY - box.top) * HOVER_ZOOM}px`;
+
+    // Showing here as well as on enter is what brings the panel back after a
+    // photo switch, which hides it: no mouseenter fires while the pointer is
+    // already inside, so it would otherwise stay hidden until you left and
+    // came back. Writing the same value costs nothing.
+    setLoupeVisible(true);
+  };
 
   // The strip hides its scrollbar, so these arrows are the only thing telling
   // the customer more photos exist — they have to track the real scroll offset
@@ -190,12 +269,12 @@ function ImageGallery({ images }: { images: string[] }) {
   // every scrollable ancestor including the document and would jerk the whole
   // page vertically when the gallery mounts below the fold.
   // Switching photo while hovering would leave the loupe reading the old one.
-  useEffect(() => setZoom(null), [active]);
+  useEffect(() => setLoupeVisible(false), [active]);
 
   // Scrolling fires no mousemove, so the panel would hang at a stale spot
   // while the photo slid out from under it. Close it instead.
   useEffect(() => {
-    const close = () => setZoom(null);
+    const close = () => setLoupeVisible(false);
     window.addEventListener("scroll", close, { passive: true });
     return () => window.removeEventListener("scroll", close);
   }, []);
@@ -240,7 +319,7 @@ function ImageGallery({ images }: { images: string[] }) {
         onClose={() => setLightboxAt(null)}
       />
 
-      {zoom && <Loupe src={images[active]} at={zoom} />}
+      <Loupe ref={loupeRef} />
 
       {/* Main image */}
       <div className="relative aspect-[4/3] bg-[#0a0a0a] overflow-hidden">
@@ -252,27 +331,30 @@ function ImageGallery({ images }: { images: string[] }) {
           // Feeds the loupe. The photo itself never moves — magnifying it in
           // place pushed the part being examined out from under the cursor,
           // so the magnification goes in a panel beside the pointer instead.
+          onMouseEnter={(e) => {
+            if (!canHover) return;
+            openLoupe(e.currentTarget);
+            moveLoupe(e.clientX, e.clientY);
+          }}
           onMouseMove={(e) => {
             if (!canHover) return;
-            const box = e.currentTarget.getBoundingClientRect();
-            setZoom({
-              x: e.clientX - box.left,
-              y: e.clientY - box.top,
-              width: box.width,
-              height: box.height,
-              clientX: e.clientX,
-              clientY: e.clientY,
-            });
+            moveLoupe(e.clientX, e.clientY);
           }}
-          onMouseLeave={() => setZoom(null)}
+          onMouseLeave={() => setLoupeVisible(false)}
         />
         <Image
+          ref={mainImgRef}
           src={images[active]}
           alt="Product"
           fill
           className="object-cover object-center"
           priority
-          sizes="(max-width: 1024px) 100vw, 50vw"
+          onLoad={syncLoupeSource}
+          // Desktop asks for a wider file than it displays. The loupe reuses
+          // this exact download, so the extra pixels are what it magnifies —
+          // without them it would either be soft or need its own request.
+          // Phones, which never see the loupe, are unaffected.
+          sizes="(max-width: 1024px) 100vw, 1200px"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#111111]/30 to-transparent pointer-events-none" />
         {images.length > 1 && (
