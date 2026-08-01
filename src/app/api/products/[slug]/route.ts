@@ -4,6 +4,11 @@ export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 export const runtime = "nodejs";
 
+import { parseBlockData } from "@/features/product-sections/blockData";
+import {
+  DEFAULT_SELECTION_MODE,
+  type SelectionMode,
+} from "@/features/products/selectionMode";
 import { liveJson, PUBLIC_ERROR } from "@/lib/liveJson";
 import { createLiveRestClient } from "@/lib/supabase/rest";
 
@@ -75,8 +80,8 @@ export async function GET(
           images: o.images ?? [],
           features: o.features ?? [],
           displayOrder: o.display_order,
-          selectionMode: (o.selection_mode ?? "select") as
-            "select" | "quantity",
+          selectionMode: (o.selection_mode ??
+            DEFAULT_SELECTION_MODE) as SelectionMode,
         })),
     }));
 
@@ -145,7 +150,10 @@ export async function GET(
           id: (b as any).id,
           type: (b as any).type,
           order: (b as any).order,
-          data: (b as any).data ?? {},
+          // Legacy rows hold a JSON string rather than an object; PostgREST
+          // returns it verbatim, which is why those blocks used to render as
+          // nothing on the storefront while looking fine in admin.
+          data: parseBlockData((b as any).data),
         });
         blocksBySection.set((b as any).sectionId, list);
       }

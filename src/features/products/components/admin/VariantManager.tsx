@@ -12,6 +12,7 @@ import {
   updateVariantGroup,
   updateVariantOption,
 } from "@/_actions/variants";
+import { DEFAULT_SELECTION_MODE } from "@/features/products/selectionMode";
 import { SelectVariantGroup, SelectVariantOption } from "@/lib/supabase/schema";
 import {
   ChevronDown,
@@ -92,6 +93,10 @@ export default function VariantManager({ productId }: Props) {
         features: [],
         images: [],
         displayOrder: groups.find((g) => g.id === groupId)?.options.length ?? 0,
+        // Sent explicitly rather than left to the column default, so a new
+        // option is quantity-mode even on a database that has not had the
+        // updated schema pushed.
+        selectionMode: DEFAULT_SELECTION_MODE,
       });
       setGroups((prev) =>
         prev.map((g) =>
@@ -292,7 +297,7 @@ export default function VariantManager({ productId }: Props) {
                   />
                   <select
                     className="h-8 text-xs rounded-md border border-input bg-background px-2 shrink-0"
-                    defaultValue={opt.selectionMode ?? "select"}
+                    defaultValue={opt.selectionMode ?? DEFAULT_SELECTION_MODE}
                     onChange={(e) =>
                       updateOption(
                         group.id,

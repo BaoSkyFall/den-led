@@ -3,28 +3,26 @@ export const runtime = "nodejs";
 
 import { liveJson } from "@/lib/liveJson";
 
-import db from "@/lib/supabase/db";
+import { createId } from "@paralleldrive/cuid2";
+import db, { sqlClient } from "@/lib/supabase/db";
 import { productSections, sectionBlocks } from "@/lib/supabase/schema";
 import { asc, eq, inArray } from "drizzle-orm";
+import { parseBlockData } from "@/features/product-sections/blockData";
 import type {
   ProductSection,
   SectionBlock,
 } from "@/features/product-sections/types";
 
-// GET /api/product-sections/[productId] — list sections + blocks in order (admin)
-export async function GET(
-  _req: Request,
-  { params }: { params: { productId: string } },
-) {
+// Shared by GET and by the PUT response, so a save returns exactly what a
+// reload would — the editor never has to re-read what it just wrote.
+async function readSections(productId: string): Promise<ProductSection[]> {
   const sections = await db
     .select()
     .from(productSections)
-    .where(eq(productSections.productId, params.productId))
+    .where(eq(productSections.productId, productId))
     .orderBy(asc(productSections.order));
 
-  if (sections.length === 0) {
-    return liveJson([]);
-  }
+  if (sections.length === 0) return [];
 
   const sectionIds = sections.map((s) => s.id);
   const blocks = await db
@@ -40,20 +38,26 @@ export async function GET(
       id: b.id,
       order: b.order,
       type: b.type,
-      data: b.data ?? {},
+      data: parseBlockData(b.data),
     } as unknown as SectionBlock);
     byId.set(b.sectionId, list);
   }
 
-  const result: ProductSection[] = sections.map((s) => ({
+  return sections.map((s) => ({
     id: s.id,
     title: s.title,
     description: s.description,
     order: s.order,
     blocks: byId.get(s.id) ?? [],
   }));
+}
 
-  return liveJson(result);
+// GET /api/product-sections/[productId] — list sections + blocks in order (admin)
+export async function GET(
+  _req: Request,
+  { params }: { params: { productId: string } },
+) {
+  return liveJson(await readSections(params.productId));
 }
 
 // PUT /api/product-sections/[productId] — replace-all sections tree
@@ -70,7 +74,7 @@ export async function PUT(
     .where(eq(productSections.productId, params.productId));
 
   if (incoming.length === 0) {
-    return liveJson({ ok: true, count: 0 });
+    return liveJson({ ok: true, count: 0, sections: [] });
   }
 
   const now = new Date().toISOString();
@@ -88,23 +92,44 @@ export async function PUT(
     .values(sectionRows)
     .returning({ id: productSections.id });
 
-  const blockRows: Array<typeof sectionBlocks.$inferInsert> = [];
-  incoming.forEach((s, i) => {
-    const sectionId = inserted[i].id;
-    (s.blocks ?? []).forEach((b, j) => {
-      blockRows.push({
-        sectionId,
-        type: b.type,
-        order: j,
-        data: (b.data ??
-          {}) as unknown as typeof sectionBlocks.$inferInsert.data,
-      });
-    });
-  });
+  const blockRows = incoming.flatMap((s, i) =>
+    (s.blocks ?? []).map((b, j) => ({
+      id: createId(),
+      sectionId: inserted[i].id,
+      type: b.type,
+      order: j,
+      data: b.data ?? {},
+    })),
+  );
 
+  // Written with the raw postgres.js client, not drizzle: drizzle stringifies a
+  // jsonb value and postgres.js stringifies it again, so every block saved
+  // through drizzle landed as a JSON string. drizzle parses that back on read,
+  // which hid it from the admin — but PostgREST hands the string straight to
+  // the storefront, where `data.url` is undefined and the block renders as
+  // nothing. See the note on sqlClient in lib/supabase/db.ts.
+  //
+  // One multi-row insert, not a loop: a product's whole tree is rewritten on
+  // every save, so per-row round-trips would scale with the block count.
   if (blockRows.length > 0) {
-    await db.insert(sectionBlocks).values(blockRows);
+    await sqlClient`
+      insert into section_blocks ${sqlClient(
+        blockRows,
+        "id",
+        "sectionId",
+        "type",
+        "order",
+        "data",
+      )}`;
   }
 
-  return liveJson({ ok: true, count: inserted.length });
+  // The saved tree comes back with the response. The editor needs the real row
+  // ids for its next save, and re-reading them through a second request left a
+  // window where a cached GET could hand back the pre-save snapshot — which the
+  // editor would then write over the top of the edit that had just landed.
+  return liveJson({
+    ok: true,
+    count: inserted.length,
+    sections: await readSections(params.productId),
+  });
 }

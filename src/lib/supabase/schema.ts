@@ -1,5 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
 import { InferInsertModel, InferSelectModel, relations } from "drizzle-orm";
+import { DEFAULT_SELECTION_MODE } from "@/features/products/selectionMode";
 import {
   boolean,
   decimal,
@@ -717,7 +718,11 @@ export const variantOptions = pgTable("variant_options", {
   images: text("images").array().default([]),
   features: text("features").array().default([]),
   displayOrder: integer("display_order").default(0),
-  selectionMode: text("selection_mode").notNull().default("select"),
+  // Changing this only affects a database that has had the new default pushed;
+  // the admin sends the mode explicitly so new options are correct either way.
+  selectionMode: text("selection_mode")
+    .notNull()
+    .default(DEFAULT_SELECTION_MODE),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });

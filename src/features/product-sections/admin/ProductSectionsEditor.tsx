@@ -109,11 +109,11 @@ export default function ProductSectionsEditor({ productId }: Props) {
       }
       const data = await res.json();
       toast({ title: `Đã lưu ${data.count ?? 0} section` });
-      // Refresh IDs from server so subsequent saves match DB rows.
-      const refreshed = await fetch(`/api/product-sections/${productId}`, {
-        cache: "no-store",
-      }).then((r) => r.json());
-      if (Array.isArray(refreshed)) setSections(refreshed);
+      // The save response carries the persisted tree, so the real row ids for
+      // the next save come straight back from the write. Re-reading them with a
+      // second GET left a window where a cached response could hand back the
+      // pre-save snapshot and silently undo the edit that had just landed.
+      if (Array.isArray(data.sections)) setSections(data.sections);
     });
   }
 
