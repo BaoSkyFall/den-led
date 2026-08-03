@@ -13,6 +13,30 @@ type Props = { groups: NavGroup[] };
 const BAR_LINK =
   "text-[10px] font-bold tracking-[0.2em] uppercase text-white/50 hover:text-white transition-colors px-3 py-2";
 
+/**
+ * Geometry of a dropdown panel, in pixels.
+ *
+ * These have to be numbers rather than Tailwind classes because the panel's
+ * width is computed: it is absolutely positioned, so leaving the width to the
+ * layout would size it against the ~80px bar item above it. They must stay in
+ * step with `gap-x-8` and `p-6` on the panel itself.
+ */
+const COLUMN_WIDTH = 200;
+const COLUMN_GAP = 32;
+const PANEL_PADDING = 24;
+const MAX_COLUMNS = 3;
+
+/** Three columns once there are three types to fill them, fewer before that. */
+export const columnsFor = (sections: number) =>
+  Math.min(MAX_COLUMNS, Math.max(1, sections));
+
+export const panelWidth = (sections: number) => {
+  const columns = columnsFor(sections);
+  return (
+    COLUMN_WIDTH * columns + COLUMN_GAP * (columns - 1) + PANEL_PADDING * 2
+  );
+};
+
 export default function StoreHeader({ groups }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
@@ -68,16 +92,28 @@ export default function StoreHeader({ groups }: Props) {
                         levels visible at once. Nothing here is inert text —
                         the type navigates to its filtered list, each product
                         to its own page. */}
-                    {/* Wraps rather than scrolls. Dòng Xe holds seven types,
-                        which side by side is wider than the window — and a
-                        hover panel that scrolls sideways closes the moment the
-                        pointer leaves it to reach the scrollbar. */}
-                    <div className="bg-[#0a0a0a] border border-white/10 p-6 flex flex-wrap gap-x-10 gap-y-6 max-w-[760px]">
+                    {/* Three columns, wrapping onto more rows as types are
+                        added — Dòng Xe already holds seven.
+
+                        The width is set outright rather than left to
+                        `max-width`. The panel is absolutely positioned, so its
+                        containing block is the ~80px bar item above it; a
+                        wrapping container sized against that shrinks to one
+                        column wide no matter what maximum it is given. A panel
+                        holding fewer than three types is narrowed to fit them
+                        instead of leaving empty tracks. */}
+                    <div
+                      className="bg-[#0a0a0a] border border-white/10 p-6 grid gap-x-8 gap-y-6 max-w-[calc(100vw-3rem)]"
+                      style={{
+                        width: panelWidth(group.sections.length),
+                        gridTemplateColumns: `repeat(${columnsFor(group.sections.length)}, minmax(0, 1fr))`,
+                      }}
+                    >
                       {group.sections.map((section) => (
-                        <div key={section.id} className="min-w-[150px]">
+                        <div key={section.id}>
                           <Link
                             href={section.href}
-                            className="block text-[13px] font-black uppercase tracking-wide text-white hover:text-amber-500 transition-colors mb-2 whitespace-nowrap"
+                            className="block text-[13px] font-black uppercase tracking-wide text-white hover:text-amber-500 transition-colors mb-2"
                           >
                             {section.label}
                           </Link>
@@ -86,7 +122,7 @@ export default function StoreHeader({ groups }: Props) {
                               <Link
                                 key={product.id}
                                 href={product.href}
-                                className="block text-[13px] text-white/40 hover:text-white transition-colors py-0.5 whitespace-nowrap"
+                                className="block text-[13px] text-white/40 hover:text-white transition-colors py-0.5"
                               >
                                 {product.name}
                               </Link>
