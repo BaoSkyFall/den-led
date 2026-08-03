@@ -67,8 +67,8 @@ function TaxonomyPicker({ brands, value, onChange }: TaxonomyPickerProps) {
     <div className="space-y-2">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Select value={brandId ?? undefined} onValueChange={onBrandChange}>
-          <SelectTrigger aria-label="Hãng Xe">
-            <SelectValue placeholder="Hãng xe" />
+          <SelectTrigger aria-label="Phân Loại Sản Phẩm">
+            <SelectValue placeholder="Phân Loại Sản Phẩm" />
           </SelectTrigger>
           <SelectContent>
             {brands.map((b) => (
@@ -116,9 +116,9 @@ function TaxonomyPicker({ brands, value, onChange }: TaxonomyPickerProps) {
 
       {brands.length === 0 && (
         <p className="text-xs text-amber-700">
-          Chưa có hãng xe nào.{" "}
+          Chưa có phân loại nào.{" "}
           <Link href="/admin/brands/new" className="underline">
-            Thêm hãng xe
+            Thêm Phân loại Sản Phẩm
           </Link>{" "}
           trước đã.
         </p>

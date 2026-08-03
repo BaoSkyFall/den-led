@@ -26,8 +26,8 @@ async function EditBrandPage({ params: { brandId } }: EditBrandPageProps) {
 
   return (
     <AdminShell
-      heading="Chỉnh Sửa Hãng Xe"
-      description="Cập nhật thông tin hãng xe, dòng xe và đời xe."
+      heading="Chỉnh Sửa Phân loại Sản Phẩm"
+      description="Cập nhật thông tin Phân loại Sản Phẩm, dòng xe và đời xe."
       showBackButton
     >
       <div className="space-y-6 max-w-4xl">

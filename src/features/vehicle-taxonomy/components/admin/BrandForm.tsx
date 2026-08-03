@@ -66,7 +66,7 @@ function BrandForm({ brand }: BrandFormProps) {
         }
 
         toast({
-          title: brand ? "Đã cập nhật hãng xe" : "Đã tạo hãng xe mới",
+          title: brand ? "Đã cập nhật phân loại" : "Đã tạo phân loại mới",
           description: data.label,
         });
 
@@ -75,7 +75,7 @@ function BrandForm({ brand }: BrandFormProps) {
       } catch {
         toast({
           title: "Có lỗi xảy ra",
-          description: "Không thể lưu hãng xe. Vui lòng thử lại.",
+          description: "Không thể lưu phân loại. Vui lòng thử lại.",
         });
       }
     });
@@ -87,7 +87,7 @@ function BrandForm({ brand }: BrandFormProps) {
       try {
         await deleteBrandAction(brand.id);
         toast({
-          title: "Đã xoá hãng xe",
+          title: "Đã xoá phân loại",
           description: brand.label,
         });
         router.push("/admin/brands");
@@ -95,7 +95,7 @@ function BrandForm({ brand }: BrandFormProps) {
       } catch {
         toast({
           title: "Có lỗi xảy ra",
-          description: "Không thể xoá hãng xe. Vui lòng thử lại.",
+          description: "Không thể xoá phân loại. Vui lòng thử lại.",
         });
       }
     });
@@ -186,7 +186,7 @@ function BrandForm({ brand }: BrandFormProps) {
                   />
                 </FormControl>
                 <FormDescription>
-                  Số nhỏ hiển thị trước. Dùng để sắp xếp danh sách hãng xe.
+                  Số nhỏ hiển thị trước. Dùng để sắp xếp danh sách phân loại.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -240,8 +240,8 @@ function BrandForm({ brand }: BrandFormProps) {
             <div className="ml-auto">
               <DeleteDialog
                 onClickHandler={onDelete}
-                triggerLabel="Xoá Hãng Xe"
-                title="Xoá hãng xe này?"
+                triggerLabel="Xoá phân loại"
+                title="Xoá phân loại này?"
                 description="Toàn bộ dòng xe và đời xe thuộc hãng này cũng sẽ bị xoá. Sản phẩm sẽ mất phân loại xe (không bị xoá). Thao tác không thể hoàn tác."
                 cancelLabel="Huỷ"
                 actionLabel="Xoá"

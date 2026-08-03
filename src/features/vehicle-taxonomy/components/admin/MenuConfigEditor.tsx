@@ -126,7 +126,7 @@ function MenuConfigEditor({ tree }: MenuConfigEditorProps) {
       <p className="text-sm text-slate-500">
         Chưa có dòng xe nào. Thêm dòng xe ở trang{" "}
         <Link href="/admin/brands" className="underline">
-          Hãng Xe
+          Phân Loại Sản Phẩm
         </Link>
         .
       </p>

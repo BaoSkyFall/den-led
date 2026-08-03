@@ -14,12 +14,12 @@ async function AdminBrandsPage() {
 
   return (
     <AdminShell
-      heading="Hãng Xe"
-      description="Quản lý hãng xe (Honda, Yamaha, ...)."
+      heading="Phân loại sản phẩm"
+      description="Quản lý phân loại sản phẩm (Honda, Yamaha, ...)."
     >
       <section className="flex justify-end items-center pb-5 w-full">
         <Link href="/admin/brands/new" className={cn(buttonVariants())}>
-          Thêm Hãng Xe
+          Thêm phân loại sản phẩm
         </Link>
       </section>
 
