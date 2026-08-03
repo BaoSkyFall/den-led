@@ -13,7 +13,7 @@ export const dashboardConfig: DashboardConfig = {
       items: [],
     },
     {
-      title: "Hãng Xe",
+      title: "Phân Loại Sản Phẩm",
       href: "/admin/brands",
       icon: "tag",
       items: [],
