@@ -14,20 +14,6 @@
  */
 export const NAV_TAXONOMY_TAG = "nav-taxonomy";
 
-export type NavProduct = { id: string; name: string; slug: string };
-export type NavGeneration = {
-  id: string;
-  label: string;
-  slug: string;
-  products: NavProduct[];
-};
-export type NavModel = {
-  id: string;
-  label: string;
-  slug: string;
-  generations: NavGeneration[];
-};
-
 /**
  * The storefront menu's headings, left to right.
  *
@@ -57,21 +43,36 @@ export const VEHICLE_GROUP_KEY = "dong-xe";
 
 export type MenuGroupKey = (typeof MENU_GROUPS)[number]["key"];
 
-/** One clickable entry under a heading: a brand, or a model. */
-export type NavItem = {
+/** A product, linked straight to its own page. */
+export type NavProduct = {
   id: string;
-  label: string;
-  /** Already-filtered /shop URL. */
+  name: string;
+  /** `/shop/<slug>`. */
   href: string;
 };
 
-/** One heading of the menu, with everything shown beneath it. */
+/**
+ * One "Loại xe" inside a heading — a model, with the products it holds.
+ *
+ * The menu shows both levels at once rather than making the type a link that
+ * has to be followed: a customer looking for "SH 2026" should see the words
+ * "SH 2026", not a heading called SH they must guess is worth opening.
+ */
+export type NavSection = {
+  id: string;
+  label: string;
+  /** `/shop?model=<slug>` — the type itself stays clickable. */
+  href: string;
+  products: NavProduct[];
+};
+
+/** One item on the header bar, with everything shown when it is hovered. */
 export type NavGroup = {
   key: string;
   label: string;
-  /** The heading itself is a link — nothing on this menu is inert text. */
+  /** `/shop?group=<key>`. */
   href: string;
-  items: NavItem[];
+  sections: NavSection[];
 };
 
 /**

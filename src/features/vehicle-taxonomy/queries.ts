@@ -38,9 +38,9 @@ const byOrderThenLabel = <T extends { displayOrder: number; label: string }>(
  * Exported so it can be probed/tested outside the Next.js server runtime, where
  * `unstable_cache` is unavailable. Application code should call `getNavTree()`.
  *
- * Reads brands, their models and just enough of the products underneath to know
- * what is in stock — only `products(id)`, because the menu now lists categories
- * rather than product names and counting is all it needs.
+ * Reads brands, their models, and the products underneath by name: each menu
+ * shows its products outright rather than a category the customer has to open,
+ * so the names are the payload, not a count.
  *
  * Cascade-hide is derived here, never stored:
  *   models.is_active = true            -> inactive model + whole subtree gone
@@ -67,7 +67,7 @@ export const fetchNavTree = async (): Promise<NavGroup[]> => {
         id, label, slug, group, is_active, display_order,
         generations (
           is_active,
-          products ( id )
+          products ( id, name, slug )
         )
       )
     `,

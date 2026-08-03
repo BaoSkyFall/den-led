@@ -3,19 +3,20 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { ChevronDown, ChevronRight, Menu, Phone, X } from "lucide-react";
+import { ChevronDown, Menu, Phone, X } from "lucide-react";
 import type { NavGroup } from "@/features/vehicle-taxonomy";
 import HeaderSearch from "./HeaderSearch";
 
 type Props = { groups: NavGroup[] };
 
+/** Type used by the bar's own items, shared so they cannot drift apart. */
+const BAR_LINK =
+  "text-[10px] font-bold tracking-[0.2em] uppercase text-white/50 hover:text-white transition-colors px-3 py-2";
+
 export default function StoreHeader({ groups }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
-  const [desktopHover, setDesktopHover] = useState<string | null>(null);
-
-  // Empty tree (fetch error / empty DB) => plain link, never a broken dropdown.
-  const hasMenu = groups.length > 0;
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
 
   return (
     <>
@@ -34,60 +35,60 @@ export default function StoreHeader({ groups }: Props) {
             />
           </Link>
 
-          {/* The horizontal bar keeps its 10px type: it is balanced against the
-              logo and the "Gọi Ngay" button, and these three items carry 0.2em
-              letter-spacing, so growing them eats real width. Only the dropdown
-              below — where a customer actually reads — was scaled up. */}
+          {/* Each heading sits on the bar in its own right rather than behind a
+              single "Sản Phẩm" item: a customer after a light should not have
+              to discover that lights live inside something else first. */}
           <nav className="hidden lg:flex items-center gap-1">
-            <Link
-              href="/"
-              className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/50 hover:text-white transition-colors px-3 py-2"
-            >
+            <Link href="/" className={BAR_LINK}>
               Trang Chủ
             </Link>
 
-            {hasMenu ? (
+            {groups.map((group) => (
               <div
+                key={group.key}
                 className="relative"
-                onMouseEnter={() => setDesktopHover("catalogue")}
-                onMouseLeave={() => setDesktopHover(null)}
+                onMouseEnter={() => setOpenGroup(group.key)}
+                onMouseLeave={() => setOpenGroup(null)}
               >
                 <Link
-                  href="/shop"
-                  className="flex items-center gap-1.5 text-[10px] font-bold tracking-[0.2em] uppercase text-white/50 hover:text-white transition-colors px-3 py-2"
+                  href={group.href}
+                  className={`flex items-center gap-1.5 ${BAR_LINK}`}
                 >
-                  Sản Phẩm
+                  {group.label}
                   <ChevronDown
                     size={10}
                     strokeWidth={2.5}
-                    className={`transition-transform duration-200 ${desktopHover === "catalogue" ? "rotate-180" : ""}`}
+                    className={`transition-transform duration-200 ${openGroup === group.key ? "rotate-180" : ""}`}
                   />
                 </Link>
 
-                {desktopHover === "catalogue" && (
+                {openGroup === group.key && (
                   <div className="absolute top-full left-1/2 -translate-x-1/2 mt-0 pt-2 z-50">
-                    {/* Everything is visible at once and every word is a link.
-                        The menu this replaced opened with a line of text
-                        reading "Chọn hãng xe để xem gói độ đèn" — the most
-                        prominent thing on it, and not clickable — which is why
-                        customers said they could not tell where to press. */}
-                    <div className="bg-[#0a0a0a] border border-white/10 p-6 flex gap-10">
-                      {groups.map((group) => (
-                        <div key={group.key} className="min-w-[150px]">
+                    {/* Products are listed under the type they belong to, both
+                        levels visible at once. Nothing here is inert text —
+                        the type navigates to its filtered list, each product
+                        to its own page. */}
+                    {/* Wraps rather than scrolls. Dòng Xe holds seven types,
+                        which side by side is wider than the window — and a
+                        hover panel that scrolls sideways closes the moment the
+                        pointer leaves it to reach the scrollbar. */}
+                    <div className="bg-[#0a0a0a] border border-white/10 p-6 flex flex-wrap gap-x-10 gap-y-6 max-w-[760px]">
+                      {group.sections.map((section) => (
+                        <div key={section.id} className="min-w-[150px]">
                           <Link
-                            href={group.href}
-                            className="block text-[15px] font-black uppercase tracking-wide text-white hover:text-amber-500 transition-colors mb-3"
+                            href={section.href}
+                            className="block text-[13px] font-black uppercase tracking-wide text-white hover:text-amber-500 transition-colors mb-2 whitespace-nowrap"
                           >
-                            {group.label}
+                            {section.label}
                           </Link>
                           <div className="flex flex-col">
-                            {group.items.map((item) => (
+                            {section.products.map((product) => (
                               <Link
-                                key={item.id}
-                                href={item.href}
-                                className="block text-[13px] text-white/40 hover:text-white transition-colors py-1"
+                                key={product.id}
+                                href={product.href}
+                                className="block text-[13px] text-white/40 hover:text-white transition-colors py-0.5 whitespace-nowrap"
                               >
-                                {item.label}
+                                {product.name}
                               </Link>
                             ))}
                           </div>
@@ -97,25 +98,15 @@ export default function StoreHeader({ groups }: Props) {
                   </div>
                 )}
               </div>
-            ) : (
-              <Link
-                href="/shop"
-                className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/50 hover:text-white transition-colors px-3 py-2"
-              >
-                Sản Phẩm
-              </Link>
-            )}
+            ))}
 
-            <a
-              href="/#contact"
-              className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/50 hover:text-white transition-colors px-3 py-2"
-            >
+            <a href="/#contact" className={BAR_LINK}>
               Liên Hệ
             </a>
           </nav>
 
           <div className="flex items-center gap-4">
-            <div className="hidden lg:block">
+            <div className="hidden xl:block">
               <HeaderSearch />
             </div>
             <a
@@ -158,9 +149,9 @@ export default function StoreHeader({ groups }: Props) {
             />
           </div>
 
-          {/* Same three headings as desktop, stacked. A phone has no room for
-              them side by side, so here they do fold — but the heading itself
-              still navigates, so nothing is reachable only by expanding. */}
+          {/* A phone has no hover and no room for three panels, so the headings
+              fold here. The heading itself still navigates, so nothing is
+              reachable only by expanding. */}
           <nav className="flex flex-col px-8 py-6 gap-0">
             <Link
               href="/"
@@ -197,16 +188,27 @@ export default function StoreHeader({ groups }: Props) {
                   </button>
                 </div>
                 {mobileExpanded === group.key && (
-                  <div className="pb-3 pl-4 flex flex-col gap-3">
-                    {group.items.map((item) => (
-                      <Link
-                        key={item.id}
-                        href={item.href}
-                        onClick={() => setMobileOpen(false)}
-                        className="text-sm text-white/50 hover:text-amber-500 transition-colors pl-3"
-                      >
-                        {item.label}
-                      </Link>
+                  <div className="pb-4 pl-4 flex flex-col gap-4">
+                    {group.sections.map((section) => (
+                      <div key={section.id} className="flex flex-col gap-2">
+                        <Link
+                          href={section.href}
+                          onClick={() => setMobileOpen(false)}
+                          className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30 pl-3"
+                        >
+                          {section.label}
+                        </Link>
+                        {section.products.map((product) => (
+                          <Link
+                            key={product.id}
+                            href={product.href}
+                            onClick={() => setMobileOpen(false)}
+                            className="text-sm text-white/50 hover:text-amber-500 transition-colors pl-6"
+                          >
+                            {product.name}
+                          </Link>
+                        ))}
+                      </div>
                     ))}
                   </div>
                 )}

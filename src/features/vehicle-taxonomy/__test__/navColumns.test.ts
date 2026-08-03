@@ -1,13 +1,13 @@
 import { buildNavGroups, type RawNavBrand } from "../navColumns";
 
-/** A brand whose models each hold `count` active products. */
+/** A brand whose models each hold the named products. */
 const brand = (
   over: Partial<RawNavBrand> & { id: string; label: string; slug: string },
   models: {
     label: string;
     slug: string;
     group?: string;
-    count?: number;
+    products?: string[];
   }[] = [],
 ): RawNavBrand => ({
   ...over,
@@ -18,18 +18,20 @@ const brand = (
     group: m.group ?? null,
     generations: [
       {
-        products: Array.from({ length: m.count ?? 1 }, (_, j) => ({
+        products: (m.products ?? ["SP"]).map((name, j) => ({
           id: `${over.id}-m${i}-p${j}`,
+          name,
+          slug: `${m.slug}-${j}`,
         })),
       },
     ],
   })),
 });
 
-const labels = (items: { label: string }[]) => items.map((i) => i.label);
+const names = (products: { name: string }[]) => products.map((p) => p.name);
 
 describe("buildNavGroups", () => {
-  it("lists brands under Dòng Xe and models under the accessory headings", () => {
+  it("puts each heading on the bar with its own sections", () => {
     const groups = buildNavGroups([
       brand({ id: "b1", label: "Honda", slug: "honda" }, [
         { label: "SH", slug: "sh" },
@@ -41,11 +43,40 @@ describe("buildNavGroups", () => {
     ]);
 
     expect(groups.map((g) => g.label)).toEqual(["Dòng Xe", "Đèn", "Linh Kiện"]);
-    // Dòng Xe answers "which bike is it for", so it lists the make itself
-    // rather than the models underneath it.
-    expect(labels(groups[0].items)).toEqual(["Honda"]);
-    expect(labels(groups[1].items)).toEqual(["Pha Đèn"]);
-    expect(labels(groups[2].items)).toEqual(["Pat Inox"]);
+    expect(groups.map((g) => g.sections.map((s) => s.label))).toEqual([
+      ["SH"],
+      ["Pha Đèn"],
+      ["Pat Inox"],
+    ]);
+  });
+
+  it("lists the products themselves under each type", () => {
+    const [vehicles] = buildNavGroups([
+      brand({ id: "b1", label: "Honda", slug: "honda" }, [
+        {
+          label: "Vario",
+          slug: "vario",
+          products: ["Vario 160", "Vario 2018"],
+        },
+      ]),
+    ]);
+
+    expect(names(vehicles.sections[0].products)).toEqual([
+      "Vario 160",
+      "Vario 2018",
+    ]);
+  });
+
+  it("links the type to its filtered list and each product to its page", () => {
+    const [vehicles] = buildNavGroups([
+      brand({ id: "b1", label: "Honda", slug: "honda" }, [
+        { label: "SH", slug: "sh", products: ["SH 2026"] },
+      ]),
+    ]);
+
+    expect(vehicles.href).toBe("/shop?group=dong-xe");
+    expect(vehicles.sections[0].href).toBe("/shop?model=sh");
+    expect(vehicles.sections[0].products[0].href).toBe("/shop/sh-0");
   });
 
   it("keeps the headings in their fixed order", () => {
@@ -62,34 +93,31 @@ describe("buildNavGroups", () => {
     expect(groups.map((g) => g.key)).toEqual(["dong-xe", "den", "linh-kien"]);
   });
 
-  it("makes every heading and every item a link", () => {
-    const [vehicles, lights] = buildNavGroups([
+  it("percent-encodes a model slug so it cannot inject a parameter", () => {
+    const [vehicles] = buildNavGroups([
+      brand({ id: "b1", label: "Honda", slug: "honda" }, [
+        { label: "SH", slug: "a&b=c" },
+      ]),
+    ]);
+
+    expect(vehicles.sections[0].href).toBe("/shop?model=a%26b%3Dc");
+  });
+
+  it("gathers Dòng Xe from every vehicle brand", () => {
+    const [vehicles] = buildNavGroups([
       brand({ id: "b1", label: "Honda", slug: "honda" }, [
         { label: "SH", slug: "sh" },
       ]),
-      brand({ id: "b2", label: "Đồ Đúc", slug: "-c", is_accessory: true }, [
-        { label: "Pha Đèn", slug: "pha-den", group: "den" },
+      brand({ id: "b2", label: "Vinfast", slug: "vinfast" }, [
+        { label: "VF3", slug: "vf3" },
       ]),
     ]);
 
-    expect(vehicles.href).toBe("/shop?group=dong-xe");
-    expect(vehicles.items[0].href).toBe("/shop?brand=honda");
-    expect(lights.href).toBe("/shop?group=den");
-    expect(lights.items[0].href).toBe("/shop?model=pha-den");
+    expect(vehicles.sections.map((s) => s.label)).toEqual(["SH", "VF3"]);
   });
 
-  it("percent-encodes slugs so one cannot inject a second parameter", () => {
-    const [vehicles] = buildNavGroups([
-      brand({ id: "b1", label: "Honda", slug: "a&b=c" }, [
-        { label: "SH", slug: "sh" },
-      ]),
-    ]);
-
-    expect(vehicles.items[0].href).toBe("/shop?brand=a%26b%3Dc");
-  });
-
-  it("groups models from every accessory brand under one heading", () => {
-    const groups = buildNavGroups([
+  it("gathers a heading from every accessory brand carrying that group", () => {
+    const [lights] = buildNavGroups([
       brand({ id: "b1", label: "Đồ Đúc", slug: "-c", is_accessory: true }, [
         { label: "Pha Đèn", slug: "pha-den", group: "den" },
       ]),
@@ -98,41 +126,39 @@ describe("buildNavGroups", () => {
       ]),
     ]);
 
-    expect(labels(groups[0].items)).toEqual(["Pha Đèn", "Đèn Hậu"]);
+    expect(lights.sections.map((s) => s.label)).toEqual(["Pha Đèn", "Đèn Hậu"]);
   });
 
-  it("drops a model with nothing in stock", () => {
+  it("drops a type with nothing in stock", () => {
     // Hộp In 3D and Hộp Nhôm in the real data: models with zero active
-    // products, which would otherwise render as a link to an empty page.
+    // products, which would otherwise render as a heading over nothing.
     const [linhKien] = buildNavGroups([
       brand({ id: "b1", label: "Bi Cầu", slug: "bc", is_accessory: true }, [
-        { label: "Pat Inox", slug: "pat-inox", group: "linh-kien", count: 1 },
-        { label: "Hộp In 3D", slug: "hop-3d", group: "linh-kien", count: 0 },
+        { label: "Pat Inox", slug: "pat-inox", group: "linh-kien" },
+        {
+          label: "Hộp In 3D",
+          slug: "hop-3d",
+          group: "linh-kien",
+          products: [],
+        },
       ]),
     ]);
 
-    expect(labels(linhKien.items)).toEqual(["Pat Inox"]);
+    expect(linhKien.sections.map((s) => s.label)).toEqual(["Pat Inox"]);
   });
 
-  it("drops a brand with nothing in stock", () => {
-    const groups = buildNavGroups([
-      brand({ id: "b1", label: "Honda", slug: "honda" }, [
-        { label: "SH", slug: "sh", count: 1 },
-      ]),
-      // Vinfast in the real data once its products were unfiled.
-      brand({ id: "b2", label: "Vinfast", slug: "vinfast" }, [
-        { label: "VF3", slug: "vf3", count: 0 },
-      ]),
-      { id: "b3", label: "Yamaha", slug: "yamaha" },
-    ]);
-
-    expect(labels(groups[0].items)).toEqual(["Honda"]);
-  });
-
-  it("omits a heading with no items rather than showing an empty one", () => {
+  it("omits a heading left with no sections rather than opening an empty panel", () => {
     const groups = buildNavGroups([
       brand({ id: "b1", label: "Honda", slug: "honda" }, [
         { label: "SH", slug: "sh" },
+      ]),
+      brand({ id: "b2", label: "Bi Cầu", slug: "bc", is_accessory: true }, [
+        {
+          label: "Hộp In 3D",
+          slug: "hop-3d",
+          group: "linh-kien",
+          products: [],
+        },
       ]),
     ]);
 
@@ -144,12 +170,12 @@ describe("buildNavGroups", () => {
   });
 
   it("ignores an accessory model whose group is unrecognised", () => {
-    const groups = buildNavGroups([
-      brand({ id: "b1", label: "Đồ Đúc", slug: "-c", is_accessory: true }, [
-        { label: "Thứ lạ", slug: "la", group: "khong-biet" },
+    expect(
+      buildNavGroups([
+        brand({ id: "b1", label: "Đồ Đúc", slug: "-c", is_accessory: true }, [
+          { label: "Thứ lạ", slug: "la", group: "khong-biet" },
+        ]),
       ]),
-    ]);
-
-    expect(groups).toEqual([]);
+    ).toEqual([]);
   });
 });
