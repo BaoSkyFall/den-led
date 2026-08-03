@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 import type { ShopPage, ShopProduct } from "@/features/search/queries";
-import type { NavBrand } from "@/features/vehicle-taxonomy";
+import type { NavGroup } from "@/features/vehicle-taxonomy";
 
 const ALL_LABEL = "Tất Cả";
 
@@ -46,16 +46,16 @@ function resolveImageSrc(key: string | null): string {
  * the unfiltered first page is plain `/shop` and not `/shop?brand=&page=1`.
  */
 export function shopHref({
-  brand,
+  group,
   q,
   page,
 }: {
-  brand?: string | null;
+  group?: string | null;
   q?: string;
   page?: number;
 }): string {
   const params = new URLSearchParams();
-  if (brand) params.set("brand", brand);
+  if (group) params.set("group", group);
   if (q) params.set("q", q);
   if (page && page > 1) params.set("page", String(page));
   const search = params.toString();
@@ -148,13 +148,13 @@ function ProductCard({ product }: { product: ShopProduct }) {
 }
 
 type Props = {
-  brands: NavBrand[];
+  groups: NavGroup[];
   result: ShopPage;
-  activeBrand: string | null;
+  activeGroup: string | null;
   query: string;
 };
 
-function ShopPageContent({ brands, result, activeBrand, query }: Props) {
+function ShopPageContent({ groups, result, activeGroup, query }: Props) {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -172,15 +172,15 @@ function ShopPageContent({ brands, result, activeBrand, query }: Props) {
     const id = setTimeout(() => {
       // Any change of search term restarts at page one — page 3 of the old
       // result set means nothing for the new one.
-      router.replace(shopHref({ brand: activeBrand, q: term.trim() }), {
+      router.replace(shopHref({ group: activeGroup, q: term.trim() }), {
         scroll: false,
       });
     }, SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(id);
-  }, [term, activeBrand, router, pathname]);
+  }, [term, activeGroup, router, pathname]);
 
   const { products, total, page, pageCount } = result;
-  const hasFilter = activeBrand !== null || query !== "";
+  const hasFilter = activeGroup !== null || query !== "";
 
   return (
     <>
@@ -232,25 +232,25 @@ function ShopPageContent({ brands, result, activeBrand, query }: Props) {
                 href={shopHref({ q: query })}
                 scroll={false}
                 className={`text-[10px] font-bold tracking-[0.2em] uppercase px-3 py-2 whitespace-nowrap transition-colors ${
-                  activeBrand === null
+                  activeGroup === null
                     ? "bg-amber-500 text-black"
                     : "text-white/40 hover:text-white"
                 }`}
               >
                 {ALL_LABEL}
               </Link>
-              {brands.map((b) => (
+              {groups.map((g) => (
                 <Link
-                  key={b.id}
-                  href={shopHref({ brand: b.slug, q: query })}
+                  key={g.key}
+                  href={shopHref({ group: g.key, q: query })}
                   scroll={false}
                   className={`text-[10px] font-bold tracking-[0.2em] uppercase px-3 py-2 whitespace-nowrap transition-colors ${
-                    activeBrand === b.slug
+                    activeGroup === g.key
                       ? "bg-amber-500 text-black"
                       : "text-white/40 hover:text-white"
                   }`}
                 >
-                  {b.label}
+                  {g.label}
                 </Link>
               ))}
             </div>
@@ -287,8 +287,8 @@ function ShopPageContent({ brands, result, activeBrand, query }: Props) {
                 Không có sản phẩm
               </h2>
               <p className="text-sm text-white/40 max-w-sm mx-auto mb-8">
-                Không tìm thấy sản phẩm phù hợp với bộ lọc. Thử chọn hãng xe
-                khác hoặc xoá bộ lọc.
+                Không tìm thấy sản phẩm phù hợp với bộ lọc. Thử chọn nhóm khác
+                hoặc xoá bộ lọc.
               </p>
               <Link
                 href="/shop"
@@ -328,7 +328,7 @@ function ShopPageContent({ brands, result, activeBrand, query }: Props) {
                 >
                   <PageLink
                     href={shopHref({
-                      brand: activeBrand,
+                      group: activeGroup,
                       q: query,
                       page: page - 1,
                     })}
@@ -350,7 +350,7 @@ function ShopPageContent({ brands, result, activeBrand, query }: Props) {
                       <Link
                         key={p}
                         href={shopHref({
-                          brand: activeBrand,
+                          group: activeGroup,
                           q: query,
                           page: p,
                         })}
@@ -369,7 +369,7 @@ function ShopPageContent({ brands, result, activeBrand, query }: Props) {
 
                   <PageLink
                     href={shopHref({
-                      brand: activeBrand,
+                      group: activeGroup,
                       q: query,
                       page: page + 1,
                     })}

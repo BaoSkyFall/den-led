@@ -1,4 +1,4 @@
-import { ACCESSORY_BRAND_SLUG } from "@/features/vehicle-taxonomy";
+import { VEHICLE_GROUP_KEY } from "@/features/vehicle-taxonomy";
 import { createLiveRestClient } from "@/lib/supabase/rest";
 
 /** Products per page on /shop. */
@@ -24,8 +24,12 @@ export type ShopPage = {
 };
 
 export type ShopQuery = {
-  /** A brand slug, or {@link ACCESSORY_BRAND_SLUG} for every accessory range. */
+  /** A brand slug — the menu uses these under "Dòng Xe". */
   brand?: string;
+  /** A menu heading: "dong-xe", "den" or "linh-kien". */
+  group?: string;
+  /** A model slug — the menu uses these under "Đèn" and "Linh Kiện". */
+  model?: string;
   /** Free-text match against the product name. */
   q?: string;
   page?: number;
@@ -51,16 +55,20 @@ const EMPTY: ShopPage = { products: [], total: 0, page: 1, pageCount: 1 };
  */
 export const fetchShopPage = async ({
   brand,
+  group,
+  model,
   q,
   page = 1,
 }: ShopQuery): Promise<ShopPage> => {
   const supabase = createLiveRestClient();
 
-  // `!inner` turns the nested brand into a join filter, but it also drops any
-  // product whose generation is unset — so it is only applied when a brand
-  // filter actually needs it, and an unfiltered /shop still lists everything.
-  const brandJoin = brand
-    ? `generations:generation_id!inner(models:model_id!inner(brands:brand_id!inner(slug, is_accessory)))`
+  // `!inner` turns the nested taxonomy into a join filter, but it also drops
+  // any product whose generation is unset — so it is only applied when a filter
+  // actually needs it, and an unfiltered /shop still lists everything,
+  // unclassified products included.
+  const needsJoin = Boolean(brand || group || model);
+  const taxonomyJoin = needsJoin
+    ? `generations:generation_id!inner(models:model_id!inner(slug, group, brands:brand_id!inner(slug, is_accessory)))`
     : "";
 
   const term = q?.trim();
@@ -75,7 +83,7 @@ export const fetchShopPage = async ({
         [
           "id, name, slug, badge, rating, price",
           "medias:featured_image_id(key)",
-          brandJoin,
+          taxonomyJoin,
         ]
           .filter(Boolean)
           .join(", "),
@@ -83,12 +91,20 @@ export const fetchShopPage = async ({
       )
       .eq("status", "active");
 
-    if (brand === ACCESSORY_BRAND_SLUG) {
-      // The accessory column is several brands rendered as one, so it filters
-      // on the flag rather than on any single slug.
-      query = query.eq("generations.models.brands.is_accessory", true);
-    } else if (brand) {
+    if (brand) {
       query = query.eq("generations.models.brands.slug", brand);
+    }
+
+    if (group === VEHICLE_GROUP_KEY) {
+      // "Dòng Xe" is not a value in `models.group` — it is everything that is
+      // not an accessory range, so it filters on the brand flag instead.
+      query = query.eq("generations.models.brands.is_accessory", false);
+    } else if (group) {
+      query = query.eq("generations.models.group", group);
+    }
+
+    if (model) {
+      query = query.eq("generations.models.slug", model);
     }
 
     if (term) {

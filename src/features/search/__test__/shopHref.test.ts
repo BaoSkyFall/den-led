@@ -3,26 +3,25 @@ import { pageItems, shopHref } from "../components/ShopPageContent";
 describe("shopHref", () => {
   it("returns a bare /shop when nothing is filtered", () => {
     expect(shopHref({})).toBe("/shop");
-    expect(shopHref({ brand: null, q: "", page: 1 })).toBe("/shop");
+    expect(shopHref({ group: null, q: "", page: 1 })).toBe("/shop");
   });
 
   it("omits page 1 so the first page has one canonical URL", () => {
-    expect(shopHref({ brand: "honda", page: 1 })).toBe("/shop?brand=honda");
-    expect(shopHref({ brand: "honda", page: 2 })).toBe(
-      "/shop?brand=honda&page=2",
-    );
+    expect(shopHref({ group: "den", page: 1 })).toBe("/shop?group=den");
+    expect(shopHref({ group: "den", page: 2 })).toBe("/shop?group=den&page=2");
   });
 
-  it("keeps the brand and the search term together", () => {
-    expect(shopHref({ brand: "honda", q: "Vario", page: 3 })).toBe(
-      "/shop?brand=honda&q=Vario&page=3",
+  it("keeps the group and the search term together", () => {
+    expect(shopHref({ group: "den", q: "Vario", page: 3 })).toBe(
+      "/shop?group=den&q=Vario&page=3",
     );
   });
 
   it("encodes values that would otherwise break the query string", () => {
-    // "Đồ Đúc" slugifies to "-c" today, but a brand named with an ampersand or
-    // a space must not be able to inject a second parameter.
-    expect(shopHref({ brand: "a&b=c" })).toBe("/shop?brand=a%26b%3Dc");
+    // A heading key is fixed in code today, but the same builder takes
+    // brand and model slugs from the database — one with an ampersand or a
+    // space must not be able to inject a second parameter.
+    expect(shopHref({ group: "a&b=c" })).toBe("/shop?group=a%26b%3Dc");
     expect(shopHref({ q: "bi cầu" })).toBe("/shop?q=bi+c%E1%BA%A7u");
   });
 });

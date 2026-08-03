@@ -1,7 +1,7 @@
 // Shared shapes for the vehicle taxonomy (Brand -> Model -> Generation).
 //
 // Three distinct views over the same tree:
-//  - Nav*        : the PUBLIC storefront menu, now keyed by brand.
+//  - Nav*        : the PUBLIC storefront menu, keyed by product type.
 //  - MenuConfig* : the admin "Cấu Hình Menu" view. Everything, unfiltered.
 //  - BrandTree*  : the full unfiltered tree used by the ProductForm picker.
 
@@ -29,43 +29,49 @@ export type NavModel = {
 };
 
 /**
- * Longest a menu column may get before it turns into a "Xem thêm" link.
+ * The storefront menu's headings, left to right.
  *
- * Applies to every column, vehicle makes included. The accessory ranges looked
- * like the reason the menu had outgrown its box, but counting the rows showed
- * Honda alone would have rendered ten entries against the accessory column's
- * five — capping only accessories would have moved the bulge, not removed it.
+ * Grouped by what a product IS rather than who supplies it. The old menu put a
+ * column per brand under a line of text reading "Chọn hãng xe để xem gói độ
+ * đèn" — which was not a link, while the only link sat at the bottom of each
+ * column. Customers reported not knowing where they could click.
+ *
+ * Fixed here rather than fetched: three headings that change about never, and
+ * a table for them would be a join per page load for no benefit. What each one
+ * CONTAINS is data — see `models.group` and `brands.is_accessory`.
  */
-export const NAV_COLUMN_LIMIT = 5;
+export const MENU_GROUPS = [
+  { key: "dong-xe", label: "Dòng Xe" },
+  { key: "den", label: "Đèn" },
+  { key: "linh-kien", label: "Linh Kiện" },
+] as const;
 
 /**
- * Synthetic slug for the merged accessory column.
+ * The one heading filled from brands rather than from `models.group`.
  *
- * The column is several brands rendered as one, so it has no brand slug of its
- * own to put in `/shop?brand=`. This stands in for "every brand flagged
- * `is_accessory`" on both ends of that link. It cannot collide with a real
- * brand: `brands.slug` is UNIQUE and no row uses this value.
+ * "Dòng Xe" answers a different question than its neighbours — "which bike is
+ * this for" rather than "what is this" — so it is the set of brands that are
+ * not accessory ranges, and vehicle models carry no group value at all.
  */
-export const ACCESSORY_BRAND_SLUG = "phu-kien";
+export const VEHICLE_GROUP_KEY = "dong-xe";
 
-export const ACCESSORY_BRAND_LABEL = "Phụ Kiện";
+export type MenuGroupKey = (typeof MENU_GROUPS)[number]["key"];
 
-/**
- * One column of the storefront menu: a brand, or the merged accessory group.
- *
- * Products are flattened out of the Model -> Generation nesting deliberately —
- * the menu trades the intermediate levels for a single click to the product,
- * and `/shop` keeps the browsable hierarchy.
- */
-export type NavBrand = {
+/** One clickable entry under a heading: a brand, or a model. */
+export type NavItem = {
   id: string;
   label: string;
-  slug: string;
-  isAccessory: boolean;
-  /** Capped at {@link NAV_COLUMN_LIMIT}. */
-  products: NavProduct[];
-  /** True when products were dropped by the cap, so a "Xem thêm" link is due. */
-  hasMore: boolean;
+  /** Already-filtered /shop URL. */
+  href: string;
+};
+
+/** One heading of the menu, with everything shown beneath it. */
+export type NavGroup = {
+  key: string;
+  label: string;
+  /** The heading itself is a link — nothing on this menu is inert text. */
+  href: string;
+  items: NavItem[];
 };
 
 /**
@@ -90,6 +96,8 @@ export type MenuConfigModel = {
   id: string;
   label: string;
   slug: string;
+  /** Storefront heading; null on vehicle models. See `models.group`. */
+  group: string | null;
   brandId: string;
   brandLabel: string;
   displayOrder: number;

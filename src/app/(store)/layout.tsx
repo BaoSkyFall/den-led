@@ -8,12 +8,12 @@ import { getNavTree, getVehicleFormOptions } from "@/features/vehicle-taxonomy";
 type Props = { children: ReactNode };
 
 export default async function StoreLayout({ children }: Props) {
-  // Menu is DB-driven (Hãng Xe -> Sản phẩm), cached by the "nav-taxonomy" tag
+  // Menu is DB-driven (Dòng Xe / Đèn / Linh Kiện), cached by the "nav-taxonomy" tag
   // so admin edits show up on the next request.
   // The footer select is intentionally a different view of the taxonomy: it
   // lists every active generation, including ones with no product yet, so a
   // quote request for a model we do not stock is still capturable.
-  const [navBrands, vehicleOptions] = await Promise.all([
+  const [navGroups, vehicleOptions] = await Promise.all([
     getNavTree(),
     getVehicleFormOptions(),
   ]);
@@ -26,7 +26,7 @@ export default async function StoreLayout({ children }: Props) {
       <Suspense fallback={null}>
         <PageProgress />
       </Suspense>
-      <StoreHeader brands={navBrands} />
+      <StoreHeader groups={navGroups} />
       <div className="flex-1">{children}</div>
       <StoreFooter vehicleOptions={vehicleOptions} />
       <SocialRail />

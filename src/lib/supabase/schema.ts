@@ -186,6 +186,14 @@ export const models = pgTable(
     slug: varchar("slug", { length: 255 }).notNull(),
     displayOrder: integer("display_order").notNull().default(0),
     isActive: boolean("is_active").notNull().default(true),
+    // Which heading this model sits under in the storefront menu: "den" or
+    // "linh-kien". Null on vehicle models — those are grouped under "Dòng Xe"
+    // by their brand instead, so they need no value of their own.
+    //
+    // Grouping lives here rather than on products because the accessory models
+    // already ARE the product types (Pha Đèn, Xinhan, Đèn Hậu, Pat Inox): six
+    // rows carry the whole taxonomy instead of every product carrying one.
+    group: text("group"),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
       .defaultNow()
       .notNull(),

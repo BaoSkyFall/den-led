@@ -11,26 +11,34 @@ export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
 type Props = {
-  searchParams: { brand?: string; q?: string; page?: string };
+  searchParams: {
+    brand?: string;
+    group?: string;
+    model?: string;
+    q?: string;
+    page?: string;
+  };
 };
 
 export default async function ShopPage({ searchParams }: Props) {
   const brand = searchParams.brand?.trim() || undefined;
+  const group = searchParams.group?.trim() || undefined;
+  const model = searchParams.model?.trim() || undefined;
   const q = searchParams.q?.trim() || undefined;
   const page = Number(searchParams.page) || 1;
 
   // Filter chips read the same DB-driven tree as the header menu, so the two
   // can never drift apart.
-  const [brands, result] = await Promise.all([
+  const [groups, result] = await Promise.all([
     getNavTree(),
-    fetchShopPage({ brand, q, page }),
+    fetchShopPage({ brand, group, model, q, page }),
   ]);
 
   return (
     <ShopPageContent
-      brands={brands}
+      groups={groups}
       result={result}
-      activeBrand={brand ?? null}
+      activeGroup={group ?? null}
       query={q ?? ""}
     />
   );

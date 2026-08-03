@@ -13,13 +13,13 @@ import {
   type SelectModel,
 } from "@/lib/supabase/schema";
 
-import { buildNavColumns } from "./navColumns";
+import { buildNavGroups } from "./navColumns";
 import type { RawNavBrand } from "./navColumns";
 import { NAV_TAXONOMY_TAG } from "./types";
 import type {
   BrandTreeBrand,
   MenuConfigModel,
-  NavBrand,
+  NavGroup,
   VehicleFormOption,
 } from "./types";
 
@@ -38,11 +38,9 @@ const byOrderThenLabel = <T extends { displayOrder: number; label: string }>(
  * Exported so it can be probed/tested outside the Next.js server runtime, where
  * `unstable_cache` is unavailable. Application code should call `getNavTree()`.
  *
- * One column per brand, with the Model and Generation levels flattened away:
- * the menu buys a single click to the product, and `/shop` keeps the browsable
- * hierarchy. Every brand flagged `is_accessory` collapses into one extra column
- * pinned last, so adding a third accessory range is a checkbox rather than a
- * new column.
+ * Reads brands, their models and just enough of the products underneath to know
+ * what is in stock — only `products(id)`, because the menu now lists categories
+ * rather than product names and counting is all it needs.
  *
  * Cascade-hide is derived here, never stored:
  *   models.is_active = true            -> inactive model + whole subtree gone
@@ -53,7 +51,7 @@ const byOrderThenLabel = <T extends { displayOrder: number; label: string }>(
  * model-shaped tree used to do — which is why Yamaha, Suzuki and Datbike never
  * reach the menu while they have no models at all.
  */
-export const fetchNavTree = async (): Promise<NavBrand[]> => {
+export const fetchNavTree = async (): Promise<NavGroup[]> => {
   const supabase = createClient(
     env.NEXT_PUBLIC_SUPABASE_URL,
     env.NEXT_PUBLIC_SUPABASE_ANON_KEY, // public read; RLS is OFF by design
@@ -66,10 +64,10 @@ export const fetchNavTree = async (): Promise<NavBrand[]> => {
       `
       id, label, slug, is_accessory, display_order,
       models (
-        is_active,
+        id, label, slug, group, is_active, display_order,
         generations (
           is_active,
-          products ( id, name, slug, featured, created_at )
+          products ( id )
         )
       )
     `,
@@ -85,7 +83,7 @@ export const fetchNavTree = async (): Promise<NavBrand[]> => {
     return [];
   }
 
-  return buildNavColumns((data ?? []) as RawNavBrand[]);
+  return buildNavGroups((data ?? []) as RawNavBrand[]);
 };
 
 /** Public menu tree, cached and invalidated by the `nav-taxonomy` tag. */
@@ -175,6 +173,7 @@ export const getMenuConfigTree = async (): Promise<MenuConfigModel[]> => {
       id: m.id,
       label: m.label,
       slug: m.slug,
+      group: m.group,
       brandId: m.brandId,
       brandLabel: m.brand?.label ?? "",
       displayOrder: m.displayOrder,

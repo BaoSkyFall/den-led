@@ -1,147 +1,155 @@
-import { buildNavColumns, type RawNavBrand } from "../navColumns";
-import {
-  ACCESSORY_BRAND_LABEL,
-  ACCESSORY_BRAND_SLUG,
-  NAV_COLUMN_LIMIT,
-} from "../types";
+import { buildNavGroups, type RawNavBrand } from "../navColumns";
 
-/** Wrap products in the Model -> Generation nesting the query returns. */
+/** A brand whose models each hold `count` active products. */
 const brand = (
   over: Partial<RawNavBrand> & { id: string; label: string; slug: string },
-  products: {
-    id: string;
-    name: string;
-    featured?: boolean;
-    created_at?: string;
+  models: {
+    label: string;
+    slug: string;
+    group?: string;
+    count?: number;
   }[] = [],
 ): RawNavBrand => ({
   ...over,
-  models: [
-    {
-      generations: [
-        {
-          products: products.map((p) => ({
-            slug: p.id,
-            created_at: "2026-01-01T00:00:00Z",
-            ...p,
-          })),
-        },
-      ],
-    },
-  ],
+  models: models.map((m, i) => ({
+    id: `${over.id}-m${i}`,
+    label: m.label,
+    slug: m.slug,
+    group: m.group ?? null,
+    generations: [
+      {
+        products: Array.from({ length: m.count ?? 1 }, (_, j) => ({
+          id: `${over.id}-m${i}-p${j}`,
+        })),
+      },
+    ],
+  })),
 });
 
-const names = (products: { name: string }[]) => products.map((p) => p.name);
+const labels = (items: { label: string }[]) => items.map((i) => i.label);
 
-describe("buildNavColumns", () => {
-  it("gives each vehicle brand its own column", () => {
-    const columns = buildNavColumns([
+describe("buildNavGroups", () => {
+  it("lists brands under Dòng Xe and models under the accessory headings", () => {
+    const groups = buildNavGroups([
       brand({ id: "b1", label: "Honda", slug: "honda" }, [
-        { id: "p1", name: "SH 2026" },
-      ]),
-      brand({ id: "b2", label: "Vinfast", slug: "vinfast" }, [
-        { id: "p2", name: "VF3" },
-      ]),
-    ]);
-
-    expect(columns.map((c) => c.label)).toEqual(["Honda", "Vinfast"]);
-    expect(columns.every((c) => c.isAccessory)).toBe(false);
-  });
-
-  it("collapses every accessory brand into one trailing column", () => {
-    const columns = buildNavColumns([
-      brand({ id: "b1", label: "Honda", slug: "honda" }, [
-        { id: "p1", name: "SH 2026" },
+        { label: "SH", slug: "sh" },
       ]),
       brand({ id: "b2", label: "Đồ Đúc", slug: "-c", is_accessory: true }, [
-        { id: "p2", name: "Pha Đèn" },
+        { label: "Pha Đèn", slug: "pha-den", group: "den" },
+        { label: "Pat Inox", slug: "pat-inox", group: "linh-kien" },
       ]),
-      brand(
-        {
-          id: "b3",
-          label: "Phụ Kiện Bi Cầu",
-          slug: "ph-kin",
-          is_accessory: true,
-        },
-        [{ id: "p3", name: "Pat Inox" }],
-      ),
     ]);
 
-    expect(columns).toHaveLength(2);
-    const accessories = columns[1];
-    expect(accessories.label).toBe(ACCESSORY_BRAND_LABEL);
-    expect(accessories.slug).toBe(ACCESSORY_BRAND_SLUG);
-    expect(accessories.isAccessory).toBe(true);
-    expect(names(accessories.products).sort()).toEqual(["Pat Inox", "Pha Đèn"]);
+    expect(groups.map((g) => g.label)).toEqual(["Dòng Xe", "Đèn", "Linh Kiện"]);
+    // Dòng Xe answers "which bike is it for", so it lists the make itself
+    // rather than the models underneath it.
+    expect(labels(groups[0].items)).toEqual(["Honda"]);
+    expect(labels(groups[1].items)).toEqual(["Pha Đèn"]);
+    expect(labels(groups[2].items)).toEqual(["Pat Inox"]);
   });
 
-  it("caps every column, vehicle brands included", () => {
-    const many = Array.from({ length: NAV_COLUMN_LIMIT + 4 }, (_, i) => ({
-      id: `p${i}`,
-      name: `SP ${i}`,
-    }));
-    const [honda] = buildNavColumns([
-      brand({ id: "b1", label: "Honda", slug: "honda" }, many),
+  it("keeps the headings in their fixed order", () => {
+    const groups = buildNavGroups([
+      brand({ id: "b1", label: "Đồ Đúc", slug: "-c", is_accessory: true }, [
+        { label: "Pat Inox", slug: "pat-inox", group: "linh-kien" },
+        { label: "Pha Đèn", slug: "pha-den", group: "den" },
+      ]),
+      brand({ id: "b2", label: "Honda", slug: "honda" }, [
+        { label: "SH", slug: "sh" },
+      ]),
     ]);
 
-    expect(honda.products).toHaveLength(NAV_COLUMN_LIMIT);
-    expect(honda.hasMore).toBe(true);
+    expect(groups.map((g) => g.key)).toEqual(["dong-xe", "den", "linh-kien"]);
   });
 
-  it("does not flag hasMore when the column exactly fills the cap", () => {
-    const exact = Array.from({ length: NAV_COLUMN_LIMIT }, (_, i) => ({
-      id: `p${i}`,
-      name: `SP ${i}`,
-    }));
-    const [honda] = buildNavColumns([
-      brand({ id: "b1", label: "Honda", slug: "honda" }, exact),
-    ]);
-
-    expect(honda.hasMore).toBe(false);
-  });
-
-  it("puts featured products first, then the newest", () => {
-    const [honda] = buildNavColumns([
+  it("makes every heading and every item a link", () => {
+    const [vehicles, lights] = buildNavGroups([
       brand({ id: "b1", label: "Honda", slug: "honda" }, [
-        { id: "p1", name: "Cũ", created_at: "2020-01-01T00:00:00Z" },
-        { id: "p2", name: "Mới", created_at: "2026-06-01T00:00:00Z" },
-        {
-          id: "p3",
-          name: "Nổi bật nhưng cũ",
-          featured: true,
-          created_at: "2019-01-01T00:00:00Z",
-        },
+        { label: "SH", slug: "sh" },
+      ]),
+      brand({ id: "b2", label: "Đồ Đúc", slug: "-c", is_accessory: true }, [
+        { label: "Pha Đèn", slug: "pha-den", group: "den" },
       ]),
     ]);
 
-    expect(names(honda.products)).toEqual(["Nổi bật nhưng cũ", "Mới", "Cũ"]);
+    expect(vehicles.href).toBe("/shop?group=dong-xe");
+    expect(vehicles.items[0].href).toBe("/shop?brand=honda");
+    expect(lights.href).toBe("/shop?group=den");
+    expect(lights.items[0].href).toBe("/shop?model=pha-den");
   });
 
-  it("drops a brand with no active product", () => {
-    const columns = buildNavColumns([
+  it("percent-encodes slugs so one cannot inject a second parameter", () => {
+    const [vehicles] = buildNavGroups([
+      brand({ id: "b1", label: "Honda", slug: "a&b=c" }, [
+        { label: "SH", slug: "sh" },
+      ]),
+    ]);
+
+    expect(vehicles.items[0].href).toBe("/shop?brand=a%26b%3Dc");
+  });
+
+  it("groups models from every accessory brand under one heading", () => {
+    const groups = buildNavGroups([
+      brand({ id: "b1", label: "Đồ Đúc", slug: "-c", is_accessory: true }, [
+        { label: "Pha Đèn", slug: "pha-den", group: "den" },
+      ]),
+      brand({ id: "b2", label: "Bi Cầu", slug: "bc", is_accessory: true }, [
+        { label: "Đèn Hậu", slug: "den-hau", group: "den" },
+      ]),
+    ]);
+
+    expect(labels(groups[0].items)).toEqual(["Pha Đèn", "Đèn Hậu"]);
+  });
+
+  it("drops a model with nothing in stock", () => {
+    // Hộp In 3D and Hộp Nhôm in the real data: models with zero active
+    // products, which would otherwise render as a link to an empty page.
+    const [linhKien] = buildNavGroups([
+      brand({ id: "b1", label: "Bi Cầu", slug: "bc", is_accessory: true }, [
+        { label: "Pat Inox", slug: "pat-inox", group: "linh-kien", count: 1 },
+        { label: "Hộp In 3D", slug: "hop-3d", group: "linh-kien", count: 0 },
+      ]),
+    ]);
+
+    expect(labels(linhKien.items)).toEqual(["Pat Inox"]);
+  });
+
+  it("drops a brand with nothing in stock", () => {
+    const groups = buildNavGroups([
       brand({ id: "b1", label: "Honda", slug: "honda" }, [
-        { id: "p1", name: "SH 2026" },
+        { label: "SH", slug: "sh", count: 1 },
       ]),
-      // Yamaha / Suzuki / Datbike in the real data: rows with no models at all.
-      { id: "b2", label: "Yamaha", slug: "yamaha" },
-      brand({ id: "b3", label: "Suzuki", slug: "suzuki" }, []),
+      // Vinfast in the real data once its products were unfiled.
+      brand({ id: "b2", label: "Vinfast", slug: "vinfast" }, [
+        { label: "VF3", slug: "vf3", count: 0 },
+      ]),
+      { id: "b3", label: "Yamaha", slug: "yamaha" },
     ]);
 
-    expect(columns.map((c) => c.label)).toEqual(["Honda"]);
+    expect(labels(groups[0].items)).toEqual(["Honda"]);
   });
 
-  it("omits the accessory column entirely when nothing is in stock", () => {
-    const columns = buildNavColumns([
+  it("omits a heading with no items rather than showing an empty one", () => {
+    const groups = buildNavGroups([
       brand({ id: "b1", label: "Honda", slug: "honda" }, [
-        { id: "p1", name: "SH 2026" },
+        { label: "SH", slug: "sh" },
       ]),
-      brand({ id: "b2", label: "Đồ Đúc", slug: "-c", is_accessory: true }, []),
     ]);
 
-    expect(columns.map((c) => c.label)).toEqual(["Honda"]);
+    expect(groups.map((g) => g.key)).toEqual(["dong-xe"]);
   });
 
-  it("returns nothing for an empty tree rather than an empty accessory column", () => {
-    expect(buildNavColumns([])).toEqual([]);
+  it("returns nothing at all for an empty tree", () => {
+    expect(buildNavGroups([])).toEqual([]);
+  });
+
+  it("ignores an accessory model whose group is unrecognised", () => {
+    const groups = buildNavGroups([
+      brand({ id: "b1", label: "Đồ Đúc", slug: "-c", is_accessory: true }, [
+        { label: "Thứ lạ", slug: "la", group: "khong-biet" },
+      ]),
+    ]);
+
+    expect(groups).toEqual([]);
   });
 });

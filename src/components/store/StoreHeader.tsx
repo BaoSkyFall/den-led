@@ -4,21 +4,18 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { ChevronDown, ChevronRight, Menu, Phone, X } from "lucide-react";
-import type { NavBrand } from "@/features/vehicle-taxonomy";
+import type { NavGroup } from "@/features/vehicle-taxonomy";
 import HeaderSearch from "./HeaderSearch";
 
-type Props = { brands: NavBrand[] };
+type Props = { groups: NavGroup[] };
 
-/** Where a column's "Xem thêm" sends the customer. */
-const moreHref = (slug: string) => `/shop?brand=${encodeURIComponent(slug)}`;
-
-export default function StoreHeader({ brands }: Props) {
+export default function StoreHeader({ groups }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
   const [desktopHover, setDesktopHover] = useState<string | null>(null);
 
   // Empty tree (fetch error / empty DB) => plain link, never a broken dropdown.
-  const hasMenu = brands.length > 0;
+  const hasMenu = groups.length > 0;
 
   return (
     <>
@@ -52,57 +49,50 @@ export default function StoreHeader({ brands }: Props) {
             {hasMenu ? (
               <div
                 className="relative"
-                onMouseEnter={() => setDesktopHover("vehicles")}
+                onMouseEnter={() => setDesktopHover("catalogue")}
                 onMouseLeave={() => setDesktopHover(null)}
               >
                 <Link
                   href="/shop"
                   className="flex items-center gap-1.5 text-[10px] font-bold tracking-[0.2em] uppercase text-white/50 hover:text-white transition-colors px-3 py-2"
                 >
-                  Danh Sách Xe
+                  Sản Phẩm
                   <ChevronDown
                     size={10}
                     strokeWidth={2.5}
-                    className={`transition-transform duration-200 ${desktopHover === "vehicles" ? "rotate-180" : ""}`}
+                    className={`transition-transform duration-200 ${desktopHover === "catalogue" ? "rotate-180" : ""}`}
                   />
                 </Link>
 
-                {desktopHover === "vehicles" && (
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-0 pt-2 z-50 min-w-[520px]">
-                    <div className="bg-[#0a0a0a] border border-white/10 p-6">
-                      <p className="text-[11px] font-bold tracking-[0.3em] uppercase text-amber-500 mb-4">
-                        Chọn hãng xe để xem gói độ đèn
-                      </p>
-                      {/* One column per brand. Columns are capped at five rows
-                          each, so the grid can never grow past a screen no
-                          matter how much stock is added. */}
-                      <div className="grid grid-cols-3 gap-x-8 gap-y-4">
-                        {brands.map((b) => (
-                          <div key={b.id}>
-                            <p className="text-[15px] font-black uppercase tracking-wide text-white mb-2">
-                              {b.label}
-                            </p>
-                            {b.products.map((p) => (
+                {desktopHover === "catalogue" && (
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-0 pt-2 z-50">
+                    {/* Everything is visible at once and every word is a link.
+                        The menu this replaced opened with a line of text
+                        reading "Chọn hãng xe để xem gói độ đèn" — the most
+                        prominent thing on it, and not clickable — which is why
+                        customers said they could not tell where to press. */}
+                    <div className="bg-[#0a0a0a] border border-white/10 p-6 flex gap-10">
+                      {groups.map((group) => (
+                        <div key={group.key} className="min-w-[150px]">
+                          <Link
+                            href={group.href}
+                            className="block text-[15px] font-black uppercase tracking-wide text-white hover:text-amber-500 transition-colors mb-3"
+                          >
+                            {group.label}
+                          </Link>
+                          <div className="flex flex-col">
+                            {group.items.map((item) => (
                               <Link
-                                key={p.id}
-                                href={`/shop/${p.slug}`}
-                                className="block text-[13px] text-white/40 hover:text-white transition-colors py-0.5"
+                                key={item.id}
+                                href={item.href}
+                                className="block text-[13px] text-white/40 hover:text-white transition-colors py-1"
                               >
-                                {p.name}
+                                {item.label}
                               </Link>
                             ))}
-                            {b.hasMore && (
-                              <Link
-                                href={moreHref(b.slug)}
-                                className="mt-1 inline-flex items-center gap-1 text-[13px] font-bold text-amber-500 hover:text-amber-400 transition-colors py-0.5"
-                              >
-                                Xem thêm
-                                <ChevronRight size={12} strokeWidth={2.5} />
-                              </Link>
-                            )}
                           </div>
-                        ))}
-                      </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
@@ -112,7 +102,7 @@ export default function StoreHeader({ brands }: Props) {
                 href="/shop"
                 className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/50 hover:text-white transition-colors px-3 py-2"
               >
-                Danh Sách Xe
+                Sản Phẩm
               </Link>
             )}
 
@@ -168,9 +158,9 @@ export default function StoreHeader({ brands }: Props) {
             />
           </div>
 
-          {/* Same brand columns as desktop, stacked as accordions. Type is left
-              alone here — it was already text-xl, which is not what looked
-              small. */}
+          {/* Same three headings as desktop, stacked. A phone has no room for
+              them side by side, so here they do fold — but the heading itself
+              still navigates, so nothing is reachable only by expanding. */}
           <nav className="flex flex-col px-8 py-6 gap-0">
             <Link
               href="/"
@@ -180,47 +170,44 @@ export default function StoreHeader({ brands }: Props) {
               Trang Chủ
             </Link>
 
-            {brands.map((b) => (
-              <div key={b.id} className="border-b border-white/5">
-                <button
-                  className="w-full flex items-center justify-between text-left"
-                  onClick={() =>
-                    setMobileExpanded(mobileExpanded === b.id ? null : b.id)
-                  }
-                  aria-expanded={mobileExpanded === b.id}
-                >
-                  <span className="text-xl font-black uppercase tracking-tighter text-white py-4 flex-1">
-                    {b.label}
-                  </span>
-                  <span className="p-4 text-white/40">
+            {groups.map((group) => (
+              <div key={group.key} className="border-b border-white/5">
+                <div className="flex items-center justify-between">
+                  <Link
+                    href={group.href}
+                    onClick={() => setMobileOpen(false)}
+                    className="text-xl font-black uppercase tracking-tighter text-white py-4 flex-1"
+                  >
+                    {group.label}
+                  </Link>
+                  <button
+                    className="p-4 text-white/40"
+                    onClick={() =>
+                      setMobileExpanded(
+                        mobileExpanded === group.key ? null : group.key,
+                      )
+                    }
+                    aria-expanded={mobileExpanded === group.key}
+                    aria-label={`Mở rộng ${group.label}`}
+                  >
                     <ChevronDown
                       size={14}
-                      className={`transition-transform ${mobileExpanded === b.id ? "rotate-180" : ""}`}
+                      className={`transition-transform ${mobileExpanded === group.key ? "rotate-180" : ""}`}
                     />
-                  </span>
-                </button>
-                {mobileExpanded === b.id && (
+                  </button>
+                </div>
+                {mobileExpanded === group.key && (
                   <div className="pb-3 pl-4 flex flex-col gap-3">
-                    {b.products.map((p) => (
+                    {group.items.map((item) => (
                       <Link
-                        key={p.id}
-                        href={`/shop/${p.slug}`}
+                        key={item.id}
+                        href={item.href}
                         onClick={() => setMobileOpen(false)}
                         className="text-sm text-white/50 hover:text-amber-500 transition-colors pl-3"
                       >
-                        {p.name}
+                        {item.label}
                       </Link>
                     ))}
-                    {b.hasMore && (
-                      <Link
-                        href={moreHref(b.slug)}
-                        onClick={() => setMobileOpen(false)}
-                        className="inline-flex items-center gap-1 text-sm font-bold text-amber-500 hover:text-amber-400 transition-colors pl-3"
-                      >
-                        Xem thêm
-                        <ChevronRight size={14} strokeWidth={2.5} />
-                      </Link>
-                    )}
                   </div>
                 )}
               </div>

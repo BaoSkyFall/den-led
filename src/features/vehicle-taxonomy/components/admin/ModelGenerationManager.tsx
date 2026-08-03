@@ -28,9 +28,22 @@ type ModelGenerationManagerProps = {
   models: ModelWithGenerations[];
 };
 
-type Draft = { label: string; slug: string };
+type Draft = { label: string; slug: string; group: string };
 
-const emptyDraft: Draft = { label: "", slug: "" };
+const emptyDraft: Draft = { label: "", slug: "", group: "" };
+
+/**
+ * Which storefront heading this model appears under.
+ *
+ * Only accessory models carry one. A vehicle model is reached through "Dòng
+ * Xe", which is built from its brand, so leaving this blank is the correct
+ * answer for Honda and Vinfast rather than an omission.
+ */
+const GROUP_CHOICES = [
+  { value: "", label: "— Không (xe) —" },
+  { value: "den", label: "Đèn" },
+  { value: "linh-kien", label: "Linh Kiện" },
+];
 
 /**
  * Model + Generation CRUD for one brand.
@@ -81,10 +94,14 @@ function ModelGenerationManager({
 
   const startEdit = (
     kind: "model" | "generation",
-    row: { id: string; label: string; slug: string },
+    row: { id: string; label: string; slug: string; group?: string | null },
   ) => {
     setEditing({ kind, id: row.id });
-    setEditDraft({ label: row.label, slug: row.slug });
+    setEditDraft({
+      label: row.label,
+      slug: row.slug,
+      group: row.group ?? "",
+    });
   };
 
   const onAddModel = () => {
@@ -127,7 +144,13 @@ function ModelGenerationManager({
     run(
       async () => {
         if (kind === "model") {
-          await updateModelAction(id, { label, slug });
+          // Empty select means "vehicle", which is null in the column —
+          // an empty string would be a group nothing matches.
+          await updateModelAction(id, {
+            label,
+            slug,
+            group: editDraft.group || null,
+          });
         } else {
           await updateGenerationAction(id, { label, slug });
         }
@@ -253,7 +276,7 @@ function ModelGenerationManager({
                 </div>
 
                 {isEditing("model", model.id) && (
-                  <div className="px-3 py-3 border-t border-slate-200 grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto_auto] gap-2 items-center">
+                  <div className="px-3 py-3 border-t border-slate-200 grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto_auto_auto] gap-2 items-center">
                     <Input
                       value={editDraft.label}
                       placeholder="Tên dòng xe"
@@ -268,6 +291,20 @@ function ModelGenerationManager({
                         setEditDraft((d) => ({ ...d, slug: e.target.value }))
                       }
                     />
+                    <select
+                      value={editDraft.group}
+                      aria-label="Nhóm trên menu"
+                      onChange={(e) =>
+                        setEditDraft((d) => ({ ...d, group: e.target.value }))
+                      }
+                      className="h-10 rounded-md border border-slate-200 bg-white px-2 text-sm"
+                    >
+                      {GROUP_CHOICES.map((c) => (
+                        <option key={c.value} value={c.value}>
+                          {c.label}
+                        </option>
+                      ))}
+                    </select>
                     <Button
                       type="button"
                       size="sm"
